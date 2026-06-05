@@ -1,16 +1,18 @@
-## Hi there 👋
+<div style="display: block; text-align: center;">
 
-<!--
-**tonirshaik/tonirshaik** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
+  <!-- ১ম ছবি -->
+  <a href="https://i.ibb.co/RkbRbhv4/tonirshaik-1.jpg" target="_blank">
+    <img src="https://i.ibb.co/RkbRbhv4/tonirshaik-1.jpg" width="180" height="auto" style="margin: 10px; display: inline-block; border-radius: 8px;">
+  </a>
 
-Here are some ideas to get you started:
+  <!-- ২য় ছবি -->
+  <a href="https://i.ibb.co/fYCWhsYS/tonirshaik-1.jpg" target="_blank">
+    <img src="https://i.ibb.co/fYCWhsYS/tonirshaik-1.jpg" width="180" height="auto" style="margin: 10px; display: inline-block; border-radius: 8px;">
+  </a>
 
-- 🔭 I’m currently working on ...
-- 🌱 I’m currently learning ...
-- 👯 I’m looking to collaborate on ...
-- 🤔 I’m looking for help with ...
-- 💬 Ask me about ...
-- 📫 How to reach me: ...
-- 😄 Pronouns: ...
-- ⚡ Fun fact: ...
--->
+  <!-- ৩য় ছবি -->
+  <a href="https://i.ibb.co/C3kFSRk4/tonirshaik.jpg" target="_blank">
+    <img src="https://i.ibb.co/C3kFSRk4/tonirshaik.jpg" width="180" height="auto" style="margin: 10px; display: inline-block; border-radius: 8px;">
+  </a>
+
+</div>

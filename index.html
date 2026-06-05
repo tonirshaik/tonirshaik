@@ -68,8 +68,8 @@
             color: #ffffff;
             border: 1px solid rgba(255, 255, 255, 0.3);
             border-radius: 50%;
-            width: 28px; /* ৩৬ থেকে কমিয়ে ২৮ করা হলো */
-            height: 28px; /* ৩৬ থেকে কমিয়ে ২৮ করা হলো */
+            width: 28px;
+            height: 28px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -81,8 +81,8 @@
         
         /* বাটনের ভেতরের আধুনিক ডাউনলোড আইকন (SVG) */
         .download-btn svg {
-            width: 14px; /* ১৮ থেকে কমিয়ে ১৪ করা হলো */
-            height: 14px; /* ১৮ থেকে কমিয়ে ১৪ করা হলো */
+            width: 14px;
+            height: 14px;
             fill: none;
             stroke: currentColor;
             stroke-width: 2.5;
@@ -143,6 +143,27 @@
         .close-btn:hover {
             color: #c5a059;
         }
+
+        /* ফটো ওয়েবসাইটের উপযোগী নতুন মিনিমাল ফুটার ডিজাইন */
+        .site-footer {
+            margin-top: 60px;
+            padding-top: 25px;
+            padding-bottom: 25px;
+            border-top: 1px solid rgba(197, 160, 89, 0.15); /* হালকা সোনালী বর্ডার */
+        }
+        .footer-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+        .footer-copyright {
+            font-size: 13px;
+            color: #c5a059; /* সোনালী টোন */
+            opacity: 0.85;
+            letter-spacing: 0.5px;
+        }
     </style>
 </head>
 <body>
@@ -186,13 +207,21 @@
     </div>
 
     <!-- ======================================================= -->
-    <!-- গুগল সাইটকে সার্চের ১ নম্বরে আনার জন্য নতুন যুক্ত করা ব্যাকলিংক বাটন -->
+    <!-- গুগল সাইটকে সার্চের ১ নম্বরে আনার জন্য ব্যাকলিংক বাটন -->
     <!-- ======================================================= -->
-    <div style="margin-top: 50px; margin-bottom: 30px;">
+    <div style="margin-top: 50px; margin-bottom: 10px;">
         <a href="https://sites.google.com/view/tonirshaik2/" target="_blank" style="display: inline-block; padding: 12px 30px; background-color: transparent; color: #c5a059; border: 2px solid #c5a059; border-radius: 25px; text-decoration: none; font-weight: 600; transition: all 0.3s ease; letter-spacing: 1px; font-family: 'Segoe UI', sans-serif;" onmouseover="this.style.backgroundColor='#c5a059'; this.style.color='#0b0c10'; this.style.boxShadow='0 0 15px #c5a059';" onmouseout="this.style.backgroundColor='transparent'; this.style.color='#c5a059'; this.style.boxShadow='none';">
             🌐 VISIT MY OFFICIAL GOOGLE SITE
         </a>
     </div>
+
+    <!-- ======================================================= -->
+    <!-- শুধুমাত্র ফটো ওয়েবসাইটের জন্য নিখুঁত কপিরাইট ফুটার এরিয়া -->
+    <!-- ======================================================= -->
+    <footer class="site-footer">
+        <div class="footer-title">Tonir Shaik | Official Photo Gallery</div>
+        <div class="footer-copyright">© 2026 Tonir Shaik. All Rights Reserved.</div>
+    </footer>
     <!-- ======================================================= -->
 
     <script>

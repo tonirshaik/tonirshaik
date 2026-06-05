@@ -18,6 +18,11 @@ Tonir Shaik is a professional **Computer Operator** and tech enthusiast based in
 
 ---
 
+## 🔗 Connected Platforms
+* **Official Website:** For personal documents, credentials, and updates, visit the [Tonir Shaik Official Google Site](https://sites.google.com/view/tonirshaik2/).
+
+---
+
 ## 🔍 Search Discovery Tags
 To help find this platform across the web, this repository is indexed under the following keywords:
 `tonirshaik` | `tonir shaik` | `tonir shaik photo` | `tonir shaik github` | `tonirshaik cyber` | `tonir hub` | `tonir home`
@@ -31,4 +36,4 @@ To help find this platform across the web, this repository is indexed under the 
 
 ## 📜 Copyright & Licensing
 © 2026 **Tonir Shaik**. All Rights Reserved.  
-Designed and maintained with ❤️ by [Tonir Shaik](https://github.com/tonirshaik).
+Maintained with ❤️ by [Tonir Shaik](https://github.com/tonirshaik). Powered by [Google Sites](https://sites.google.com/view/tonirshaik2/).

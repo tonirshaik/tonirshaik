@@ -1,1 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Modern Premium Photo Gallery</title>
+    <style>
+        /* মূল ওয়েবসাইটের ডিজাইন */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0b0c10;
+            color: #c5a059; /* হালকা সোনালী টোন */
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            margin-bottom: 30px;
+            color: #ffffff;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+        
+        /* ছোট ছবিগুলোর গ্রিড এরিয়া */
+        .gallery {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 25px;
+        }
+        .photo-card {
+            position: relative;
+            width: 180px;
+            cursor: pointer;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            transition: all 0.3s ease;
+        }
+        .photo-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(197, 160, 89, 0.2);
+        }
+        .photo-card img {
+            width: 100%;
+            height: 240px;
+            object-fit: cover;
+            display: block;
+        }
 
+        /* আধুনিক গ্লাস-মরফিজম ডাউনলোড বাটন ডিজাইন */
+        .download-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 10;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        /* বাটনের ভেতরের আধুনিক ডাউনলোড আইকন (SVG) */
+        .download-btn svg {
+            width: 18px;
+            height: 18px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            transition: transform 0.3s ease;
+        }
+
+        /* মাউস নিলে বাটনের আধুনিক অ্যানিমেশন ইফেক্ট */
+        .download-btn:hover {
+            background: #c5a059; /* লোগো বা থিম কালার */
+            color: #0b0c10;
+            border-color: #c5a059;
+            box-shadow: 0 0 15px #c5a059;
+        }
+        .download-btn:hover svg {
+            transform: translateY(2px); /* আইকনটি হালকা নিচে নামবে */
+        }
+
+        /* ছবি বড় হয়ে দেখার পপআপ (Lightbox) ব্যাকগ্রাউন্ড */
+        .lightbox {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(11, 12, 16, 0.95);
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* পপআপের ভেতরের মেইন কন্টেইনার */
+        .lightbox-content {
+            position: relative;
+            max-width: 90%;
+            max-height: 85%;
+        }
+        .lightbox-content img {
+            max-width: 100%;
+            max-height: 85vh;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+        }
+
+        /* পপআপ বন্ধ করার ক্রস (X) বাটন */
+        .close-btn {
+            position: absolute;
+            top: -45px;
+            left: 10px;
+            color: #ffffff;
+            font-size: 35px;
+            font-weight: 300;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .close-btn:hover {
+            color: #c5a059;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>আমার ছবিসমূহ (My Photos)</h1>
+
+    <div class="gallery">
+
+        <div class="photo-card">
+            <img src="https://i.ibb.co/RkbRbhv4/tonirshaik-1.jpg" onclick="openLightbox('https://i.ibb.co/RkbRbhv4/tonirshaik-1.jpg', 'tonir-1.jpg')">
+            <button class="download-btn" onclick="forceDownload('https://i.ibb.co/RkbRbhv4/tonirshaik-1.jpg', 'tonir-1.jpg'); event.stopPropagation();" title="Download">
+                <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v4M7 10l5 5 5-5M12 15V3"/></svg>
+            </button>
+        </div>
+
+        <div class="photo-card">
+            <img src="https://i.ibb.co/fYCWhsYS/tonirshaik-1.jpg" onclick="openLightbox('https://i.ibb.co/fYCWhsYS/tonirshaik-1.jpg', 'tonir-2.jpg')">
+            <button class="download-btn" onclick="forceDownload('https://i.ibb.co/fYCWhsYS/tonirshaik-1.jpg', 'tonir-2.jpg'); event.stopPropagation();" title="Download">
+                <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v4M7 10l5 5 5-5M12 15V3"/></svg>
+            </button>
+        </div>
+
+        <div class="photo-card">
+            <img src="https://i.ibb.co/C3kFSRk4/tonirshaik.jpg" onclick="openLightbox('https://i.ibb.co/C3kFSRk4/tonirshaik.jpg', 'tonir-3.jpg')">
+            <button class="download-btn" onclick="forceDownload('https://i.ibb.co/C3kFSRk4/tonirshaik.jpg', 'tonir-3.jpg'); event.stopPropagation();" title="Download">
+                <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v4M7 10l5 5 5-5M12 15V3"/></svg>
+            </button>
+        </div>
+
+    </div>
+
+    <div id="myLightbox" class="lightbox" onclick="closeLightbox()">
+        <div class="lightbox-content" onclick="event.stopPropagation();">
+            <span class="close-btn" onclick="closeLightbox()">&times;</span>
+            <button id="popupDownloadBtn" class="download-btn" style="top: 15px; right: 15px; width: 44px; height: 44px;">
+                <svg viewBox="0 0 24 24" style="width: 22px; height: 22px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v4M7 10l5 5 5-5M12 15V3"/></svg>
+            </button>
+            <img id="lightboxImg" src="" alt="Large View">
+        </div>
+    </div>
+
+    <script>
+        // ছবি বড় করার ফাংশন
+        function openLightbox(imgUrl, fileName) {
+            document.getElementById("lightboxImg").src = imgUrl;
+            document.getElementById("myLightbox").style.display = "flex";
+            
+            // পপআপের ভেতরের ডাউনলোড বাটনে ফাংশনটি সেট করা
+            const popupBtn = document.getElementById("popupDownloadBtn");
+            popupBtn.onclick = function() {
+                forceDownload(imgUrl, fileName);
+            };
+        }
+
+        // ছবি বড় থেকে বন্ধ করার ফাংশন
+        function closeLightbox() {
+            document.getElementById("myLightbox").style.display = "none";
+        }
+
+        // সরাসরি ডাউনলোড করানোর জাভাস্ক্রিপ্ট কোড
+        function forceDownload(url, fileName) {
+            fetch(url)
+                .then(response => response.blob())
+                .then(blob => {
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = fileName;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                })
+                .catch(() => {
+                    window.open(url, '_blank');
+                });
+        }
+    </script>
+
+</body>
+</html>

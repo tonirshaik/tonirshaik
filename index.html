@@ -3,9 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Modern Premium Photo Gallery</title>
+    
+    <!-- ======================================================= -->
+    <!-- গুগল সার্চে ১ নম্বরে আসার জন্য নতুন যুক্ত করা এসইও মেটা ট্যাগসমূহ -->
+    <!-- ======================================================= -->
+    <title>Tonir Shaik - Official Photo Gallery & Website</title>
+    <meta name="description" content="Welcome to the official website of Tonir Shaik. Explore and download premium photos from Tonir Shaik's personal gallery.">
+    <meta name="keywords" content="tonirshaik, tonir shaik, tonir shaik photo, tonir shaik github, tonirshaik cyber">
+    <meta name="author" content="Tonir Shaik">
+    <!-- ======================================================= -->
+
     <style>
-        /* মূল ওয়েবসাইটের ডিজাইন */
+        /* মূল ওয়েবসাইটের ডিজাইন */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #0b0c10;
@@ -21,7 +30,7 @@
             letter-spacing: 1px;
         }
         
-        /* ছোট ছবিগুলোর গ্রিড এরিয়া */
+        /* ছোট ছবিগুলোর গ্রিড এরিয়া */
         .gallery {
             display: flex;
             flex-wrap: wrap;
@@ -59,8 +68,8 @@
             color: #ffffff;
             border: 1px solid rgba(255, 255, 255, 0.3);
             border-radius: 50%;
-            width: 28px; /* ৩৬ থেকে কমিয়ে ২৮ করা হলো */
-            height: 28px; /* ৩৬ থেকে কমিয়ে ২৮ করা হলো */
+            width: 28px; /* ৩৬ থেকে কমিয়ে ২৮ করা হলো */
+            height: 28px; /* ৩৬ থেকে কমিয়ে ২৮ করা হলো */
             display: flex;
             align-items: center;
             justify-content: center;
@@ -72,8 +81,8 @@
         
         /* বাটনের ভেতরের আধুনিক ডাউনলোড আইকন (SVG) */
         .download-btn svg {
-            width: 14px; /* ১৮ থেকে কমিয়ে ১৪ করা হলো */
-            height: 14px; /* ১৮ থেকে কমিয়ে ১৪ করা হলো */
+            width: 14px; /* ১৮ থেকে কমিয়ে ১৪ করা হলো */
+            height: 14px; /* ১৮ থেকে কমিয়ে ১৪ করা হলো */
             fill: none;
             stroke: currentColor;
             stroke-width: 2.5;
@@ -93,7 +102,7 @@
             transform: translateY(2px); /* আইকনটি হালকা নিচে নামবে */
         }
 
-        /* ছবি বড় হয়ে দেখার পপআপ (Lightbox) ব্যাকগ্রাউন্ড */
+        /* ছবি বড় হয়ে দেখার পপআপ (Lightbox) ব্যাকগ্রাউন্ড */
         .lightbox {
             display: none;
             position: fixed;
@@ -138,7 +147,8 @@
 </head>
 <body>
 
-    <h1>আমার ছবিসমূহ (My Photos)</h1>
+    <!-- গুগলের রোবট যেন সহজে পেজটি আপনার নামে চিনতে পারে, তাই হেডিং পরিবর্তন করা হয়েছে -->
+    <h1>Tonir Shaik - আমার ছবিসমূহ (My Photos)</h1>
 
     <div class="gallery">
 
@@ -176,7 +186,7 @@
     </div>
 
     <script>
-        // ছবি বড় করার ফাংশন
+        // ছবি বড় করার ফাংশন
         function openLightbox(imgUrl, fileName) {
             document.getElementById("lightboxImg").src = imgUrl;
             document.getElementById("myLightbox").style.display = "flex";
@@ -188,7 +198,7 @@
             };
         }
 
-        // ছবি বড় থেকে বন্ধ করার ফাংশন
+        // ছবি বড় থেকে বন্ধ করার ফাংশন
         function closeLightbox() {
             document.getElementById("myLightbox").style.display = "none";
         }

@@ -1,27 +1,34 @@
-<div style="display: block; text-align: center;">
+# 🌐 Tonir Shaik - Official Website & Premium Photo Gallery
 
-  <!-- ১ম ছবি -->
-  <div style="display: inline-block; margin: 10px; text-align: center;">
-    <a href="https://i.ibb.co/RkbRbhv4/tonirshaik-1.jpg" target="_blank">
-      <img src="https://i.ibb.co/RkbRbhv4/tonirshaik-1.jpg" width="180" height="auto" style="border-radius: 8px; display: block; margin-bottom: 5px;">
-    </a>
-    <a href="https://i.ibb.co/RkbRbhv4/tonirshaik-1.jpg" download="photo1.jpg" style="display: inline-block; background-color: #007bff; color: white; padding: 4px 10px; text-decoration: none; border-radius: 4px; font-size: 12px; font-family: sans-serif;">📥 Download</a>
-  </div>
+Welcome to the official GitHub repository of **Tonir Shaik**. This project features a modern, responsive premium photo gallery designed with advanced glassmorphism components and lightning-fast direct download capabilities.
 
-  <!-- ২য় ছবি -->
-  <div style="display: inline-block; margin: 10px; text-align: center;">
-    <a href="https://i.ibb.co/fYCWhsYS/tonirshaik-1.jpg" target="_blank">
-      <img src="https://i.ibb.co/fYCWhsYS/tonirshaik-1.jpg" width="180" height="auto" style="border-radius: 8px; display: block; margin-bottom: 5px;">
-    </a>
-    <a href="https://i.ibb.co/fYCWhsYS/tonirshaik-1.jpg" download="photo2.jpg" style="display: inline-block; background-color: #007bff; color: white; padding: 4px 10px; text-decoration: none; border-radius: 4px; font-size: 12px; font-family: sans-serif;">📥 Download</a>
-  </div>
+---
 
-  <!-- ৩য় ছবি -->
-  <div style="display: inline-block; margin: 10px; text-align: center;">
-    <a href="https://i.ibb.co/C3kFSRk4/tonirshaik.jpg" target="_blank">
-      <img src="https://i.ibb.co/C3kFSRk4/tonirshaik.jpg" width="180" height="auto" style="border-radius: 8px; display: block; margin-bottom: 5px;">
-    </a>
-    <a href="https://i.ibb.co/C3kFSRk4/tonirshaik.jpg" download="photo3.jpg" style="display: inline-block; background-color: #007bff; color: white; padding: 4px 10px; text-decoration: none; border-radius: 4px; font-size: 12px; font-family: sans-serif;">📥 Download</a>
-  </div>
+## 🤵 About Tonir Shaik
+Tonir Shaik is a professional **Computer Operator** and tech enthusiast based in Bangladesh. Passionate about digital branding, web design, and content creation, this platform serves as a personal hub showcasing high-quality photography and curated visual content.
 
-</div>
+---
+
+## ⚡ Key Features of this Project
+* **High-Definition Gallery:** A premium collection of curated images.
+* **Glassmorphic UI:** Sleek, modern blurred-glass action buttons.
+* **Instant Lightbox Preview:** Smooth user interface for full-screen view.
+* **One-Click Forced Download:** JavaScript-powered instant background downloading.
+* **SEO Optimized:** Structured with semantic tags for peak search visibility.
+
+---
+
+## 🔍 Search Discovery Tags
+To help find this platform across the web, this repository is indexed under the following keywords:
+`tonirshaik` | `tonir shaik` | `tonir shaik photo` | `tonir shaik github` | `tonirshaik cyber` | `tonir hub` | `tonir home`
+
+---
+
+## 🏷️ Popular Hashtags
+#tonirshaik #tonirshaik_cyber #tonir_hub #computer_operator #github_gallery #web_development #portfolio
+
+---
+
+## 📜 Copyright & Licensing
+© 2026 **Tonir Shaik**. All Rights Reserved.  
+Designed and maintained with ❤️ by [Tonir Shaik](https://github.com/tonirshaik).

@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <!-- ======================================================= -->
-    <!-- গুগল সার্চে ১ নম্বরে আসার জন্য নতুন যুক্ত করা এসইও মেটা ট্যাগসমূহ -->
+    <!-- আপনার ইচ্ছা অনুযায়ী গুগল সার্চে জাস্ট Tonir Shaik দেখানোর জন্য পরিবর্তন -->
     <!-- ======================================================= -->
-    <title>Tonir Shaik - Official Photo Gallery & Website</title>
+    <title>Tonir Shaik</title>
     <meta name="description" content="Welcome to the official website of Tonir Shaik. Explore and download premium photos from Tonir Shaik's personal gallery.">
     <meta name="keywords" content="tonirshaik, tonir shaik, tonir shaik photo, tonir shaik github, tonirshaik cyber">
     <meta name="author" content="Tonir Shaik">
@@ -144,7 +144,7 @@
             color: #c5a059;
         }
 
-        /* ফটো ওয়েবসাইটের উপযোগী নতুন মিনিমাল ফুটার ডিজাইন */
+        /* ফটো ওয়েবসাইটের উপযোগী মিনিমাল ফুটার ডিজাইন */
         .site-footer {
             margin-top: 60px;
             padding-top: 25px;
@@ -168,7 +168,7 @@
 </head>
 <body>
 
-    <!-- গুগলের রোবট যেন সহজে পেজটি আপনার নামে চিনতে পারে, তাই হেডিং পরিবর্তন করা হয়েছে -->
+    <!-- প্রধান হেডিং -->
     <h1>Tonir Shaik</h1>
 
     <div class="gallery">
@@ -206,23 +206,18 @@
         </div>
     </div>
 
-    <!-- ======================================================= -->
-    <!-- গুগল সাইটকে সার্চের ১ নম্বরে আনার জন্য ব্যাকলিংক বাটন -->
-    <!-- ======================================================= -->
+    <!-- গুগল সাইট ব্যাকলিংক বাটন -->
     <div style="margin-top: 50px; margin-bottom: 10px;">
         <a href="https://sites.google.com/view/tonirshaik2/" target="_blank" style="display: inline-block; padding: 12px 30px; background-color: transparent; color: #c5a059; border: 2px solid #c5a059; border-radius: 25px; text-decoration: none; font-weight: 600; transition: all 0.3s ease; letter-spacing: 1px; font-family: 'Segoe UI', sans-serif;" onmouseover="this.style.backgroundColor='#c5a059'; this.style.color='#0b0c10'; this.style.boxShadow='0 0 15px #c5a059';" onmouseout="this.style.backgroundColor='transparent'; this.style.color='#c5a059'; this.style.boxShadow='none';">
             🌐 VISIT MY OFFICIAL GOOGLE SITE
         </a>
     </div>
 
-    <!-- ======================================================= -->
-    <!-- শুধুমাত্র ফটো ওয়েবসাইটের জন্য নিখুঁত কপিরাইট ফুটার এরিয়া -->
-    <!-- ======================================================= -->
+    <!-- কপিরাইট ফুটার এরিয়া -->
     <footer class="site-footer">
         <div class="footer-title">Tonir Shaik | Official Photo Gallery</div>
         <div class="footer-copyright">© 2026 Tonir Shaik. All Rights Reserved.</div>
     </footer>
-    <!-- ======================================================= -->
 
     <script>
         // ছবি বড় করার ফাংশন
@@ -230,7 +225,6 @@
             document.getElementById("lightboxImg").src = imgUrl;
             document.getElementById("myLightbox").style.display = "flex";
             
-            // পপআপের ভেতরের ডাউনলোড বাটনে ফাংশনটি সেট করা
             const popupBtn = document.getElementById("popupDownloadBtn");
             popupBtn.onclick = function() {
                 forceDownload(imgUrl, fileName);

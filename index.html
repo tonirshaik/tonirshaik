@@ -5,20 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <!-- ======================================================= -->
-    <!-- আপনার ইচ্ছা অনুযায়ী গুগল সার্চে জাস্ট Tonir Shaik দেখানোর জন্য পরিবর্তন -->
+    <!-- গুগল ইমেজ ও টেক্সট সার্চের জন্য হাই-লেভেল এসইও মেটা ট্যাগ -->
     <!-- ======================================================= -->
     <title>Tonir Shaik</title>
-    <meta name="description" content="Welcome to the official website of Tonir Shaik. Explore and download premium photos from Tonir Shaik's personal gallery.">
-    <meta name="keywords" content="tonirshaik, tonir shaik, tonir shaik photo, tonir shaik github, tonirshaik cyber">
+    <meta name="description" content="Official photo gallery of Tonir Shaik. View and download high-quality official photos, portraits, and exclusive images of Tonir Shaik.">
+    <meta name="keywords" content="tonirshaik, tonir shaik, tonir shaik photo, tonir shaik official image, tonirshaik github, tonir shaik picture">
     <meta name="author" content="Tonir Shaik">
+    
+    <!-- গুগলের ইমেজ বটকে ছবিগুলো ক্রল করার অনুমতি দেওয়া -->
+    <meta name="robots" content="index, follow, max-image-preview:large">
+    <meta name="googlebot" content="index, follow">
+    <meta name="googlebot-image" content="index, follow">
     <!-- ======================================================= -->
 
     <style>
-        /* মূল ওয়েবসাইটের ডিজাইন */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #0b0c10;
-            color: #c5a059; /* হালকা সোনালী টোন */
+            color: #c5a059;
             text-align: center;
             margin: 0;
             padding: 20px;
@@ -29,8 +33,6 @@
             font-weight: 600;
             letter-spacing: 1px;
         }
-        
-        /* ছোট ছবিগুলোর গ্রিড এরিয়া */
         .gallery {
             display: flex;
             flex-wrap: wrap;
@@ -56,8 +58,6 @@
             object-fit: cover;
             display: block;
         }
-
-        /* আধুনিক গ্লাস-মরফিজম ডাউনলোড বাটন ডিজাইন */
          .download-btn {
             position: absolute;
             top: 8px;
@@ -78,8 +78,6 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        
-        /* বাটনের ভেতরের আধুনিক ডাউনলোড আইকন (SVG) */
         .download-btn svg {
             width: 14px;
             height: 14px;
@@ -88,21 +86,16 @@
             stroke-width: 2.5;
             stroke-linecap: round;
             stroke-linejoin: round;
-            transition: transform 0.3s ease;
         }
-
-        /* মাউস নিলে বাটনের আধুনিক অ্যানিমেশন ইফেক্ট */
         .download-btn:hover {
-            background: #c5a059; /* লোগো বা থিম কালার */
+            background: #c5a059;
             color: #0b0c10;
             border-color: #c5a059;
             box-shadow: 0 0 15px #c5a059;
         }
         .download-btn:hover svg {
-            transform: translateY(2px); /* আইকনটি হালকা নিচে নামবে */
+            transform: translateY(2px);
         }
-
-        /* ছবি বড় হয়ে দেখার পপআপ (Lightbox) ব্যাকগ্রাউন্ড */
         .lightbox {
             display: none;
             position: fixed;
@@ -115,8 +108,6 @@
             align-items: center;
             justify-content: center;
         }
-
-        /* পপআপের ভেতরের মেইন কন্টেইনার */
         .lightbox-content {
             position: relative;
             max-width: 90%;
@@ -128,8 +119,6 @@
             border-radius: 12px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.8);
         }
-
-        /* পপআপ বন্ধ করার ক্রস (X) বাটন */
         .close-btn {
             position: absolute;
             top: -45px;
@@ -138,18 +127,15 @@
             font-size: 35px;
             font-weight: 300;
             cursor: pointer;
-            transition: color 0.2s;
         }
         .close-btn:hover {
             color: #c5a059;
         }
-
-        /* ফটো ওয়েবসাইটের উপযোগী মিনিমাল ফুটার ডিজাইন */
         .site-footer {
             margin-top: 60px;
             padding-top: 25px;
             padding-bottom: 25px;
-            border-top: 1px solid rgba(197, 160, 89, 0.15); /* হালকা সোনালী বর্ডার */
+            border-top: 1px solid rgba(197, 160, 89, 0.15);
         }
         .footer-title {
             font-size: 15px;
@@ -160,7 +146,7 @@
         }
         .footer-copyright {
             font-size: 13px;
-            color: #c5a059; /* সোনালী টোন */
+            color: #c5a059;
             opacity: 0.85;
             letter-spacing: 0.5px;
         }
@@ -168,28 +154,30 @@
 </head>
 <body>
 
-    <!-- প্রধান হেডিং -->
     <h1>Tonir Shaik</h1>
 
     <div class="gallery">
 
+        <!-- ছবি ১: ইমেজ এসইও যুক্ত করা হয়েছে -->
         <div class="photo-card">
-            <img src="https://i.ibb.co/RkbRbhv4/tonirshaik-1.jpg" onclick="openLightbox('https://i.ibb.co/RkbRbhv4/tonirshaik-1.jpg', 'tonir-1.jpg')">
-            <button class="download-btn" onclick="forceDownload('https://i.ibb.co/RkbRbhv4/tonirshaik-1.jpg', 'tonir-1.jpg'); event.stopPropagation();" title="Download">
+            <img src="https://i.ibb.co/RkbRbhv4/tonirshaik-1.jpg" alt="Tonir Shaik Official Photo" title="Tonir Shaik Portrait Image" onclick="openLightbox('https://i.ibb.co/RkbRbhv4/tonirshaik-1.jpg', 'tonir-shaik-1.jpg')">
+            <button class="download-btn" onclick="forceDownload('https://i.ibb.co/RkbRbhv4/tonirshaik-1.jpg', 'tonir-shaik-1.jpg'); event.stopPropagation();" title="Download Tonir Shaik Photo">
                 <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v4M7 10l5 5 5-5M12 15V3"/></svg>
             </button>
         </div>
 
+        <!-- ছবি ২: ইমেজ এসইও যুক্ত করা হয়েছে -->
         <div class="photo-card">
-            <img src="https://i.ibb.co/fYCWhsYS/tonirshaik-1.jpg" onclick="openLightbox('https://i.ibb.co/fYCWhsYS/tonirshaik-1.jpg', 'tonir-2.jpg')">
-            <button class="download-btn" onclick="forceDownload('https://i.ibb.co/fYCWhsYS/tonirshaik-1.jpg', 'tonir-2.jpg'); event.stopPropagation();" title="Download">
+            <img src="https://i.ibb.co/fYCWhsYS/tonirshaik-1.jpg" alt="Tonir Shaik New Picture" title="Tonir Shaik Premium Photo" onclick="openLightbox('https://i.ibb.co/fYCWhsYS/tonirshaik-1.jpg', 'tonir-shaik-2.jpg')">
+            <button class="download-btn" onclick="forceDownload('https://i.ibb.co/fYCWhsYS/tonirshaik-1.jpg', 'tonir-shaik-2.jpg'); event.stopPropagation();" title="Download Tonir Shaik Photo">
                 <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v4M7 10l5 5 5-5M12 15V3"/></svg>
             </button>
         </div>
 
+        <!-- ছবি ৩: ইমেজ এসইও যুক্ত করা হয়েছে -->
         <div class="photo-card">
-            <img src="https://i.ibb.co/C3kFSRk4/tonirshaik.jpg" onclick="openLightbox('https://i.ibb.co/C3kFSRk4/tonirshaik.jpg', 'tonir-3.jpg')">
-            <button class="download-btn" onclick="forceDownload('https://i.ibb.co/C3kFSRk4/tonirshaik.jpg', 'tonir-3.jpg'); event.stopPropagation();" title="Download">
+            <img src="https://i.ibb.co/C3kFSRk4/tonirshaik.jpg" alt="Tonir Shaik Gallery Image" title="Tonir Shaik Profile Picture" onclick="openLightbox('https://i.ibb.co/C3kFSRk4/tonirshaik.jpg', 'tonir-shaik-3.jpg')">
+            <button class="download-btn" onclick="forceDownload('https://i.ibb.co/C3kFSRk4/tonirshaik.jpg', 'tonir-shaik-3.jpg'); event.stopPropagation();" title="Download Tonir Shaik Photo">
                 <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v4M7 10l5 5 5-5M12 15V3"/></svg>
             </button>
         </div>
@@ -202,7 +190,7 @@
             <button id="popupDownloadBtn" class="download-btn" style="top: 15px; right: 15px; width: 44px; height: 44px;">
                 <svg viewBox="0 0 24 24" style="width: 22px; height: 22px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v4M7 10l5 5 5-5M12 15V3"/></svg>
             </button>
-            <img id="lightboxImg" src="" alt="Large View">
+            <img id="lightboxImg" src="" alt="Tonir Shaik HD Photo View">
         </div>
     </div>
 
@@ -213,14 +201,12 @@
         </a>
     </div>
 
-    <!-- কপিরাইট ফুটার এরিয়া -->
     <footer class="site-footer">
         <div class="footer-title">Tonir Shaik | Official Photo Gallery</div>
         <div class="footer-copyright">© 2026 Tonir Shaik. All Rights Reserved.</div>
     </footer>
 
     <script>
-        // ছবি বড় করার ফাংশন
         function openLightbox(imgUrl, fileName) {
             document.getElementById("lightboxImg").src = imgUrl;
             document.getElementById("myLightbox").style.display = "flex";
@@ -231,12 +217,10 @@
             };
         }
 
-        // ছবি বড় থেকে বন্ধ করার ফাংশন
         function closeLightbox() {
             document.getElementById("myLightbox").style.display = "none";
         }
 
-        // সরাসরি ডাউনলোড করানোর জাভাস্ক্রিপ্ট কোড
         function forceDownload(url, fileName) {
             fetch(url)
                 .then(response => response.blob())

@@ -3,336 +3,115 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <!-- ======================================================= -->
-    <!-- গুগল ইমেজ ও টেক্সট সার্চের জন্য হাই-লেভেল এসইও মেটা ট্যাগ -->
-    <!-- ======================================================= -->
     <title>Tonir Shaik</title>
-    <meta name="description" content="Official photo gallery of Tonir Shaik. View and download high-quality official photos, portraits, and exclusive images of Tonir Shaik.">
-    <meta name="keywords" content="tonirshaik, tonir shaik, tonir shaik photo, tonir shaik official image, tonirshaik github, tonir shaik picture">
-    <meta name="author" content="Tonir Shaik">
-    
-    <!-- গুগলের ইমেজ বটকে ছবিগুলো ক্রল করার অনুমতি দেওয়া -->
-    <meta name="robots" content="index, follow, max-image-preview:large">
-    <meta name="googlebot" content="index, follow">
-    <meta name="googlebot-image" content="index, follow">
-    <!-- ======================================================= -->
-
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #0b0c10;
-            color: #c5a059;
-            text-align: center;
-            margin: 0;
-            padding: 20px;
+        body { font-family: 'Segoe UI', sans-serif; background-color: #0b0c10; color: #c5a059; text-align: center; margin: 0; padding: 20px; }
+        h1 { color: #ffffff; margin-bottom: 20px; }
+        
+        .visit-btn { 
+            display: inline-block; padding: 12px 30px; border: 2px solid #c5a059; border-radius: 25px; 
+            color: #c5a059; text-decoration: none; font-weight: 600; margin-bottom: 40px; 
+            transition: 0.4s; position: relative; 
         }
-        h1 {
-            margin-bottom: 30px;
-            color: #ffffff;
-            font-weight: 600;
-            letter-spacing: 1px;
+        .visit-btn:hover { 
+            background-color: #c5a059; color: #000; 
+            box-shadow: 0 0 20px #c5a059;
         }
-        .gallery {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 25px;
+        
+        .gallery { display: flex; flex-wrap: wrap; justify-content: center; gap: 25px; margin-bottom: 80px; }
+        
+        .photo-card { 
+            position: relative; width: 200px; height: 260px; cursor: pointer; border-radius: 12px; 
+            overflow: hidden; box-shadow: 0 8px 20px rgba(0,0,0,0.5); 
+            transition: transform 0.4s, box-shadow 0.4s; 
         }
-        .photo-card {
-            position: relative;
-            width: 180px;
-            cursor: pointer;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            transition: all 0.3s ease;
+        .photo-card:hover { 
+            transform: translateY(-10px); 
+            box-shadow: 0 10px 30px rgba(197, 160, 89, 0.4); 
         }
-        .photo-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(197, 160, 89, 0.2);
+        .photo-card img { width: 100%; height: 100%; object-fit: cover; }
+        
+        .dl-btn { 
+            position: absolute; top: 10px; right: 10px; 
+            background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); 
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff; width: 28px; height: 28px; 
+            border-radius: 50%; display: flex; align-items: center; justify-content: center; 
+            cursor: pointer; z-index: 10; font-size: 14px; transition: 0.3s;
         }
-        .photo-card img {
-            width: 100%;
-            height: 240px;
-            object-fit: cover;
-            display: block;
-        }
-         .download-btn {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            color: #ffffff;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            width: 28px;
-            height: 28px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            z-index: 10;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .download-btn svg {
-            width: 14px;
-            height: 14px;
-            fill: none;
-            stroke: currentColor;
-            stroke-width: 2.5;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-        }
-        .download-btn:hover {
-            background: #c5a059;
-            color: #0b0c10;
-            border-color: #c5a059;
-            box-shadow: 0 0 15px #c5a059;
-        }
-        .download-btn:hover svg {
-            transform: translateY(2px);
-        }
-        .lightbox {
-            display: none;
-            position: fixed;
-            z-index: 100;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(11, 12, 16, 0.95);
-            align-items: center;
-            justify-content: center;
-        }
-        .lightbox-content {
-            position: relative;
-            max-width: 90%;
-            max-height: 85%;
-        }
-        .lightbox-content img {
-            max-width: 100%;
-            max-height: 85vh;
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
-        }
-        .close-btn {
-            position: absolute;
-            top: -45px;
-            left: 10px;
-            color: #ffffff;
-            font-size: 35px;
-            font-weight: 300;
-            cursor: pointer;
-        }
-        .close-btn:hover {
-            color: #c5a059;
-        }
-        .site-footer {
-            margin-top: 60px;
-            padding-top: 25px;
-            padding-bottom: 25px;
-            border-top: 1px solid rgba(197, 160, 89, 0.15);
-        }
-        .footer-title {
-            font-size: 15px;
-            font-weight: 600;
-            color: #ffffff;
-            margin-bottom: 8px;
-            letter-spacing: 0.5px;
-        }
-        .footer-copyright {
-            font-size: 13px;
-            color: #c5a059;
-            opacity: 0.85;
-            letter-spacing: 0.5px;
-        }
+        .dl-btn:hover { background: #c5a059; color: #000; }
+        
+        .lightbox { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); align-items: center; justify-content: center; }
+        .lightbox-content { position: relative; max-width: 80%; }
+        .lightbox-content img { max-height: 80vh; border-radius: 12px; }
+        .lightbox .dl-btn { top: 15px; right: 15px; width: 32px; height: 32px; font-size: 16px; }
+        
+        /* ফুটার স্টাইল */
+        footer { margin-top: 50px; padding: 20px; border-top: 1px solid rgba(197, 160, 89, 0.2); color: #c5a059; }
     </style>
 </head>
 <body>
 
     <h1>Tonir Shaik</h1>
+    <a href="https://sites.google.com/view/tonirshaik2/" target="_blank" class="visit-btn">🌐 VISIT MY OFFICIAL GOOGLE SITE</a>
 
-    <div class="gallery">
-
-        <!-- ছবি ১ -->
-        <div class="photo-card">
-            <img src="https://i.ibb.co/RkbRbhv4/tonirshaik-1.jpg" alt="Tonir Shaik Official Photo" title="Tonir Shaik Portrait Image" onclick="openLightbox('https://i.ibb.co/RkbRbhv4/tonirshaik-1.jpg', 'tonir-shaik-1.jpg')">
-            <button class="download-btn" onclick="forceDownload('https://i.ibb.co/RkbRbhv4/tonirshaik-1.jpg', 'tonir-shaik-1.jpg'); event.stopPropagation();" title="Download Tonir Shaik Photo">
-                <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v4M7 10l5 5 5-5M12 15V3"/></svg>
-            </button>
-        </div>
-
-        <!-- ছবি ২ -->
-        <div class="photo-card">
-            <img src="https://i.ibb.co/fYCWhsYS/tonirshaik-1.jpg" alt="Tonir Shaik New Picture" title="Tonir Shaik Premium Photo" onclick="openLightbox('https://i.ibb.co/fYCWhsYS/tonirshaik-1.jpg', 'tonir-shaik-2.jpg')">
-            <button class="download-btn" onclick="forceDownload('https://i.ibb.co/fYCWhsYS/tonirshaik-1.jpg', 'tonir-shaik-2.jpg'); event.stopPropagation();" title="Download Tonir Shaik Photo">
-                <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v4M7 10l5 5 5-5M12 15V3"/></svg>
-            </button>
-        </div>
-
-        <!-- ছবি ৩ -->
-        <div class="photo-card">
-            <img src="https://i.ibb.co/C3kFSRk4/tonirshaik.jpg" alt="Tonir Shaik Gallery Image" title="Tonir Shaik Profile Picture" onclick="openLightbox('https://i.ibb.co/C3kFSRk4/tonirshaik.jpg', 'tonir-shaik-3.jpg')">
-            <button class="download-btn" onclick="forceDownload('https://i.ibb.co/C3kFSRk4/tonirshaik.jpg', 'tonir-shaik-3.jpg'); event.stopPropagation();" title="Download Tonir Shaik Photo">
-                <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v4M7 10l5 5 5-5M12 15V3"/></svg>
-            </button>
-        </div>
-
-        <!-- নতুন ছবি ৪ (IMG-4409) -->
-        <div class="photo-card">
-            <img src="https://i.ibb.co/V0GK3FZk/IMG-4409.jpg" alt="Tonir Shaik Exclusive Photo" title="Tonir Shaik Image 4" onclick="openLightbox('https://i.ibb.co/V0GK3FZk/IMG-4409.jpg', 'tonir-shaik-4.jpg')">
-            <button class="download-btn" onclick="forceDownload('https://i.ibb.co/V0GK3FZk/IMG-4409.jpg', 'tonir-shaik-4.jpg'); event.stopPropagation();" title="Download Tonir Shaik Photo">
-                <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v4M7 10l5 5 5-5M12 15V3"/></svg>
-            </button>
-        </div>
-
-        <!-- নতুন ছবি ৫ (IMG-4425) -->
-        <div class="photo-card">
-            <img src="https://i.ibb.co/4g5DwGjz/IMG-4425.jpg" alt="Tonir Shaik Outdoor Shoot" title="Tonir Shaik Image 5" onclick="openLightbox('https://i.ibb.co/4g5DwGjz/IMG-4425.jpg', 'tonir-shaik-5.jpg')">
-            <button class="download-btn" onclick="forceDownload('https://i.ibb.co/4g5DwGjz/IMG-4425.jpg', 'tonir-shaik-5.jpg'); event.stopPropagation();" title="Download Tonir Shaik Photo">
-                <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v4M7 10l5 5 5-5M12 15V3"/></svg>
-            </button>
-        </div>
-
-        <!-- নতুন ছবি ৬ (IMG-4429) -->
-        <div class="photo-card">
-            <img src="https://i.ibb.co/rRJfb7kz/IMG-4429.jpg" alt="Tonir Shaik Candid Picture" title="Tonir Shaik Image 6" onclick="openLightbox('https://i.ibb.co/rRJfb7kz/IMG-4429.jpg', 'tonir-shaik-6.jpg')">
-            <button class="download-btn" onclick="forceDownload('https://i.ibb.co/rRJfb7kz/IMG-4429.jpg', 'tonir-shaik-6.jpg'); event.stopPropagation();" title="Download Tonir Shaik Photo">
-                <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v4M7 10l5 5 5-5M12 15V3"/></svg>
-            </button>
-        </div>
-
-        <!-- নতুন ছবি ৭ (IMG-4431) -->
-        <div class="photo-card">
-            <img src="https://i.ibb.co/3Z8xWMx/IMG-4431.jpg" alt="Tonir Shaik Stylish Look" title="Tonir Shaik Image 7" onclick="openLightbox('https://i.ibb.co/3Z8xWMx/IMG-4431.jpg', 'tonir-shaik-7.jpg')">
-            <button class="download-btn" onclick="forceDownload('https://i.ibb.co/3Z8xWMx/IMG-4431.jpg', 'tonir-shaik-7.jpg'); event.stopPropagation();" title="Download Tonir Shaik Photo">
-                <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v4M7 10l5 5 5-5M12 15V3"/></svg>
-            </button>
-        </div>
-
-        <!-- নতুন ছবি ৮ (IMG-4364) -->
-        <div class="photo-card">
-            <img src="https://i.ibb.co/cKvt0rwD/IMG-4364.jpg" alt="Tonir Shaik Professional Photo" title="Tonir Shaik Image 8" onclick="openLightbox('https://i.ibb.co/cKvt0rwD/IMG-4364.jpg', 'tonir-shaik-8.jpg')">
-            <button class="download-btn" onclick="forceDownload('https://i.ibb.co/cKvt0rwD/IMG-4364.jpg', 'tonir-shaik-8.jpg'); event.stopPropagation();" title="Download Tonir Shaik Photo">
-                <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v4M7 10l5 5 5-5M12 15V3"/></svg>
-            </button>
-        </div>
-
-        <!-- নতুন ছবি ৯ (IMG-4375) -->
-        <div class="photo-card">
-            <img src="https://i.ibb.co/d4mfR81K/IMG-4375.jpg" alt="Tonir Shaik HD Picture" title="Tonir Shaik Image 9" onclick="openLightbox('https://i.ibb.co/d4mfR81K/IMG-4375.jpg', 'tonir-shaik-9.jpg')">
-            <button class="download-btn" onclick="forceDownload('https://i.ibb.co/d4mfR81K/IMG-4375.jpg', 'tonir-shaik-9.jpg'); event.stopPropagation();" title="Download Tonir Shaik Photo">
-                <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v4M7 10l5 5 5-5M12 15V3"/></svg>
-            </button>
-        </div>
-
-        <!-- নতুন ছবি ১০ (tonir-shaik-1) -->
-        <div class="photo-card">
-            <img src="https://i.ibb.co/ZRVvk55N/tonir-shaik-1.jpg" alt="Tonir Shaik Official Gallery" title="Tonir Shaik Image 10" onclick="openLightbox('https://i.ibb.co/ZRVvk55N/tonir-shaik-1.jpg', 'tonir-shaik-10.jpg')">
-            <button class="download-btn" onclick="forceDownload('https://i.ibb.co/ZRVvk55N/tonir-shaik-1.jpg', 'tonir-shaik-10.jpg'); event.stopPropagation();" title="Download Tonir Shaik Photo">
-                <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v4M7 10l5 5 5-5M12 15V3"/></svg>
-            </button>
-        </div>
-
-        <!-- নতুন ছবি ১১ (Tonir-Shaik) -->
-        <div class="photo-card">
-            <img src="https://i.ibb.co/XGCFFJn/Tonir-Shaik.jpg" alt="Tonir Shaik Premium Selection" title="Tonir Shaik Image 11" onclick="openLightbox('https://i.ibb.co/XGCFFJn/Tonir-Shaik.jpg', 'tonir-shaik-11.jpg')">
-            <button class="download-btn" onclick="forceDownload('https://i.ibb.co/XGCFFJn/Tonir-Shaik.jpg', 'tonir-shaik-11.jpg'); event.stopPropagation();" title="Download Tonir Shaik Photo">
-                <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v4M7 10l5 5 5-5M12 15V3"/></svg>
-            </button>
-        </div>
-
-        <!-- নতুন ছবি ১২ (IMG-4394) -->
-        <div class="photo-card">
-            <img src="https://i.ibb.co/Y43gWwtf/IMG-4394.jpg" alt="Tonir Shaik Collection" title="Tonir Shaik Image 12" onclick="openLightbox('https://i.ibb.co/Y43gWwtf/IMG-4394.jpg', 'tonir-shaik-12.jpg')">
-            <button class="download-btn" onclick="forceDownload('https://i.ibb.co/Y43gWwtf/IMG-4394.jpg', 'tonir-shaik-12.jpg'); event.stopPropagation();" title="Download Tonir Shaik Photo">
-                <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v4M7 10l5 5 5-5M12 15V3"/></svg>
-            </button>
-        </div>
-
-        <!-- নতুন ছবি ১৩ (IMG-4406) -->
-        <div class="photo-card">
-            <img src="https://i.ibb.co/bMJHYJNH/IMG-4406.jpg" alt="Tonir Shaik Best Portrait" title="Tonir Shaik Image 13" onclick="openLightbox('https://i.ibb.co/bMJHYJNH/IMG-4406.jpg', 'tonir-shaik-13.jpg')">
-            <button class="download-btn" onclick="forceDownload('https://i.ibb.co/bMJHYJNH/IMG-4406.jpg', 'tonir-shaik-13.jpg'); event.stopPropagation();" title="Download Tonir Shaik Photo">
-                <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v4M7 10l5 5 5-5M12 15V3"/></svg>
-            </button>
-        </div>
-
-        <!-- নতুন ছবি ১৪ (1000005753-1) -->
-        <div class="photo-card">
-            <img src="https://i.ibb.co/2YqQNrKs/1000005753-1.jpg" alt="Tonir Shaik Album Image" title="Tonir Shaik Image 14" onclick="openLightbox('https://i.ibb.co/2YqQNrKs/1000005753-1.jpg', 'tonir-shaik-14.jpg')">
-            <button class="download-btn" onclick="forceDownload('https://i.ibb.co/2YqQNrKs/1000005753-1.jpg', 'tonir-shaik-14.jpg'); event.stopPropagation();" title="Download Tonir Shaik Photo">
-                <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v4M7 10l5 5 5-5M12 15V3"/></svg>
-            </button>
-        </div>
-
-        <!-- নতুন ছবি ১৫ (IMG-4411) -->
-        <div class="photo-card">
-            <img src="https://i.ibb.co/sdCr35Nk/IMG-4411.jpg" alt="Tonir Shaik Photography" title="Tonir Shaik Image 15" onclick="openLightbox('https://i.ibb.co/sdCr35Nk/IMG-4411.jpg', 'tonir-shaik-15.jpg')">
-            <button class="download-btn" onclick="forceDownload('https://i.ibb.co/sdCr35Nk/IMG-4411.jpg', 'tonir-shaik-15.jpg'); event.stopPropagation();" title="Download Tonir Shaik Photo">
-                <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v4M7 10l5 5 5-5M12 15V3"/></svg>
-            </button>
-        </div>
-
-    </div>
+    <div class="gallery" id="gallery"></div>
 
     <div id="myLightbox" class="lightbox" onclick="closeLightbox()">
-        <div class="lightbox-content" onclick="event.stopPropagation();">
-            <span class="close-btn" onclick="closeLightbox()">&times;</span>
-            <button id="popupDownloadBtn" class="download-btn" style="top: 15px; right: 15px; width: 44px; height: 44px;">
-                <svg viewBox="0 0 24 24" style="width: 22px; height: 22px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v4M7 10l5 5 5-5M12 15V3"/></svg>
-            </button>
-            <img id="lightboxImg" src="" alt="Tonir Shaik HD Photo View">
+        <div class="lightbox-content" onclick="event.stopPropagation()">
+            <div id="lightboxDl" class="dl-btn">↓</div>
+            <img id="lightboxImg" src="">
         </div>
     </div>
 
-    <!-- গুগল সাইট ব্যাকলিংক বাটন -->
-    <div style="margin-top: 50px; margin-bottom: 10px;">
-        <a href="https://sites.google.com/view/tonirshaik2/" target="_blank" style="display: inline-block; padding: 12px 30px; background-color: transparent; color: #c5a059; border: 2px solid #c5a059; border-radius: 25px; text-decoration: none; font-weight: 600; transition: all 0.3s ease; letter-spacing: 1px; font-family: 'Segoe UI', sans-serif;" onmouseover="this.style.backgroundColor='#c5a059'; this.style.color='#0b0c10'; this.style.boxShadow='0 0 15px #c5a059';" onmouseout="this.style.backgroundColor='transparent'; this.style.color='#c5a059'; this.style.boxShadow='none';">
-            🌐 VISIT MY OFFICIAL GOOGLE SITE
-        </a>
-    </div>
-
-    <footer class="site-footer">
-        <div class="footer-title">Tonir Shaik | Official Photo Gallery</div>
-        <div class="footer-copyright">© 2026 Tonir Shaik. All Rights Reserved.</div>
+    <footer>
+        <div style="font-weight: 600; color: #fff; margin-bottom: 5px;">Tonir Shaik | Official Photo Gallery</div>
+        <div style="font-size: 13px;">© 2026 Tonir Shaik. All Rights Reserved.</div>
     </footer>
 
     <script>
-        function openLightbox(imgUrl, fileName) {
-            document.getElementById("lightboxImg").src = imgUrl;
-            document.getElementById("myLightbox").style.display = "flex";
-            
-            const popupBtn = document.getElementById("popupDownloadBtn");
-            popupBtn.onclick = function() {
-                forceDownload(imgUrl, fileName);
-            };
-        }
-
-        function closeLightbox() {
-            document.getElementById("myLightbox").style.display = "none";
-        }
-
-        function forceDownload(url, fileName) {
-            fetch(url)
-                .then(response => response.blob())
-                .then(blob => {
-                    const link = document.createElement('a');
-                    link.href = URL.createObjectURL(blob);
-                    link.download = fileName;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                })
-                .catch(() => {
-                    window.open(url, '_blank');
+        const csvUrl = 'https://raw.githubusercontent.com/piyalhub2/photo/refs/heads/main/Tonir%20photo%20Link.txt?t=' + new Date().getTime();
+        
+        fetch(csvUrl)
+            .then(res => res.text())
+            .then(data => {
+                const gallery = document.getElementById('gallery');
+                const links = data.split('\n').filter(l => l.trim() !== '');
+                
+                links.forEach((url, i) => {
+                    const cleanUrl = url.trim();
+                    if(cleanUrl.startsWith('http')) {
+                        const div = document.createElement('div');
+                        div.className = 'photo-card';
+                        div.innerHTML = `
+                            <div class="dl-btn" onclick="downloadImage('${cleanUrl}', 'Tonir-${i+1}.jpg'); event.stopPropagation();">↓</div>
+                            <img src="${cleanUrl}" onclick="openLightbox('${cleanUrl}')">
+                        `;
+                        gallery.appendChild(div);
+                    }
                 });
+            });
+
+        function openLightbox(url) {
+            document.getElementById("lightboxImg").src = url;
+            document.getElementById("lightboxDl").onclick = () => downloadImage(url, 'Tonir-Original.jpg');
+            document.getElementById("myLightbox").style.display = "flex";
+        }
+        function closeLightbox() { document.getElementById("myLightbox").style.display = "none"; }
+
+        function downloadImage(url, filename) {
+            fetch(url)
+                .then(res => res.blob())
+                .then(blob => {
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                })
+                .catch(err => window.open(url, '_blank'));
         }
     </script>
-
 </body>
 </html>

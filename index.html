@@ -1,117 +1,560 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tonir Shaik</title>
+    <title>Tonir Shaik | Official Gallery</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background-color: #0b0c10; color: #c5a059; text-align: center; margin: 0; padding: 20px; }
-        h1 { color: #ffffff; margin-bottom: 20px; }
-        
-        .visit-btn { 
-            display: inline-block; padding: 12px 30px; border: 2px solid #c5a059; border-radius: 25px; 
-            color: #c5a059; text-decoration: none; font-weight: 600; margin-bottom: 40px; 
-            transition: 0.4s; position: relative; 
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --gold: #C9A84C;
+            --gold-light: #E8C96A;
+            --gold-dim: rgba(201,168,76,0.15);
+            --ink: #0E0D0B;
+            --surface: #161410;
+            --card-bg: #1C1A16;
+            --muted: rgba(255,255,255,0.38);
+            --border: rgba(201,168,76,0.18);
         }
-        .visit-btn:hover { 
-            background-color: #c5a059; color: #000; 
-            box-shadow: 0 0 20px #c5a059;
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--ink);
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
         }
-        
-        .gallery { display: flex; flex-wrap: wrap; justify-content: center; gap: 25px; margin-bottom: 80px; }
-        
-        .photo-card { 
-            position: relative; width: 200px; height: 260px; cursor: pointer; border-radius: 12px; 
-            overflow: hidden; box-shadow: 0 8px 20px rgba(0,0,0,0.5); 
-            transition: transform 0.4s, box-shadow 0.4s; 
+
+        /* ── CURSOR DOT ── */
+        #cursor {
+            position: fixed; width: 8px; height: 8px;
+            background: var(--gold); border-radius: 50%;
+            pointer-events: none; z-index: 9999;
+            transform: translate(-50%,-50%);
+            transition: transform 0.1s, opacity 0.3s;
         }
-        .photo-card:hover { 
-            transform: translateY(-10px); 
-            box-shadow: 0 10px 30px rgba(197, 160, 89, 0.4); 
+
+        /* ── HERO ── */
+        .hero {
+            position: relative;
+            min-height: auto;
+            padding: 100px 20px 40px;
+            display: flex; align-items: center; justify-content: center;
+            overflow: hidden;
         }
-        .photo-card img { width: 100%; height: 100%; object-fit: cover; }
-        
-        .dl-btn { 
-            position: absolute; top: 10px; right: 10px; 
-            background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); 
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: #fff; width: 28px; height: 28px; 
-            border-radius: 50%; display: flex; align-items: center; justify-content: center; 
-            cursor: pointer; z-index: 10; font-size: 14px; transition: 0.3s;
+        .hero-bg {
+            position: absolute; inset: 0;
+            background: radial-gradient(ellipse 80% 60% at 50% 40%, rgba(201,168,76,0.08) 0%, transparent 70%);
         }
-        .dl-btn:hover { background: #c5a059; color: #000; }
-        
-        .lightbox { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); align-items: center; justify-content: center; }
-        .lightbox-content { position: relative; max-width: 80%; }
-        .lightbox-content img { max-height: 80vh; border-radius: 12px; }
-        .lightbox .dl-btn { top: 15px; right: 15px; width: 32px; height: 32px; font-size: 16px; }
-        
-        /* ফুটার স্টাইল */
-        footer { margin-top: 50px; padding: 20px; border-top: 1px solid rgba(197, 160, 89, 0.2); color: #c5a059; }
+        .hero-lines {
+            position: absolute; inset: 0;
+            background-image:
+                linear-gradient(rgba(201,168,76,0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(201,168,76,0.04) 1px, transparent 1px);
+            background-size: 60px 60px;
+        }
+        .hero-content { position: relative; text-align: center; z-index: 2; }
+        .hero-eyebrow {
+            font-family: 'Inter', sans-serif;
+            font-size: 11px; font-weight: 500;
+            letter-spacing: 0.25em; text-transform: uppercase;
+            color: var(--gold); margin-bottom: 10px;
+            display: flex; align-items: center; gap: 12px; justify-content: center;
+        }
+        .hero-eyebrow::before, .hero-eyebrow::after {
+            content: ''; display: block;
+            width: 40px; height: 1px; background: var(--gold);
+            opacity: 0.4;
+        }
+        .hero-name {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: clamp(42px, 6vw, 72px);
+            font-weight: 300; line-height: 0.95;
+            letter-spacing: -0.02em;
+            color: #fff;
+        }
+        .hero-name em {
+            font-style: italic; color: var(--gold-light);
+        }
+        .hero-tagline {
+            margin-top: 10px;
+            font-size: 12px; font-weight: 300;
+            letter-spacing: 0.12em; color: var(--muted);
+        }
+        .hero-cta {
+            margin-top: 20px;
+            display: inline-flex; align-items: center; gap: 10px;
+            font-size: 12px; font-weight: 500;
+            letter-spacing: 0.15em; text-transform: uppercase;
+            color: var(--gold); text-decoration: none;
+            border: 1px solid var(--border);
+            padding: 14px 32px; border-radius: 2px;
+            transition: background 0.3s, color 0.3s;
+        }
+        .hero-cta:hover { background: var(--gold); color: #000; }
+        .hero-scroll { display: none; }
+
+        /* ── NAV ── */
+        nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            padding: 20px 40px;
+            display: flex; justify-content: space-between; align-items: center;
+            background: linear-gradient(to bottom, rgba(14,13,11,0.9), transparent);
+            backdrop-filter: blur(8px);
+        }
+        .nav-logo {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 22px; font-weight: 600; color: #fff;
+            text-decoration: none;
+        }
+        .nav-logo span { color: var(--gold); }
+        .nav-links { display: flex; gap: 32px; list-style: none; }
+        .nav-links a {
+            font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase;
+            color: var(--muted); text-decoration: none;
+            transition: color 0.2s;
+        }
+        .nav-links a:hover { color: var(--gold); }
+
+        /* ── SECTION HEADER ── */
+        .section-header {
+            text-align: center; padding: 40px 20px 28px;
+        }
+        .section-eyebrow {
+            font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase;
+            color: var(--gold); margin-bottom: 16px;
+        }
+        .section-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: clamp(36px, 5vw, 56px); font-weight: 300;
+            color: #fff; line-height: 1.1;
+        }
+        .section-title em { font-style: italic; color: var(--gold-light); }
+        .section-rule {
+            width: 48px; height: 1px;
+            background: var(--gold); opacity: 0.4;
+            margin: 20px auto 0;
+        }
+
+        /* ── FILTERS ── */
+        .filters {
+            display: flex; justify-content: center; flex-wrap: wrap;
+            gap: 8px; padding: 0 20px 48px;
+        }
+        .filter-btn {
+            font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+            padding: 8px 20px; border-radius: 2px;
+            border: 1px solid var(--border);
+            background: transparent; color: var(--muted);
+            cursor: pointer; transition: all 0.2s;
+        }
+        .filter-btn:hover, .filter-btn.active {
+            background: var(--gold-dim);
+            border-color: var(--gold); color: var(--gold);
+        }
+
+        /* ── MASONRY GALLERY ── */
+        .gallery-section { padding: 0 24px 80px; max-width: 1400px; margin: 0 auto; }
+        .masonry {
+            columns: 4; column-gap: 16px;
+        }
+        @media (max-width: 1100px) { .masonry { columns: 3; } }
+        @media (max-width: 700px) { .masonry { columns: 2; } }
+        @media (max-width: 400px) { .masonry { columns: 1; } }
+
+        .photo-item {
+            break-inside: avoid; margin-bottom: 16px;
+            position: relative; border-radius: 4px; overflow: hidden;
+            cursor: pointer;
+        }
+        .photo-item img {
+            width: 100%; display: block;
+            transition: transform 0.6s cubic-bezier(0.25,0.46,0.45,0.94);
+        }
+        .photo-item:hover img { transform: scale(1.04); }
+        .photo-overlay {
+            position: absolute; inset: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 50%);
+            opacity: 0; transition: opacity 0.3s;
+            display: flex; align-items: flex-end; padding: 16px;
+        }
+        .photo-item:hover .photo-overlay { opacity: 1; }
+        .photo-meta { flex: 1; }
+        .photo-tag {
+            font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase;
+            color: var(--gold); margin-bottom: 4px;
+        }
+        .photo-title { font-size: 13px; font-weight: 400; color: #fff; }
+        .photo-actions { display: flex; gap: 8px; }
+        .photo-action-btn {
+            width: 32px; height: 32px; border-radius: 50%;
+            background: rgba(255,255,255,0.1); backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.15);
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; cursor: pointer; font-size: 14px;
+            transition: all 0.2s;
+        }
+        .photo-action-btn:hover { background: var(--gold); color: #000; border-color: var(--gold); }
+
+        /* ── FEATURED STRIP ── */
+        .featured-strip {
+            padding: 80px 0; overflow: hidden;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 80px;
+        }
+        .strip-track {
+            display: flex; gap: 24px;
+            animation: marquee 30s linear infinite;
+            width: max-content;
+        }
+        .strip-track:hover { animation-play-state: paused; }
+        .strip-item {
+            width: 280px; height: 380px; flex-shrink: 0;
+            border-radius: 4px; overflow: hidden; position: relative;
+        }
+        .strip-item img { width: 100%; height: 100%; object-fit: cover; }
+        @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+        /* ── STATS ── */
+        .stats-row {
+            display: flex; justify-content: center; gap: 40px;
+            padding: 8px 20px 24px; flex-wrap: wrap;
+        }
+        .stat { text-align: center; }
+        .stat-num {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 28px; font-weight: 300; color: var(--gold-light);
+            line-height: 1;
+        }
+        .stat-label {
+            font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase;
+            color: var(--muted); margin-top: 4px;
+        }
+
+        /* ── LIGHTBOX ── */
+        .lightbox {
+            display: none; position: fixed; inset: 0; z-index: 1000;
+            background: rgba(0,0,0,0.95);
+            align-items: center; justify-content: center;
+        }
+        .lightbox.open { display: flex; }
+        .lb-inner {
+            position: relative; max-width: 90vw; max-height: 90vh;
+            display: flex; flex-direction: column; align-items: center;
+        }
+        .lb-inner img {
+            max-width: 100%; max-height: 80vh;
+            border-radius: 4px; box-shadow: 0 40px 80px rgba(0,0,0,0.8);
+        }
+        .lb-meta {
+            margin-top: 16px; display: flex; align-items: center; gap: 20px;
+        }
+        .lb-title { font-family: 'Cormorant Garamond', serif; font-size: 20px; color: #fff; }
+        .lb-close {
+            position: fixed; top: 24px; right: 32px;
+            font-size: 28px; color: var(--muted); cursor: pointer;
+            line-height: 1; transition: color 0.2s; background: none; border: none;
+        }
+        .lb-close:hover { color: var(--gold); }
+        .lb-nav {
+            position: fixed; top: 50%; transform: translateY(-50%);
+            font-size: 32px; color: var(--muted); cursor: pointer;
+            background: none; border: none; transition: color 0.2s;
+            padding: 16px;
+        }
+        .lb-nav:hover { color: var(--gold); }
+        .lb-prev { left: 20px; }
+        .lb-next { right: 20px; }
+        .lb-counter {
+            font-size: 11px; letter-spacing: 0.15em; color: var(--muted);
+        }
+        .lb-dl {
+            font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase;
+            color: var(--gold); text-decoration: none;
+            border: 1px solid var(--border); padding: 8px 20px; border-radius: 2px;
+            background: none; cursor: pointer; transition: background 0.2s, color 0.2s;
+        }
+        .lb-dl:hover { background: var(--gold); color: #000; }
+
+        /* ── FOOTER ── */
+        footer {
+            padding: 48px 40px;
+            border-top: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 20px;
+        }
+        .footer-logo {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 28px; font-weight: 300; color: #fff;
+        }
+        .footer-logo span { color: var(--gold); }
+        .footer-copy { font-size: 12px; color: var(--muted); letter-spacing: 0.05em; }
+        .footer-site-link {
+            font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase;
+            color: var(--gold); text-decoration: none;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 2px; transition: border-color 0.2s;
+        }
+        .footer-site-link:hover { border-color: var(--gold); }
+
+        /* ── LOADING ── */
+        .loading-state {
+            text-align: center; padding: 80px 20px;
+            color: var(--muted); font-size: 12px; letter-spacing: 0.15em;
+        }
+        .loading-spinner {
+            width: 32px; height: 32px; border-radius: 50%;
+            border: 1px solid var(--border);
+            border-top-color: var(--gold);
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── REVEAL ANIM ── */
+        .reveal {
+            opacity: 0; transform: translateY(24px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        .reveal.visible { opacity: 1; transform: none; }
+
+        @media (max-width: 600px) {
+            nav { padding: 16px 20px; }
+            .nav-links { display: none; }
+            footer { flex-direction: column; text-align: center; }
+        }
     </style>
 </head>
 <body>
 
-    <h1>Tonir Shaik</h1>
-    <a href="https://sites.google.com/view/tonirshaik2/" target="_blank" class="visit-btn">🌐 VISIT MY OFFICIAL GOOGLE SITE</a>
+<div id="cursor"></div>
 
-    <div class="gallery" id="gallery"></div>
+<!-- NAV -->
+<nav>
+    <a href="#" class="nav-logo">Tonir <span>Shaik</span></a>
+    <ul class="nav-links">
+        <li><a href="#gallery">Gallery</a></li>
+        <li><a href="https://sites.google.com/view/tonirshaik2/" target="_blank">Official Site</a></li>
+    </ul>
+</nav>
 
-    <div id="myLightbox" class="lightbox" onclick="closeLightbox()">
-        <div class="lightbox-content" onclick="event.stopPropagation()">
-            <div id="lightboxDl" class="dl-btn">↓</div>
-            <img id="lightboxImg" src="">
+
+<!-- GALLERY -->
+<section id="gallery">
+    <div class="section-header reveal">
+        <p class="section-eyebrow">Portfolio</p>
+        <h2 class="section-title">Photo <em>Gallery</em></h2>
+        <div class="section-rule"></div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-row reveal">
+        <div class="stat">
+            <div class="stat-num" id="photoCount">—</div>
+            <div class="stat-label">Photos</div>
+        </div>
+        <div class="stat">
+            <div class="stat-num">2026</div>
+            <div class="stat-label">Collection</div>
+        </div>
+        <div class="stat">
+            <div class="stat-num">∞</div>
+            <div class="stat-label">Memories</div>
         </div>
     </div>
 
-    <footer>
-        <div style="font-weight: 600; color: #fff; margin-bottom: 5px;">Tonir Shaik | Official Photo Gallery</div>
-        <div style="font-size: 13px;">© 2026 Tonir Shaik. All Rights Reserved.</div>
-    </footer>
+    <div class="filters reveal">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="portrait">Portrait</button>
+        <button class="filter-btn" data-filter="lifestyle">Lifestyle</button>
+        <button class="filter-btn" data-filter="editorial">Editorial</button>
+    </div>
 
-    <script>
-        const csvUrl = 'https://raw.githubusercontent.com/tonirshaik/tonirshaik/refs/heads/main/Tonir%20photo%20Link.txt?t=' + new Date().getTime();
-        
-        fetch(csvUrl)
-            .then(res => res.text())
-            .then(data => {
-                const gallery = document.getElementById('gallery');
-                const links = data.split('\n').filter(l => l.trim() !== '');
-                
-                links.forEach((url, i) => {
-                    const cleanUrl = url.trim();
-                    if(cleanUrl.startsWith('http')) {
-                        const div = document.createElement('div');
-                        div.className = 'photo-card';
-                        div.innerHTML = `
-                            <div class="dl-btn" onclick="downloadImage('${cleanUrl}', 'Tonir-${i+1}.jpg'); event.stopPropagation();">↓</div>
-                            <img src="${cleanUrl}" onclick="openLightbox('${cleanUrl}')">
-                        `;
-                        gallery.appendChild(div);
-                    }
-                });
-            });
+    <div class="gallery-section">
+        <div class="loading-state" id="loadingState">
+            <div class="loading-spinner"></div>
+            Loading gallery…
+        </div>
+        <div class="masonry" id="masonry" style="display:none;"></div>
+    </div>
+</section>
 
-        function openLightbox(url) {
-            document.getElementById("lightboxImg").src = url;
-            document.getElementById("lightboxDl").onclick = () => downloadImage(url, 'Tonir-Original.jpg');
-            document.getElementById("myLightbox").style.display = "flex";
-        }
-        function closeLightbox() { document.getElementById("myLightbox").style.display = "none"; }
+<!-- FEATURED STRIP -->
+<div class="featured-strip" id="stripSection" style="display:none;">
+    <div class="strip-track" id="stripTrack"></div>
+</div>
 
-        function downloadImage(url, filename) {
-            fetch(url)
-                .then(res => res.blob())
-                .then(blob => {
-                    const a = document.createElement('a');
-                    a.href = URL.createObjectURL(blob);
-                    a.download = filename;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                })
-                .catch(err => window.open(url, '_blank'));
-        }
-    </script>
+<!-- FOOTER -->
+<footer>
+    <div>
+        <div class="footer-logo">Tonir <span>Shaik</span></div>
+        <div class="footer-copy" style="margin-top:8px;">© 2026 Tonir Shaik. All Rights Reserved.</div>
+    </div>
+    <a href="https://sites.google.com/view/tonirshaik2/" target="_blank" class="footer-site-link">
+        Visit Official Site →
+    </a>
+</footer>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox">
+    <button class="lb-close" id="lbClose">×</button>
+    <button class="lb-nav lb-prev" id="lbPrev">‹</button>
+    <button class="lb-nav lb-next" id="lbNext">›</button>
+    <div class="lb-inner">
+        <img id="lbImg" src="" alt="">
+        <div class="lb-meta">
+            <span class="lb-title" id="lbTitle"></span>
+            <span class="lb-counter" id="lbCounter"></span>
+            <button class="lb-dl" id="lbDl">↓ Download</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Cursor
+    const cursor = document.getElementById('cursor');
+    document.addEventListener('mousemove', e => {
+        cursor.style.left = e.clientX + 'px';
+        cursor.style.top = e.clientY + 'px';
+    });
+
+    // Photo categories for demo labeling
+    const categories = ['portrait','lifestyle','editorial'];
+    const catLabels = ['Portrait','Lifestyle','Editorial'];
+
+    let allPhotos = [];
+    let currentIdx = 0;
+
+    const csvUrl = 'https://raw.githubusercontent.com/tonirshaik/tonirshaik/refs/heads/main/Tonir%20photo%20Link.txt?t=' + Date.now();
+
+    fetch(csvUrl)
+        .then(r => r.text())
+        .then(data => {
+            const links = data.split('\n').map(l => l.trim()).filter(l => l.startsWith('http'));
+            allPhotos = links.map((url, i) => ({
+                url,
+                idx: i,
+                cat: categories[i % 3],
+                title: 'Photo ' + (i + 1)
+            }));
+
+            document.getElementById('photoCount').textContent = allPhotos.length;
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('masonry').style.display = '';
+
+            renderGallery(allPhotos);
+            buildStrip(allPhotos);
+        })
+        .catch(() => {
+            document.getElementById('loadingState').innerHTML =
+                '<p style="color:var(--muted)">Could not load photos. Check your connection.</p>';
+        });
+
+    function renderGallery(photos) {
+        const masonry = document.getElementById('masonry');
+        masonry.innerHTML = '';
+        photos.forEach((p, i) => {
+            const item = document.createElement('div');
+            item.className = 'photo-item reveal';
+            item.dataset.cat = p.cat;
+            item.innerHTML = `
+                <img src="${p.url}" alt="${p.title}" loading="lazy">
+                <div class="photo-overlay">
+                    <div class="photo-meta">
+                        <div class="photo-tag">${catLabels[categories.indexOf(p.cat)]}</div>
+                        <div class="photo-title">${p.title}</div>
+                    </div>
+                    <div class="photo-actions">
+                        <button class="photo-action-btn" title="View" onclick="openLightbox(${p.idx});event.stopPropagation()">⤢</button>
+                        <button class="photo-action-btn" title="Download" onclick="dlImg('${p.url}','Tonir-${i+1}.jpg');event.stopPropagation()">↓</button>
+                    </div>
+                </div>`;
+            item.addEventListener('click', () => openLightbox(p.idx));
+            masonry.appendChild(item);
+            setTimeout(() => item.classList.add('visible'), i * 40);
+        });
+    }
+
+    function buildStrip(photos) {
+        const track = document.getElementById('stripTrack');
+        const doubled = [...photos, ...photos];
+        track.innerHTML = doubled.map(p =>
+            `<div class="strip-item"><img src="${p.url}" alt="" loading="lazy"></div>`
+        ).join('');
+        document.getElementById('stripSection').style.display = 'block';
+    }
+
+    // Filters
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const f = btn.dataset.filter;
+            const filtered = f === 'all' ? allPhotos : allPhotos.filter(p => p.cat === f);
+            renderGallery(filtered);
+        });
+    });
+
+    // Lightbox
+    function openLightbox(idx) {
+        currentIdx = idx;
+        updateLightbox();
+        document.getElementById('lightbox').classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
+    function closeLightbox() {
+        document.getElementById('lightbox').classList.remove('open');
+        document.body.style.overflow = '';
+    }
+    function updateLightbox() {
+        const p = allPhotos[currentIdx];
+        document.getElementById('lbImg').src = p.url;
+        document.getElementById('lbTitle').textContent = p.title;
+        document.getElementById('lbCounter').textContent = (currentIdx + 1) + ' / ' + allPhotos.length;
+        document.getElementById('lbDl').onclick = () => dlImg(p.url, 'Tonir-' + (currentIdx + 1) + '.jpg');
+    }
+
+    document.getElementById('lbClose').onclick = closeLightbox;
+    document.getElementById('lightbox').addEventListener('click', e => {
+        if (e.target === e.currentTarget) closeLightbox();
+    });
+    document.getElementById('lbPrev').onclick = () => {
+        currentIdx = (currentIdx - 1 + allPhotos.length) % allPhotos.length;
+        updateLightbox();
+    };
+    document.getElementById('lbNext').onclick = () => {
+        currentIdx = (currentIdx + 1) % allPhotos.length;
+        updateLightbox();
+    };
+    document.addEventListener('keydown', e => {
+        if (!document.getElementById('lightbox').classList.contains('open')) return;
+        if (e.key === 'Escape') closeLightbox();
+        if (e.key === 'ArrowLeft') document.getElementById('lbPrev').click();
+        if (e.key === 'ArrowRight') document.getElementById('lbNext').click();
+    });
+
+    function dlImg(url, filename) {
+        fetch(url)
+            .then(r => r.blob())
+            .then(blob => {
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = filename;
+                a.click();
+            })
+            .catch(() => window.open(url, '_blank'));
+    }
+
+    // Scroll reveal
+    const observer = new IntersectionObserver(entries => {
+        entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
 </body>
 </html>

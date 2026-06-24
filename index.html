@@ -455,6 +455,20 @@
                 '<p style="color:var(--muted)">Could not load photos. Check your connection.</p>';
         });
 
+    // Lazy load — শুধু স্ক্রিনে আসলে লোড হবে
+    const imgObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const img = entry.target;
+                if (img.dataset.src) {
+                    img.src = img.dataset.src;
+                    img.removeAttribute('data-src');
+                }
+                imgObserver.unobserve(img);
+            }
+        });
+    }, { rootMargin: '300px 0px' });
+
     function renderGallery(photos) {
         const masonry = document.getElementById('masonry');
         masonry.innerHTML = '';
@@ -462,8 +476,9 @@
             const item = document.createElement('div');
             item.className = 'photo-item reveal';
             item.dataset.cat = p.cat;
+            const placeholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 3 4'%3E%3Crect width='3' height='4' fill='%231C1A16'/%3E%3C/svg%3E";
             item.innerHTML = `
-                <img src="${p.url}" alt="${p.title}" loading="lazy">
+                <img data-src="${p.url}" src="${placeholder}" alt="${p.title}" style="min-height:160px;background:#1C1A16;">
                 <div class="photo-overlay">
                     <div class="photo-meta">
                         <div class="photo-tag">${catLabels[categories.indexOf(p.cat)]}</div>
@@ -476,6 +491,7 @@
                 </div>`;
             item.addEventListener('click', () => openLightbox(p.idx));
             masonry.appendChild(item);
+            imgObserver.observe(item.querySelector('img'));
             setTimeout(() => item.classList.add('visible'), i * 40);
         });
     }

@@ -934,19 +934,19 @@ const gdashContents = {
     </button>
 </div>
 
-<!-- IN-PAGE DRIVE OVERLAY -->
+<!-- IN-PAGE FOLDER EMBED OVERLAY (Mega.nz টেস্ট) -->
 <div class="drive-overlay" id="driveOverlay">
     <div class="drive-bar">
         <span class="drive-bar-title">5 Feet Size Photo</span>
         <div class="drive-bar-actions">
-            <a class="drive-open-new" href="https://drive.google.com/drive/folders/1euK6afTC4S0vrwGdynqfrpauwFjdCbEv?usp=sharing" target="_blank">Open in new tab ↗</a>
+            <a class="drive-open-new" href="https://mega.nz/folder/TtQSQIjC#gJKaWsMcFoMH5oHkXBCzqw" target="_blank">Open in new tab ↗</a>
             <button class="drive-close" id="driveClose">×</button>
         </div>
     </div>
     <div class="drive-iframe-wrap">
-        <iframe id="driveIframe" title="Google Drive folder"></iframe>
+        <iframe id="driveIframe" title="Mega folder"></iframe>
     </div>
-    <div class="drive-hint">ফোল্ডারটি ভেতরে না দেখা গেলে উপরে "Open in new tab ↗" বাটনে ক্লিক করুন — গুগল ড্রাইভ অনেক সময় অন্য সাইটে এম্বেড হতে দেয় না।</div>
+    <div class="drive-hint">ফোল্ডারটি ভেতরে না দেখা গেলে উপরে "Open in new tab ↗" বাটনে ক্লিক করুন — কিছু ক্লাউড সার্ভিস অন্য সাইটে এম্বেড হতে দেয় না।</div>
 </div>
 
 <script>
@@ -971,8 +971,11 @@ const gdashContents = {
         this.classList.toggle('fa-eye-slash');
     });
 
-    const driveUrl = "https://drive.google.com/drive/folders/1euK6afTC4S0vrwGdynqfrpauwFjdCbEv?usp=sharing";
+    const driveUrl = "https://mega.nz/folder/TtQSQIjC#gJKaWsMcFoMH5oHkXBCzqw";
 
+    // Mega.nz ফোল্ডার iframe-এর ভেতরে এম্বেড হয় কিনা টেস্ট করা হচ্ছে।
+    // যদি ফাঁকা দেখায় বা লোড না হয়, তাহলে Mega-ও Google Drive-এর মতই
+    // অন্য সাইটে এম্বেড হতে দেয় না — সেক্ষেত্রে "Open in new tab" বাটন ব্যবহার করুন।
     function openDriveOverlay() {
         document.getElementById('driveOverlay').classList.add('open');
         document.getElementById('driveIframe').src = driveUrl;

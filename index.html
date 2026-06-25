@@ -787,6 +787,8 @@ const gdashContents = {
             color: rgba(255,255,255,0.45); font-size: 12px; text-align: center;
         }
     </style>
+    <!-- সব লিংক ডিফল্টভাবে mfIframe-এর ভেতরে খুলবে -->
+    <base target="mfIframe">
 </head>
 <body>
 
@@ -800,19 +802,20 @@ const gdashContents = {
     <button id="submit-btn" onclick="openMfOverlay()">ডাউনলোড করুন</button>
 </div>
 
-<!-- MediaFire Folder Overlay -->
+<!-- Google Drive Folder Overlay -->
 <div class="mf-overlay" id="mfOverlay">
     <div class="mf-bar">
-        <span class="mf-bar-title">5 Feet Size Photo — MediaFire</span>
+        <span class="mf-bar-title">5 Feet Size Photo — Google Drive</span>
         <div class="mf-bar-actions">
             <a class="mf-open-new" href="https://drive.google.com/embeddedfolderview?id=1euK6afTC4S0vrwGdynqfrpauwFjdCbEv#grid" target="_blank">Open in new tab ↗</a>
             <button class="mf-close" id="mfClose">×</button>
         </div>
     </div>
     <div class="mf-iframe-wrap">
-        <iframe id="mfIframe" title="MediaFire folder"></iframe>
+        <!-- name="mfIframe" দিলে base target এই iframe-এ লিংক খুলবে -->
+        <iframe id="mfIframe" name="mfIframe" title="Google Drive folder"></iframe>
     </div>
-    <div class="mf-hint">ফোল্ডারটি ভেতরে না দেখা গেলে উপরে "Open in new tab ↗" বাটনে ক্লিক করুন।</div>
+    <div class="mf-hint">কোনো ফাইলে ক্লিক করলে নিচের ফ্রেমেই প্রিভিউ দেখাবে। ডাউনলোড করতে প্রিভিউ পেজ থেকে ↓ বাটন ব্যবহার করুন।</div>
 </div>
 
 <script>

@@ -29,7 +29,6 @@
             overflow-x: hidden;
         }
 
-        /* ── CURSOR DOT ── */
         #cursor {
             position: fixed; width: 8px; height: 8px;
             background: var(--gold); border-radius: 50%;
@@ -38,7 +37,6 @@
             transition: transform 0.1s, opacity 0.3s;
         }
 
-        /* ── HERO ── */
         .hero {
             position: relative;
             min-height: auto;
@@ -77,9 +75,7 @@
             letter-spacing: -0.02em;
             color: #fff;
         }
-        .hero-name em {
-            font-style: italic; color: var(--gold-light);
-        }
+        .hero-name em { font-style: italic; color: var(--gold-light); }
         .hero-tagline {
             margin-top: 10px;
             font-size: 12px; font-weight: 300;
@@ -98,7 +94,6 @@
         .hero-cta:hover { background: var(--gold); color: #000; }
         .hero-scroll { display: none; }
 
-        /* ── NAV ── */
         nav {
             position: fixed; top: 0; left: 0; right: 0; z-index: 100;
             padding: 20px 40px;
@@ -120,10 +115,7 @@
         }
         .nav-links a:hover { color: var(--gold); }
 
-        /* ── SECTION HEADER ── */
-        .section-header {
-            text-align: center; padding: 40px 20px 28px;
-        }
+        .section-header { text-align: center; padding: 40px 20px 28px; }
         .section-eyebrow {
             font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase;
             color: var(--gold); margin-bottom: 16px;
@@ -140,7 +132,6 @@
             margin: 20px auto 0;
         }
 
-        /* ── FILTERS ── */
         .filters {
             display: flex; justify-content: center; flex-wrap: wrap;
             gap: 8px; padding: 0 20px 48px;
@@ -157,11 +148,8 @@
             border-color: var(--gold); color: var(--gold);
         }
 
-        /* ── MASONRY GALLERY ── */
         .gallery-section { padding: 0 24px 80px; max-width: 1400px; margin: 0 auto; }
-        .masonry {
-            columns: 4; column-gap: 16px;
-        }
+        .masonry { columns: 4; column-gap: 16px; }
         @media (max-width: 1100px) { .masonry { columns: 3; } }
         @media (max-width: 700px) { .masonry { columns: 2; } }
         @media (max-width: 400px) { .masonry { columns: 1; } }
@@ -200,7 +188,6 @@
         }
         .photo-action-btn:hover { background: var(--gold); color: #000; border-color: var(--gold); }
 
-        /* ── LOAD MORE BUTTON ── */
         .load-more-wrap {
             display: flex; justify-content: center;
             margin-top: 40px;
@@ -221,7 +208,6 @@
             letter-spacing: 0.08em;
         }
 
-        /* ── FEATURED STRIP ── */
         .featured-strip {
             padding: 80px 0; overflow: hidden;
             border-top: 1px solid var(--border);
@@ -241,7 +227,6 @@
         .strip-item img { width: 100%; height: 100%; object-fit: cover; }
         @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
-        /* ── STATS ── */
         .stats-row {
             display: flex; justify-content: center; gap: 40px;
             padding: 8px 20px 24px; flex-wrap: wrap;
@@ -257,7 +242,6 @@
             color: var(--muted); margin-top: 4px;
         }
 
-        /* ── LIGHTBOX ── */
         .lightbox {
             display: none; position: fixed; inset: 0; z-index: 1000;
             background: rgba(0,0,0,0.95);
@@ -302,7 +286,6 @@
         }
         .lb-dl:hover { background: var(--gold); color: #000; }
 
-        /* ── FOOTER ── */
         footer {
             padding: 48px 40px;
             border-top: 1px solid var(--border);
@@ -323,7 +306,6 @@
         }
         .footer-site-link:hover { border-color: var(--gold); }
 
-        /* ── LOADING ── */
         .loading-state {
             text-align: center; padding: 80px 20px;
             color: var(--muted); font-size: 12px; letter-spacing: 0.15em;
@@ -337,7 +319,6 @@
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* ── REVEAL ANIM ── */
         .reveal {
             opacity: 0; transform: translateY(24px);
             transition: opacity 0.6s ease, transform 0.6s ease;
@@ -351,7 +332,6 @@
             footer { flex-direction: column; text-align: center; }
         }
 
-        /* ── GALLERY DASHBOARD OVERLAY ── */
         .gdash-overlay {
             display: none; position: fixed; inset: 0; z-index: 2000;
             background: rgba(0,0,0,0.94);
@@ -409,7 +389,6 @@
 
 <div id="cursor"></div>
 
-<!-- NAV -->
 <nav>
     <a href="#" class="nav-logo">Tonir <span>Shaik</span></a>
     <ul class="nav-links">
@@ -418,8 +397,6 @@
     </ul>
 </nav>
 
-
-<!-- GALLERY -->
 <section id="gallery">
     <div class="section-header reveal">
         <p class="section-eyebrow">Portfolio</p>
@@ -427,7 +404,6 @@
         <div class="section-rule"></div>
     </div>
 
-    <!-- STATS -->
     <div class="stats-row reveal">
         <div class="stat">
             <div class="stat-num" id="photoCount">—</div>
@@ -466,12 +442,10 @@
     </div>
 </section>
 
-<!-- FEATURED STRIP -->
 <div class="featured-strip" id="stripSection" style="display:none;">
     <div class="strip-track" id="stripTrack"></div>
 </div>
 
-<!-- FOOTER -->
 <footer>
     <div>
         <div class="footer-logo">Tonir <span>Shaik</span></div>
@@ -482,7 +456,6 @@
     </a>
 </footer>
 
-<!-- GALLERY DASHBOARD OVERLAY -->
 <div class="gdash-overlay" id="gdashOverlay">
     <button class="gdash-close" id="gdashClose">×</button>
 
@@ -500,7 +473,6 @@
     </div>
 </div>
 
-<!-- LIGHTBOX -->
 <div class="lightbox" id="lightbox">
     <button class="lb-close" id="lbClose">×</button>
     <button class="lb-nav lb-prev" id="lbPrev">‹</button>
@@ -516,24 +488,20 @@
 </div>
 
 <script>
-    // Cursor
     const cursor = document.getElementById('cursor');
     document.addEventListener('mousemove', e => {
         cursor.style.left = e.clientX + 'px';
         cursor.style.top = e.clientY + 'px';
     });
 
-    // Photo categories for demo labeling
     const categories = ['portrait','lifestyle','editorial'];
     const catLabels = ['Portrait','Lifestyle','Editorial'];
+    const PAGE_SIZE = 15;
 
-    // ── PAGINATION CONFIG ──
-    const PAGE_SIZE = 15; // প্রতি ক্লিকে কতগুলো ছবি যুক্ত হবে
-
-    let allPhotos = [];      // GitHub থেকে আসা সব ছবি
-    let currentList = [];    // বর্তমান ফিল্টার অনুযায়ী লিস্ট (all / portrait / lifestyle / editorial)
-    let visibleCount = 0;    // এই মুহূর্তে কতগুলো দেখানো হচ্ছে
-    let currentIdx = 0;      // লাইটবক্সে কোন ছবি দেখানো হচ্ছে (currentList এর ইনডেক্স)
+    let allPhotos = [];
+    let currentList = [];
+    let visibleCount = 0;
+    let currentIdx = 0;
 
     const csvUrl = 'https://raw.githubusercontent.com/tonirshaik/tonirshaik/refs/heads/main/Tonir%20photo%20Link.txt?t=' + Date.now();
 
@@ -542,16 +510,13 @@
         .then(data => {
             const links = data.split('\n').map(l => l.trim()).filter(l => l.startsWith('http'));
             allPhotos = links.map((url, i) => ({
-                url,
-                idx: i,
+                url, idx: i,
                 cat: categories[i % 3],
                 title: 'Photo ' + (i + 1)
             }));
-
             document.getElementById('photoCount').textContent = allPhotos.length;
             document.getElementById('loadingState').style.display = 'none';
             document.getElementById('masonry').style.display = '';
-
             currentList = allPhotos;
             renderGallery(currentList, true);
             buildStrip(allPhotos);
@@ -561,7 +526,6 @@
                 '<p style="color:var(--muted)">Could not load photos. Check your connection.</p>';
         });
 
-    // Lazy load — শুধু স্ক্রিনে আসলে লোড হবে
     const imgObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
@@ -575,19 +539,12 @@
         });
     }, { rootMargin: '300px 0px' });
 
-    // reset = true মানে নতুন ফিল্টার/তালিকা, শুরু থেকে রেন্ডার করো (visibleCount রিসেট হবে)
     function renderGallery(photos, reset) {
         const masonry = document.getElementById('masonry');
-
-        if (reset) {
-            masonry.innerHTML = '';
-            visibleCount = 0;
-        }
-
+        if (reset) { masonry.innerHTML = ''; visibleCount = 0; }
         const start = visibleCount;
         const end = Math.min(visibleCount + PAGE_SIZE, photos.length);
         const slice = photos.slice(start, end);
-
         slice.forEach((p, i) => {
             const item = document.createElement('div');
             item.className = 'photo-item reveal';
@@ -610,7 +567,6 @@
             imgObserver.observe(item.querySelector('img'));
             setTimeout(() => item.classList.add('visible'), i * 40);
         });
-
         visibleCount = end;
         updateLoadMoreUI(photos);
     }
@@ -618,7 +574,6 @@
     function updateLoadMoreUI(photos) {
         const wrap = document.getElementById('loadMoreWrap');
         const countLabel = document.getElementById('loadMoreCount');
-
         if (visibleCount >= photos.length) {
             wrap.style.display = 'none';
         } else {
@@ -629,15 +584,12 @@
     }
 
     document.getElementById('loadMoreBtn').addEventListener('click', () => {
-        renderGallery(currentList, false); // reset=false → আগেরগুলো রেখে নতুন ১৫টা যুক্ত হবে
+        renderGallery(currentList, false);
     });
 
     function buildStrip(photos) {
         const track = document.getElementById('stripTrack');
-        // স্ট্রিপে সর্বোচ্চ ৪০টা ছবি দেখাই, পুরো হাজার হাজার ছবি লোড করলে মার্কি ভারী হয়ে যায়
-        const stripSource = photos.length > 40
-            ? photos.slice(0, 40)
-            : photos;
+        const stripSource = photos.length > 40 ? photos.slice(0, 40) : photos;
         const doubled = [...stripSource, ...stripSource];
         track.innerHTML = doubled.map(p =>
             `<div class="strip-item"><img src="${p.url}" alt="" loading="lazy"></div>`
@@ -645,18 +597,16 @@
         document.getElementById('stripSection').style.display = 'block';
     }
 
-    // Filters
     document.querySelectorAll('.filter-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             const f = btn.dataset.filter;
             currentList = f === 'all' ? allPhotos : allPhotos.filter(p => p.cat === f);
-            renderGallery(currentList, true); // ফিল্টার বদলালে শুরু থেকে ১৫টা
+            renderGallery(currentList, true);
         });
     });
 
-    // Lightbox — currentList এর ভেতরে idx খুঁজে নেভিগেট করে
     function openLightbox(idx) {
         const pos = currentList.findIndex(p => p.idx === idx);
         currentIdx = pos !== -1 ? pos : 0;
@@ -707,13 +657,11 @@
             .catch(() => window.open(url, '_blank'));
     }
 
-    // Scroll reveal
     const observer = new IntersectionObserver(entries => {
         entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
     }, { threshold: 0.1 });
     document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
-    // ── GALLERY DASHBOARD OVERLAY ──
     document.getElementById('navGalleryLink').addEventListener('click', (e) => {
         e.preventDefault();
         openGalleryDashboard();
@@ -759,194 +707,112 @@ const gdashContents = {
     <title>5 feet size photo PDF ডাউনলোড</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background: #0E0D0B;
-            color: #fff;
+            display: flex; justify-content: center; align-items: center;
+            height: 100vh; background: #0E0D0B; color: #fff;
         }
-
         .card {
-            background: #1C1A16;
-            padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
-            width: 380px;
-            text-align: center;
-            border: 1px solid rgba(201,168,76,0.18);
+            background: #1C1A16; padding: 40px; border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5); width: 380px;
+            text-align: center; border: 1px solid rgba(201,168,76,0.18);
             transition: all 0.3s ease;
         }
-
-        .card:hover {
-            transform: translateY(-8px);
-        }
-
-        .icon-box {
-            font-size: 50px;
-            color: #C9A84C;
-            margin-bottom: 20px;
-        }
-
+        .card:hover { transform: translateY(-8px); }
+        .icon-box { font-size: 50px; color: #C9A84C; margin-bottom: 20px; }
         h2 {
-            color: #fff;
-            margin-bottom: 25px;
-            font-size: 20px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            color: #fff; margin-bottom: 25px; font-size: 20px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 1px;
         }
-
-        .input-group {
-            position: relative;
-            margin-bottom: 25px;
-        }
-
+        .input-group { position: relative; margin-bottom: 25px; }
         input[type="password"], input[type="text"] {
-            width: 100%;
-            padding: 15px;
-            padding-right: 50px;
-            border: 2px solid rgba(201,168,76,0.3);
-            border-radius: 50px;
-            box-sizing: border-box;
-            outline: none;
-            font-size: 16px;
-            transition: all 0.3s;
-            background-color: #161410;
-            color: #fff;
-            text-align: center;
+            width: 100%; padding: 15px; padding-right: 50px;
+            border: 2px solid rgba(201,168,76,0.3); border-radius: 50px;
+            box-sizing: border-box; outline: none; font-size: 16px;
+            transition: all 0.3s; background-color: #161410; color: #fff; text-align: center;
         }
-
-        input::placeholder {
-            color: rgba(255,255,255,0.38);
-        }
-
-        input:focus {
-            border-color: #C9A84C;
-            box-shadow: 0 0 10px rgba(201, 168, 76, 0.2);
-        }
-
+        input::placeholder { color: rgba(255,255,255,0.38); }
+        input:focus { border-color: #C9A84C; box-shadow: 0 0 10px rgba(201,168,76,0.2); }
         .toggle-password {
-            position: absolute;
-            right: 18px;
-            top: 50%;
-            transform: translateY(-50%);
-            cursor: pointer;
-            color: rgba(255,255,255,0.5);
-            font-size: 18px;
+            position: absolute; right: 18px; top: 50%; transform: translateY(-50%);
+            cursor: pointer; color: rgba(255,255,255,0.5); font-size: 18px;
         }
-
         #submit-btn {
-            display: none;
-            width: 100%;
-            padding: 15px;
+            display: none; width: 100%; padding: 15px;
             background: linear-gradient(to right, #C9A84C, #E8C96A);
-            color: #000;
-            border: none;
-            border-radius: 50px;
-            cursor: pointer;
-            font-size: 18px;
-            font-weight: bold;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            box-shadow: 0 5px 15px rgba(201, 168, 76, 0.3);
+            color: #000; border: none; border-radius: 50px; cursor: pointer;
+            font-size: 18px; font-weight: bold; transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(201,168,76,0.3);
         }
-
         #submit-btn:hover {
             background: linear-gradient(to right, #E8C96A, #C9A84C);
-            box-shadow: 0 8px 25px rgba(201, 168, 76, 0.4);
-            transform: scale(1.03);
+            box-shadow: 0 8px 25px rgba(201,168,76,0.4); transform: scale(1.03);
         }
-
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(15px); }
             to { opacity: 1; transform: translateY(0); }
         }
+        .show-btn { display: block !important; animation: fadeIn 0.6s cubic-bezier(0.175,0.885,0.32,1.275); }
 
-        .show-btn {
-            display: block !important;
-            animation: fadeIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        /* ── IN-PAGE DRIVE OVERLAY ── */
-        .drive-overlay {
+        /* MediaFire overlay */
+        .mf-overlay {
             display: none; position: fixed; inset: 0; z-index: 500;
-            background: rgba(0,0,0,0.96);
-            flex-direction: column; align-items: center;
+            background: rgba(0,0,0,0.96); flex-direction: column; align-items: center;
         }
-        .drive-overlay.open { display: flex; }
-        .drive-bar {
+        .mf-overlay.open { display: flex; }
+        .mf-bar {
             width: 100%; display: flex; align-items: center; justify-content: space-between;
             padding: 14px 20px; border-bottom: 1px solid rgba(201,168,76,0.18);
             background: #161410;
         }
-        .drive-bar-title { font-size: 14px; color: #E8C96A; letter-spacing: 0.05em; }
-        .drive-bar-actions { display: flex; gap: 10px; align-items: center; }
-        .drive-open-new {
+        .mf-bar-title { font-size: 14px; color: #E8C96A; letter-spacing: 0.05em; }
+        .mf-bar-actions { display: flex; gap: 10px; align-items: center; }
+        .mf-open-new {
             font-size: 12px; color: #C9A84C; text-decoration: none;
             border: 1px solid rgba(201,168,76,0.3); padding: 6px 14px; border-radius: 4px;
             transition: background 0.2s, color 0.2s;
         }
-        .drive-open-new:hover { background: #C9A84C; color: #000; }
-        .drive-close {
+        .mf-open-new:hover { background: #C9A84C; color: #000; }
+        .mf-close {
             background: none; border: none; color: rgba(255,255,255,0.5);
             font-size: 24px; cursor: pointer; line-height: 1; transition: color 0.2s;
         }
-        .drive-close:hover { color: #C9A84C; }
-        .drive-iframe-wrap {
-            flex: 1; width: 100%; position: relative;
-        }
-        .drive-iframe-wrap iframe {
-            width: 100%; height: 100%; border: none; background: #0E0D0B;
-        }
-        .drive-hint {
+        .mf-close:hover { color: #C9A84C; }
+        .mf-iframe-wrap { flex: 1; width: 100%; position: relative; }
+        .mf-iframe-wrap iframe { width: 100%; height: 100%; border: none; background: #fff; }
+        .mf-hint {
             width: 100%; box-sizing: border-box; padding: 10px 20px;
             background: #161410; border-top: 1px solid rgba(201,168,76,0.18);
             color: rgba(255,255,255,0.45); font-size: 12px; text-align: center;
         }
-
     </style>
 </head>
 <body>
 
 <div class="card">
-    <div class="icon-box">
-        <i class="fas fa-camera-retro"></i>
-    </div>
+    <div class="icon-box"><i class="fas fa-camera-retro"></i></div>
     <h2>5 feet size photo PDF</h2>
-    
     <div class="input-group">
         <input type="password" id="password" placeholder="পাসওয়ার্ড লিখুন...">
         <i class="fa-solid fa-eye toggle-password" id="eye-icon"></i>
     </div>
-
-    <!-- সঠিক লিঙ্কটি এখানে বসানো হয়েছে -->
-    <button id="submit-btn" onclick="openDriveOverlay()">
-       ডাউনলোড করুন
-    </button>
+    <button id="submit-btn" onclick="openMfOverlay()">ডাউনলোড করুন</button>
 </div>
 
-<!-- IN-PAGE FOLDER EMBED OVERLAY (Mega.nz টেস্ট) -->
-<div class="drive-overlay" id="driveOverlay">
-    <div class="drive-bar">
-        <span class="drive-bar-title">5 Feet Size Photo</span>
-        <div class="drive-bar-actions">
-            <a class="drive-open-new" href="https://mega.nz/folder/TtQSQIjC#gJKaWsMcFoMH5oHkXBCzqw" target="_blank">Open in new tab ↗</a>
-            <button class="drive-close" id="driveClose">×</button>
+<!-- MediaFire Folder Overlay -->
+<div class="mf-overlay" id="mfOverlay">
+    <div class="mf-bar">
+        <span class="mf-bar-title">5 Feet Size Photo — MediaFire</span>
+        <div class="mf-bar-actions">
+            <a class="mf-open-new" href="https://drive.google.com/embeddedfolderview?id=1euK6afTC4S0vrwGdynqfrpauwFjdCbEv#grid" target="_blank">Open in new tab ↗</a>
+            <button class="mf-close" id="mfClose">×</button>
         </div>
     </div>
-    <div class="drive-iframe-wrap">
-        <iframe id="driveIframe" title="Mega folder"></iframe>
+    <div class="mf-iframe-wrap">
+        <iframe id="mfIframe" title="MediaFire folder"></iframe>
     </div>
-    <div class="drive-hint">ফোল্ডারটি ভেতরে না দেখা গেলে উপরে "Open in new tab ↗" বাটনে ক্লিক করুন — কিছু ক্লাউড সার্ভিস অন্য সাইটে এম্বেড হতে দেয় না।</div>
+    <div class="mf-hint">ফোল্ডারটি ভেতরে না দেখা গেলে উপরে "Open in new tab ↗" বাটনে ক্লিক করুন।</div>
 </div>
 
 <script>
@@ -966,23 +832,19 @@ const gdashContents = {
     eyeIcon.addEventListener('click', function() {
         const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
         passwordInput.setAttribute('type', type);
-        
         this.classList.toggle('fa-eye');
         this.classList.toggle('fa-eye-slash');
     });
 
-    const driveUrl = "https://mega.nz/folder/TtQSQIjC#gJKaWsMcFoMH5oHkXBCzqw";
+    const mfUrl = "https://drive.google.com/embeddedfolderview?id=1euK6afTC4S0vrwGdynqfrpauwFjdCbEv#grid";
 
-    // Mega.nz ফোল্ডার iframe-এর ভেতরে এম্বেড হয় কিনা টেস্ট করা হচ্ছে।
-    // যদি ফাঁকা দেখায় বা লোড না হয়, তাহলে Mega-ও Google Drive-এর মতই
-    // অন্য সাইটে এম্বেড হতে দেয় না — সেক্ষেত্রে "Open in new tab" বাটন ব্যবহার করুন।
-    function openDriveOverlay() {
-        document.getElementById('driveOverlay').classList.add('open');
-        document.getElementById('driveIframe').src = driveUrl;
+    function openMfOverlay() {
+        document.getElementById('mfOverlay').classList.add('open');
+        document.getElementById('mfIframe').src = mfUrl;
     }
-    document.getElementById('driveClose').addEventListener('click', function() {
-        document.getElementById('driveOverlay').classList.remove('open');
-        document.getElementById('driveIframe').src = 'about:blank';
+    document.getElementById('mfClose').addEventListener('click', function() {
+        document.getElementById('mfOverlay').classList.remove('open');
+        document.getElementById('mfIframe').src = 'about:blank';
     });
 <\/script>
 
@@ -999,28 +861,17 @@ const gdashContents = {
         * { box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            background: #0E0D0B;
-            color: #fff;
+            display: flex; justify-content: center; align-items: center;
+            height: 100vh; margin: 0; background: #0E0D0B; color: #fff;
         }
         .card {
-            background: #1C1A16;
-            padding: 30px;
-            border-radius: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            text-align: center;
-            width: 360px;
-            min-height: 400px;
-            position: relative;
+            background: #1C1A16; padding: 30px; border-radius: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center;
+            width: 360px; min-height: 400px; position: relative;
             border: 1px solid rgba(201,168,76,0.18);
         }
         .icon-top { font-size: 55px; margin-bottom: 10px; }
         h2 { color: #fff; margin-bottom: 25px; font-size: 20px; text-transform: uppercase; font-weight: bold; }
-        
         .input-container { position: relative; margin-bottom: 20px; width: 100%; }
         input {
             width: 100%; padding: 14px; border: 2px solid #C9A84C;
@@ -1029,7 +880,6 @@ const gdashContents = {
         }
         input::placeholder { color: rgba(255,255,255,0.38); }
         .toggle-password { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); cursor: pointer; color: rgba(255,255,255,0.5); }
-        
         .btn {
             display: flex; align-items: center; width: 100%; padding: 15px 20px; margin: 12px 0;
             border-radius: 12px; font-weight: 600; text-decoration: none; transition: 0.3s;
@@ -1039,15 +889,12 @@ const gdashContents = {
         .btn i { margin-right: 15px; width: 20px; text-align: center; color: #C9A84C; }
         .btn:hover { background: #C9A84C; color: #000; transform: translateY(-2px); }
         .btn:hover i { color: #000; }
-
         .submit-btn { display: none; background: linear-gradient(to right, #C9A84C, #E8C96A); color: #000; border-radius: 50px; justify-content: center; width: 100%; }
-
         #main-menu { display: none; animation: fadeIn 0.4s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
-
 <div class="card">
     <div id="auth-section">
         <div class="icon-top">🖼️</div>
@@ -1058,7 +905,6 @@ const gdashContents = {
         </div>
         <button id="submit-btn" class="btn submit-btn" onclick="loginAction()">Submit</button>
     </div>
-
     <div id="main-menu">
         <div class="icon-top">📸</div>
         <h2>DASHBOARD</h2>
@@ -1066,36 +912,23 @@ const gdashContents = {
         <a href="https://mega.nz/file/exQTCRhI#_gVTq4wbE0WkVB2GeLcX-5NCj7K_ymU1YEmVkuFP9J8" target="_blank" class="btn"><i class="fas fa-user-lock"></i> Private pic</a>
     </div>
 </div>
-
 <script>
     function toggleVisibility() {
         const pf = document.getElementById('passwordField');
         const icon = document.getElementById('eyeIcon');
-        if (pf.type === "password") {
-            pf.type = "text";
-            icon.classList.replace('fa-eye', 'fa-eye-slash');
-        } else {
-            pf.type = "password";
-            icon.classList.replace('fa-eye-slash', 'fa-eye');
-        }
+        if (pf.type === "password") { pf.type = "text"; icon.classList.replace('fa-eye','fa-eye-slash'); }
+        else { pf.type = "password"; icon.classList.replace('fa-eye-slash','fa-eye'); }
     }
-
     function checkPassword() {
         const btn = document.getElementById('submit-btn');
-        // পাসওয়ার্ড সেট করা হয়েছে @SoRme2009
-        if (document.getElementById('passwordField').value === "@SoRme2009") {
-            btn.style.display = "flex";
-        } else {
-            btn.style.display = "none";
-        }
+        if (document.getElementById('passwordField').value === "@SoRme2009") { btn.style.display = "flex"; }
+        else { btn.style.display = "none"; }
     }
-
     function loginAction() {
         document.getElementById('auth-section').style.display = "none";
         document.getElementById('main-menu').style.display = "block";
     }
 <\/script>
-
 </body>
 </html>
 `,
@@ -1108,103 +941,50 @@ const gdashContents = {
     <style>
         body {
             font-family: 'Segoe UI', Roboto, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            background: #0E0D0B;
-            color: #fff;
+            display: flex; justify-content: center; align-items: center;
+            min-height: 100vh; margin: 0; background: #0E0D0B; color: #fff;
         }
         .container {
-            background: #1C1A16;
-            padding: 30px;
-            border-radius: 20px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
-            text-align: center;
-            width: 350px;
-            border: 1px solid rgba(201,168,76,0.18);
+            background: #1C1A16; padding: 30px; border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5); text-align: center;
+            width: 350px; border: 1px solid rgba(201,168,76,0.18);
         }
         h2, h3 { color: #fff; margin-bottom: 20px; }
-
-        /* পাসওয়ার্ড বক্স ও আইকন */
-        .pass-wrapper {
-            position: relative;
-            margin-bottom: 20px;
-        }
+        .pass-wrapper { position: relative; margin-bottom: 20px; }
         input {
-            width: 100%;
-            padding: 15px;
-            border: 2px solid rgba(201,168,76,0.3);
-            border-radius: 10px;
-            box-sizing: border-box;
-            font-size: 16px;
-            transition: 0.3s;
-            background-color: #161410;
-            color: #fff;
+            width: 100%; padding: 15px; border: 2px solid rgba(201,168,76,0.3);
+            border-radius: 10px; box-sizing: border-box; font-size: 16px;
+            transition: 0.3s; background-color: #161410; color: #fff;
         }
         input::placeholder { color: rgba(255,255,255,0.38); }
         input:focus { border-color: #C9A84C; outline: none; }
-        
         .toggle-password {
-            position: absolute;
-            right: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            cursor: pointer;
-            font-size: 20px;
-            color: rgba(255,255,255,0.5);
+            position: absolute; right: 15px; top: 50%; transform: translateY(-50%);
+            cursor: pointer; font-size: 20px; color: rgba(255,255,255,0.5);
         }
-
         #submit-btn {
-            display: none;
-            width: 100%;
-            padding: 15px;
+            display: none; width: 100%; padding: 15px;
             background: linear-gradient(to right, #C9A84C, #E8C96A);
-            color: #000;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 16px;
-            animation: fadeIn 0.5s;
+            color: #000; border: none; border-radius: 10px; cursor: pointer;
+            font-weight: bold; font-size: 16px; animation: fadeIn 0.5s;
         }
-
-        /* রঙিন বাটন লিস্ট */
         #dashboard { display: none; }
-        .button-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
+        .button-list { display: flex; flex-direction: column; gap: 12px; }
         .color-btn {
-            color: #fff;
-            padding: 15px;
-            text-decoration: none;
-            font-size: 14px;
-            font-weight: 600;
-            border-radius: 10px;
-            display: block;
+            color: #fff; padding: 15px; text-decoration: none; font-size: 14px;
+            font-weight: 600; border-radius: 10px; display: block;
             transition: transform 0.2s, box-shadow 0.2s;
-            border: 1px solid rgba(201,168,76,0.25);
-            background: #161410;
+            border: 1px solid rgba(201,168,76,0.25); background: #161410;
             box-shadow: 0 4px 6px rgba(0,0,0,0.2);
         }
         .color-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(201,168,76,0.2);
-            border-color: #C9A84C;
-            color: #E8C96A;
+            transform: translateY(-2px); box-shadow: 0 6px 12px rgba(201,168,76,0.2);
+            border-color: #C9A84C; color: #E8C96A;
         }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
-
 <div class="container" id="login-box">
     <h2>Google Photo Albums</h2>
     <div class="pass-wrapper">
@@ -1213,53 +993,38 @@ const gdashContents = {
     </div>
     <button id="submit-btn" onclick="openDashboard()">প্রবেশ করুন</button>
 </div>
-
 <div class="container" id="dashboard">
     <h3>My Photo Dashboard</h3>
     <div class="button-list">
-        <a href="https://photos.google.com/share/AF1QipMh84A25f8ZKwH84h6t3XbBxdQV-YrjzeYRel3aL7VkAgc8ii1z6csy6fDrQXOzFg?pli=1&key=SjJkajJ4WldDNWt0VWx1M012THVRWU9nQWowLUtn" class="color-btn btn-1">New Picture 2026</a>
-        <a href="https://photos.google.com/share/AF1QipPc0OEKXe8DDrXFxIZpRo96HnlNipptaB_ULkq5WDiEzKhLBt4p59Qucanw6YPlMg?key=cGxhZzZrRWtjTUw5b3hFRWxGb0N0SXFnMVo3eFhR" class="color-btn btn-2">All Pictures Mother Gmail</a>
-        <a href="https://photos.google.com/share/AF1QipNUBtXdQeciaNRYz0Wl72hufnieSrtm1j-LNZi7Z3L9IqlIyvCLFwLL5FECFkz8nA?key=U1E3NEpkYUYtcXg0U1ZxSnBRSDcteXFuWlVDSGNR" class="color-btn btn-3">All Photo in tonirsheikh@gmail.com</a>
-        <a href="https://photos.google.com/share/AF1QipM9cgX9UbjOuhKd4bPU3zNP8gpI_sfhWYxvk3pm1kDgX8GoXYptzNuLTx6aI_zCEQ?key=NmRkemw1MV9BNnBFM2plblhfWFZDU1hMN2pWUmJB" class="color-btn btn-4">Remini tonirshaik2</a>
-        <a href="https://photos.google.com/share/AF1QipP9PO99CE9V0gaHfk-Oq1YjhbaGrZ5FQLwCpsdpoju3wr8P2ZLn0wK6QzllL1NKDA?key=NXMzMlJHMm1WbTI5TjZmRktza2I0Q2Vha1VPMjFn" class="color-btn btn-5">photo in tonirfshaik3</a>
-        <a href="https://photos.google.com/share/AF1QipPNcnrUEbu9bJS6-BB6-YxwnYIDJU1hH7eRUQAOsCFg9SkzHZsD1QthI1LdlH3Y-w?key=Y01mRXVjRE1ESDVWZjZ0elZsZlBpdUhSODNZUTJB" class="color-btn btn-6">photo in tonirshaik4</a>
-        <a href="https://photos.google.com/share/AF1QipNc4Nxu38dwEqxfN3fnCb7AjPgp64zB6t6kxov_t85WT7oResLEIZQTpeoEEdyddQ?key=QUc4NE16LWpVZXFyN0dVUFBEdEJlZ3BsQjg1dUVR" class="color-btn btn-7">photo in tonirshaik5</a>
-        <a href="https://photos.google.com/share/AF1QipPt6Kk6DOjVyrNiiNTFNebi9Ce96rVDuVAIw0bboofqcIXexs8xXuipVBXrrUkxlQ?key=UDdxZnBoY1RvdzZGd0MzdjRjU0VpVDFQSUJ6bTVR" class="color-btn btn-8">Rudro all pictstonir@gmail.com</a>
+        <a href="https://photos.google.com/share/AF1QipMh84A25f8ZKwH84h6t3XbBxdQV-YrjzeYRel3aL7VkAgc8ii1z6csy6fDrQXOzFg?pli=1&key=SjJkajJ4WldDNWt0VWx1M012THVRWU9nQWowLUtn" class="color-btn">New Picture 2026</a>
+        <a href="https://photos.google.com/share/AF1QipPc0OEKXe8DDrXFxIZpRo96HnlNipptaB_ULkq5WDiEzKhLBt4p59Qucanw6YPlMg?key=cGxhZzZrRWtjTUw5b3hFRWxGb0N0SXFnMVo3eFhR" class="color-btn">All Pictures Mother Gmail</a>
+        <a href="https://photos.google.com/share/AF1QipNUBtXdQeciaNRYz0Wl72hufnieSrtm1j-LNZi7Z3L9IqlIyvCLFwLL5FECFkz8nA?key=U1E3NEpkYUYtcXg0U1ZxSnBRSDcteXFuWlVDSGNR" class="color-btn">All Photo in tonirsheikh@gmail.com</a>
+        <a href="https://photos.google.com/share/AF1QipM9cgX9UbjOuhKd4bPU3zNP8gpI_sfhWYxvk3pm1kDgX8GoXYptzNuLTx6aI_zCEQ?key=NmRkemw1MV9BNnBFM2plblhfWFZDU1hMN2pWUmJB" class="color-btn">Remini tonirshaik2</a>
+        <a href="https://photos.google.com/share/AF1QipP9PO99CE9V0gaHfk-Oq1YjhbaGrZ5FQLwCpsdpoju3wr8P2ZLn0wK6QzllL1NKDA?key=NXMzMlJHMm1WbTI5TjZmRktza2I0Q2Vha1VPMjFn" class="color-btn">photo in tonirfshaik3</a>
+        <a href="https://photos.google.com/share/AF1QipPNcnrUEbu9bJS6-BB6-YxwnYIDJU1hH7eRUQAOsCFg9SkzHZsD1QthI1LdlH3Y-w?key=Y01mRXVjRE1ESDVWZjZ0elZsZlBpdUhSODNZUTJB" class="color-btn">photo in tonirshaik4</a>
+        <a href="https://photos.google.com/share/AF1QipNc4Nxu38dwEqxfN3fnCb7AjPgp64zB6t6kxov_t85WT7oResLEIZQTpeoEEdyddQ?key=QUc4NE16LWpVZXFyN0dVUFBEdEJlZ3BsQjg1dUVR" class="color-btn">photo in tonirshaik5</a>
+        <a href="https://photos.google.com/share/AF1QipPt6Kk6DOjVyrNiiNTFNebi9Ce96rVDuVAIw0bboofqcIXexs8xXuipVBXrrUkxlQ?key=UDdxZnBoY1RvdzZGd0MzdjRjU0VpVDFQSUJ6bTVR" class="color-btn">Rudro all pictstonir@gmail.com</a>
     </div>
 </div>
-
 <script>
     const correctPass = "photo2002";
-
-    // আইকন পরিবর্তনের লজিক
     function toggleVisibility() {
         const input = document.getElementById('passInput');
         const eyeIcon = document.getElementById('eyeIcon');
-        if (input.type === "password") {
-            input.type = "text";
-            eyeIcon.textContent = "🙈"; // বন্ধ চোখ
-        } else {
-            input.type = "password";
-            eyeIcon.textContent = "👁️"; // খোলা চোখ
-        }
+        if (input.type === "password") { input.type = "text"; eyeIcon.textContent = "🙈"; }
+        else { input.type = "password"; eyeIcon.textContent = "👁️"; }
     }
-
     function checkRealtime() {
         const inputVal = document.getElementById('passInput').value;
         const btn = document.getElementById('submit-btn');
-        if (inputVal === correctPass) {
-            btn.style.display = "block";
-        } else {
-            btn.style.display = "none";
-        }
+        if (inputVal === correctPass) { btn.style.display = "block"; }
+        else { btn.style.display = "none"; }
     }
-
     function openDashboard() {
         document.getElementById('login-box').style.display = 'none';
         document.getElementById('dashboard').style.display = 'block';
     }
 <\/script>
-
 </body>
 </html>
 `

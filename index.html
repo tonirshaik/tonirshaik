@@ -876,6 +876,43 @@ const gdashContents = {
             animation: fadeIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
+        /* ── IN-PAGE DRIVE OVERLAY ── */
+        .drive-overlay {
+            display: none; position: fixed; inset: 0; z-index: 500;
+            background: rgba(0,0,0,0.96);
+            flex-direction: column; align-items: center;
+        }
+        .drive-overlay.open { display: flex; }
+        .drive-bar {
+            width: 100%; display: flex; align-items: center; justify-content: space-between;
+            padding: 14px 20px; border-bottom: 1px solid rgba(201,168,76,0.18);
+            background: #161410;
+        }
+        .drive-bar-title { font-size: 14px; color: #E8C96A; letter-spacing: 0.05em; }
+        .drive-bar-actions { display: flex; gap: 10px; align-items: center; }
+        .drive-open-new {
+            font-size: 12px; color: #C9A84C; text-decoration: none;
+            border: 1px solid rgba(201,168,76,0.3); padding: 6px 14px; border-radius: 4px;
+            transition: background 0.2s, color 0.2s;
+        }
+        .drive-open-new:hover { background: #C9A84C; color: #000; }
+        .drive-close {
+            background: none; border: none; color: rgba(255,255,255,0.5);
+            font-size: 24px; cursor: pointer; line-height: 1; transition: color 0.2s;
+        }
+        .drive-close:hover { color: #C9A84C; }
+        .drive-iframe-wrap {
+            flex: 1; width: 100%; position: relative;
+        }
+        .drive-iframe-wrap iframe {
+            width: 100%; height: 100%; border: none; background: #0E0D0B;
+        }
+        .drive-hint {
+            width: 100%; box-sizing: border-box; padding: 10px 20px;
+            background: #161410; border-top: 1px solid rgba(201,168,76,0.18);
+            color: rgba(255,255,255,0.45); font-size: 12px; text-align: center;
+        }
+
     </style>
 </head>
 <body>
@@ -892,10 +929,24 @@ const gdashContents = {
     </div>
 
     <!-- সঠিক লিঙ্কটি এখানে বসানো হয়েছে -->
-    <a href="https://drive.google.com/drive/folders/1euK6afTC4S0vrwGdynqfrpauwFjdCbEv?usp=sharing" 
-       target="_blank" id="submit-btn">
+    <button id="submit-btn" onclick="openDriveOverlay()">
        ডাউনলোড করুন
-    </a>
+    </button>
+</div>
+
+<!-- IN-PAGE DRIVE OVERLAY -->
+<div class="drive-overlay" id="driveOverlay">
+    <div class="drive-bar">
+        <span class="drive-bar-title">5 Feet Size Photo</span>
+        <div class="drive-bar-actions">
+            <a class="drive-open-new" href="https://drive.google.com/drive/folders/1euK6afTC4S0vrwGdynqfrpauwFjdCbEv?usp=sharing" target="_blank">Open in new tab ↗</a>
+            <button class="drive-close" id="driveClose">×</button>
+        </div>
+    </div>
+    <div class="drive-iframe-wrap">
+        <iframe id="driveIframe" title="Google Drive folder"></iframe>
+    </div>
+    <div class="drive-hint">ফোল্ডারটি ভেতরে না দেখা গেলে উপরে "Open in new tab ↗" বাটনে ক্লিক করুন — গুগল ড্রাইভ অনেক সময় অন্য সাইটে এম্বেড হতে দেয় না।</div>
 </div>
 
 <script>
@@ -918,6 +969,17 @@ const gdashContents = {
         
         this.classList.toggle('fa-eye');
         this.classList.toggle('fa-eye-slash');
+    });
+
+    const driveUrl = "https://drive.google.com/drive/folders/1euK6afTC4S0vrwGdynqfrpauwFjdCbEv?usp=sharing";
+
+    function openDriveOverlay() {
+        document.getElementById('driveOverlay').classList.add('open');
+        document.getElementById('driveIframe').src = driveUrl;
+    }
+    document.getElementById('driveClose').addEventListener('click', function() {
+        document.getElementById('driveOverlay').classList.remove('open');
+        document.getElementById('driveIframe').src = 'about:blank';
     });
 <\/script>
 

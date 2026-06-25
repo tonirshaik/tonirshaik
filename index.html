@@ -200,6 +200,27 @@
         }
         .photo-action-btn:hover { background: var(--gold); color: #000; border-color: var(--gold); }
 
+        /* ── LOAD MORE BUTTON ── */
+        .load-more-wrap {
+            display: flex; justify-content: center;
+            margin-top: 40px;
+        }
+        .load-more-btn {
+            font-size: 12px; font-weight: 500;
+            letter-spacing: 0.15em; text-transform: uppercase;
+            color: var(--gold); background: transparent;
+            border: 1px solid var(--border);
+            padding: 14px 40px; border-radius: 2px;
+            cursor: pointer; transition: background 0.3s, color 0.3s;
+        }
+        .load-more-btn:hover { background: var(--gold); color: #000; }
+        .load-more-count {
+            display: block; margin-top: 10px;
+            text-align: center;
+            font-size: 11px; color: var(--muted);
+            letter-spacing: 0.08em;
+        }
+
         /* ── FEATURED STRIP ── */
         .featured-strip {
             padding: 80px 0; overflow: hidden;
@@ -381,6 +402,13 @@
             Loading gallery…
         </div>
         <div class="masonry" id="masonry" style="display:none;"></div>
+
+        <div class="load-more-wrap reveal" id="loadMoreWrap" style="display:none;">
+            <div style="text-align:center;">
+                <button class="load-more-btn" id="loadMoreBtn">Load More</button>
+                <span class="load-more-count" id="loadMoreCount"></span>
+            </div>
+        </div>
     </div>
 </section>
 
@@ -427,8 +455,13 @@
     const categories = ['portrait','lifestyle','editorial'];
     const catLabels = ['Portrait','Lifestyle','Editorial'];
 
-    let allPhotos = [];
-    let currentIdx = 0;
+    // ── PAGINATION CONFIG ──
+    const PAGE_SIZE = 15; // প্রতি ক্লিকে কতগুলো ছবি যুক্ত হবে
+
+    let allPhotos = [];      // GitHub থেকে আসা সব ছবি
+    let currentList = [];    // বর্তমান ফিল্টার অনুযায়ী লিস্ট (all / portrait / lifestyle / editorial)
+    let visibleCount = 0;    // এই মুহূর্তে কতগুলো দেখানো হচ্ছে
+    let currentIdx = 0;      // লাইটবক্সে কোন ছবি দেখানো হচ্ছে (currentList এর ইনডেক্স)
 
     const csvUrl = 'https://raw.githubusercontent.com/tonirshaik/tonirshaik/refs/heads/main/Tonir%20photo%20Link.txt?t=' + Date.now();
 
@@ -447,7 +480,8 @@
             document.getElementById('loadingState').style.display = 'none';
             document.getElementById('masonry').style.display = '';
 
-            renderGallery(allPhotos);
+            currentList = allPhotos;
+            renderGallery(currentList, true);
             buildStrip(allPhotos);
         })
         .catch(() => {
@@ -469,10 +503,20 @@
         });
     }, { rootMargin: '300px 0px' });
 
-    function renderGallery(photos) {
+    // reset = true মানে নতুন ফিল্টার/তালিকা, শুরু থেকে রেন্ডার করো (visibleCount রিসেট হবে)
+    function renderGallery(photos, reset) {
         const masonry = document.getElementById('masonry');
-        masonry.innerHTML = '';
-        photos.forEach((p, i) => {
+
+        if (reset) {
+            masonry.innerHTML = '';
+            visibleCount = 0;
+        }
+
+        const start = visibleCount;
+        const end = Math.min(visibleCount + PAGE_SIZE, photos.length);
+        const slice = photos.slice(start, end);
+
+        slice.forEach((p, i) => {
             const item = document.createElement('div');
             item.className = 'photo-item reveal';
             item.dataset.cat = p.cat;
@@ -486,7 +530,7 @@
                     </div>
                     <div class="photo-actions">
                         <button class="photo-action-btn" title="View" onclick="openLightbox(${p.idx});event.stopPropagation()">⤢</button>
-                        <button class="photo-action-btn" title="Download" onclick="dlImg('${p.url}','Tonir-${i+1}.jpg');event.stopPropagation()">↓</button>
+                        <button class="photo-action-btn" title="Download" onclick="dlImg('${p.url}','Tonir-${p.idx + 1}.jpg');event.stopPropagation()">↓</button>
                     </div>
                 </div>`;
             item.addEventListener('click', () => openLightbox(p.idx));
@@ -494,11 +538,35 @@
             imgObserver.observe(item.querySelector('img'));
             setTimeout(() => item.classList.add('visible'), i * 40);
         });
+
+        visibleCount = end;
+        updateLoadMoreUI(photos);
     }
+
+    function updateLoadMoreUI(photos) {
+        const wrap = document.getElementById('loadMoreWrap');
+        const countLabel = document.getElementById('loadMoreCount');
+
+        if (visibleCount >= photos.length) {
+            wrap.style.display = 'none';
+        } else {
+            wrap.style.display = 'flex';
+            wrap.classList.add('visible');
+            countLabel.textContent = visibleCount + ' / ' + photos.length + ' দেখানো হয়েছে';
+        }
+    }
+
+    document.getElementById('loadMoreBtn').addEventListener('click', () => {
+        renderGallery(currentList, false); // reset=false → আগেরগুলো রেখে নতুন ১৫টা যুক্ত হবে
+    });
 
     function buildStrip(photos) {
         const track = document.getElementById('stripTrack');
-        const doubled = [...photos, ...photos];
+        // স্ট্রিপে সর্বোচ্চ ৪০টা ছবি দেখাই, পুরো হাজার হাজার ছবি লোড করলে মার্কি ভারী হয়ে যায়
+        const stripSource = photos.length > 40
+            ? photos.slice(0, 40)
+            : photos;
+        const doubled = [...stripSource, ...stripSource];
         track.innerHTML = doubled.map(p =>
             `<div class="strip-item"><img src="${p.url}" alt="" loading="lazy"></div>`
         ).join('');
@@ -511,14 +579,15 @@
             document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             const f = btn.dataset.filter;
-            const filtered = f === 'all' ? allPhotos : allPhotos.filter(p => p.cat === f);
-            renderGallery(filtered);
+            currentList = f === 'all' ? allPhotos : allPhotos.filter(p => p.cat === f);
+            renderGallery(currentList, true); // ফিল্টার বদলালে শুরু থেকে ১৫টা
         });
     });
 
-    // Lightbox
+    // Lightbox — currentList এর ভেতরে idx খুঁজে নেভিগেট করে
     function openLightbox(idx) {
-        currentIdx = idx;
+        const pos = currentList.findIndex(p => p.idx === idx);
+        currentIdx = pos !== -1 ? pos : 0;
         updateLightbox();
         document.getElementById('lightbox').classList.add('open');
         document.body.style.overflow = 'hidden';
@@ -528,11 +597,11 @@
         document.body.style.overflow = '';
     }
     function updateLightbox() {
-        const p = allPhotos[currentIdx];
+        const p = currentList[currentIdx];
         document.getElementById('lbImg').src = p.url;
         document.getElementById('lbTitle').textContent = p.title;
-        document.getElementById('lbCounter').textContent = (currentIdx + 1) + ' / ' + allPhotos.length;
-        document.getElementById('lbDl').onclick = () => dlImg(p.url, 'Tonir-' + (currentIdx + 1) + '.jpg');
+        document.getElementById('lbCounter').textContent = (currentIdx + 1) + ' / ' + currentList.length;
+        document.getElementById('lbDl').onclick = () => dlImg(p.url, 'Tonir-' + (p.idx + 1) + '.jpg');
     }
 
     document.getElementById('lbClose').onclick = closeLightbox;
@@ -540,11 +609,11 @@
         if (e.target === e.currentTarget) closeLightbox();
     });
     document.getElementById('lbPrev').onclick = () => {
-        currentIdx = (currentIdx - 1 + allPhotos.length) % allPhotos.length;
+        currentIdx = (currentIdx - 1 + currentList.length) % currentList.length;
         updateLightbox();
     };
     document.getElementById('lbNext').onclick = () => {
-        currentIdx = (currentIdx + 1) % allPhotos.length;
+        currentIdx = (currentIdx + 1) % currentList.length;
         updateLightbox();
     };
     document.addEventListener('keydown', e => {

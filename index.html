@@ -544,9 +544,8 @@
     const GOOGLE_REDIRECT_URI = 'https://tonirshaik.github.io/tonirshaik/';
     const GOOGLE_SCOPE = 'https://www.googleapis.com/auth/photoslibrary.readonly';
 
-    // Google Photos Library API albumId to scope the gallery to.
-    // Leave blank ('') to pull from the whole library instead.
-    const ALBUM_ID = 'AF1QipPc0OEKXe8DDrXFxIZpRo96HnlNipptaB_ULkq5WDiEzKhLBt4p59Qucanw6YPlMg';
+    // Album scoping removed — this gallery now loads the user's
+    // entire Google Photos library via mediaItems.list.
 
     /**
      * Kicks off the OAuth 2.0 implicit grant flow by redirecting the
@@ -596,28 +595,45 @@
     }
 
     /**
-     * Calls mediaItems:search with the given access token, scoped to
-     * ALBUM_ID if set, maps the results into the global allPhotos
-     * array, and renders the gallery.
+     * Fetches one page of the user's library via mediaItems.list (GET).
+     * Returns a promise resolving to { mediaItems, nextPageToken }.
+     */
+    function fetchMediaItemsPage(accessToken, pageToken) {
+        const params = new URLSearchParams({ pageSize: '100' });
+        if (pageToken) params.set('pageToken', pageToken);
+
+        return fetch('https://photoslibrary.googleapis.com/v1/mediaItems?' + params.toString(), {
+            method: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + accessToken
+            }
+        }).then(r => {
+            if (!r.ok) throw new Error('Google Photos API request failed (' + r.status + ')');
+            return r.json();
+        });
+    }
+
+    /**
+     * Loads the user's whole Google Photos library by following
+     * nextPageToken across as many pages as mediaItems.list returns,
+     * maps the combined results into the global allPhotos array, and
+     * renders the gallery.
      */
     function loadGooglePhotos(accessToken) {
-        const requestBody = { pageSize: 100 };
-        if (ALBUM_ID) requestBody.albumId = ALBUM_ID;
+        let allItems = [];
 
-        fetch('https://photoslibrary.googleapis.com/v1/mediaItems:search', {
-            method: 'POST',
-            headers: {
-                'Authorization': 'Bearer ' + accessToken,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(requestBody)
-        })
-            .then(r => {
-                if (!r.ok) throw new Error('Google Photos API request failed (' + r.status + ')');
-                return r.json();
-            })
-            .then(data => {
-                const items = data.mediaItems || [];
+        function loadPage(pageToken) {
+            return fetchMediaItemsPage(accessToken, pageToken).then(data => {
+                allItems = allItems.concat(data.mediaItems || []);
+                if (data.nextPageToken) {
+                    return loadPage(data.nextPageToken);
+                }
+                return allItems;
+            });
+        }
+
+        loadPage(null)
+            .then(items => {
                 allPhotos = items.map((item, i) => ({
                     url: `${item.baseUrl}=w1200`,
                     idx: i,

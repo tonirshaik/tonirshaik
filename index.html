@@ -538,14 +538,21 @@
     let currentIdx = 0;
 
     // ---------------------------------------------------------------
-    // Google Photos Library API integration
+    // Google Photos Picker API integration
+    //
+    // Google retired the `photoslibrary`/`photoslibrary.readonly`
+    // library-read scopes (403 PERMISSION_DENIED on all calls after
+    // March 31, 2025). The replacement flow is the Picker API:
+    // the user explicitly picks photos in a Google-hosted picker UI,
+    // then this app lists just the items they picked. Picked baseUrls
+    // are valid for ~60 minutes, same expiry behavior as before.
     // ---------------------------------------------------------------
     const GOOGLE_CLIENT_ID = '1030639151924-4g7jv16ev3blgkgth1iaodlp4m0s2lh7.apps.googleusercontent.com';
     const GOOGLE_REDIRECT_URI = 'https://tonirshaik.github.io/tonirshaik/';
-    const GOOGLE_SCOPE = 'https://www.googleapis.com/auth/photoslibrary.readonly';
+    const GOOGLE_SCOPE = 'https://www.googleapis.com/auth/photospicker.mediaitems.readonly';
 
-    // Album scoping removed — this gallery now loads the user's
-    // entire Google Photos library via mediaItems.list.
+    const PICKER_SESSION_STORAGE_KEY = 'gphotos_picker_session_id';
+    let pollTimer = null;
 
     /**
      * Kicks off the OAuth 2.0 implicit grant flow by redirecting the
@@ -595,35 +602,117 @@
     }
 
     /**
-     * Fetches one page of the user's library via mediaItems.list (GET).
-     * Returns a promise resolving to { mediaItems, nextPageToken }.
+     * Renders the "Open Google Photos picker" gate inside #masonry once
+     * the user is authenticated but hasn't picked photos yet (or needs
+     * to pick again). The picker opens in a new tab; this tab keeps
+     * polling the session in the background.
      */
-    function fetchMediaItemsPage(accessToken, pageToken) {
-        const params = new URLSearchParams({ pageSize: '100' });
+    function renderPickerGate(accessToken, errorMessage) {
+        document.getElementById('loadingState').style.display = 'none';
+        const masonry = document.getElementById('masonry');
+        masonry.style.display = '';
+        masonry.style.columns = '1';
+        masonry.innerHTML = `
+            <div class="gphotos-connect-wrap">
+                <div class="gphotos-connect-icon">🖼️</div>
+                <div class="gphotos-connect-title">Pick your <em>Google Photos</em></div>
+                <p class="gphotos-connect-sub">Choose the photos you'd like to show in this gallery. A new tab will open — close it once you've finished picking.</p>
+                <button class="gphotos-connect-btn" id="openPickerBtn">🖼️ Open Google Photos Picker</button>
+                ${errorMessage ? `<p class="gphotos-connect-error">${errorMessage}</p>` : ''}
+            </div>`;
+        document.getElementById('openPickerBtn').onclick = () => startPickerSession(accessToken);
+    }
+
+    /**
+     * Creates a new Picker API session, opens its pickerUri in a new
+     * tab (with /autoclose so the tab closes itself once picking is
+     * done), and begins polling for completion.
+     */
+    function startPickerSession(accessToken) {
+        fetch('https://photospicker.googleapis.com/v1/sessions', {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + accessToken,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({})
+        })
+            .then(r => {
+                if (!r.ok) throw new Error('Could not start the Google Photos picker (' + r.status + ')');
+                return r.json();
+            })
+            .then(session => {
+                sessionStorage.setItem(PICKER_SESSION_STORAGE_KEY, session.id);
+                window.open(session.pickerUri + '/autoclose', '_blank');
+                renderPickerGate(accessToken);
+                pollPickerSession(accessToken, session.id, session.pollingConfig);
+            })
+            .catch(err => {
+                console.error(err);
+                renderPickerGate(accessToken, err.message);
+            });
+    }
+
+    /**
+     * Polls sessions.get until the user finishes picking (mediaItemsSet
+     * becomes true), then loads the picked media items.
+     */
+    function pollPickerSession(accessToken, sessionId, pollingConfig) {
+        clearTimeout(pollTimer);
+
+        fetch('https://photospicker.googleapis.com/v1/sessions/' + sessionId, {
+            method: 'GET',
+            headers: { 'Authorization': 'Bearer ' + accessToken }
+        })
+            .then(r => {
+                if (!r.ok) throw new Error('Lost track of the picker session (' + r.status + ')');
+                return r.json();
+            })
+            .then(session => {
+                if (session.mediaItemsSet) {
+                    sessionStorage.removeItem(PICKER_SESSION_STORAGE_KEY);
+                    loadPickedMediaItems(accessToken, sessionId);
+                    return;
+                }
+                const interval = (session.pollingConfig && session.pollingConfig.pollInterval)
+                    ? parseFloat(session.pollingConfig.pollInterval) * 1000
+                    : 2000;
+                pollTimer = setTimeout(() => {
+                    pollPickerSession(accessToken, sessionId, session.pollingConfig);
+                }, interval || 2000);
+            })
+            .catch(err => {
+                console.error(err);
+                sessionStorage.removeItem(PICKER_SESSION_STORAGE_KEY);
+                renderPickerGate(accessToken, err.message);
+            });
+    }
+
+    /**
+     * Fetches one page of picked media items for a completed session.
+     */
+    function fetchPickedMediaItemsPage(accessToken, sessionId, pageToken) {
+        const params = new URLSearchParams({ sessionId: sessionId, pageSize: '100' });
         if (pageToken) params.set('pageToken', pageToken);
 
-        return fetch('https://photoslibrary.googleapis.com/v1/mediaItems?' + params.toString(), {
+        return fetch('https://photospicker.googleapis.com/v1/mediaItems?' + params.toString(), {
             method: 'GET',
-            headers: {
-                'Authorization': 'Bearer ' + accessToken
-            }
+            headers: { 'Authorization': 'Bearer ' + accessToken }
         }).then(r => {
-            if (!r.ok) throw new Error('Google Photos API request failed (' + r.status + ')');
+            if (!r.ok) throw new Error('Could not list picked photos (' + r.status + ')');
             return r.json();
         });
     }
 
     /**
-     * Loads the user's whole Google Photos library by following
-     * nextPageToken across as many pages as mediaItems.list returns,
-     * maps the combined results into the global allPhotos array, and
-     * renders the gallery.
+     * Loads every picked media item (following nextPageToken), maps
+     * them into the global allPhotos array, and renders the gallery.
      */
-    function loadGooglePhotos(accessToken) {
+    function loadPickedMediaItems(accessToken, sessionId) {
         let allItems = [];
 
         function loadPage(pageToken) {
-            return fetchMediaItemsPage(accessToken, pageToken).then(data => {
+            return fetchPickedMediaItemsPage(accessToken, sessionId, pageToken).then(data => {
                 allItems = allItems.concat(data.mediaItems || []);
                 if (data.nextPageToken) {
                     return loadPage(data.nextPageToken);
@@ -634,12 +723,15 @@
 
         loadPage(null)
             .then(items => {
-                allPhotos = items.map((item, i) => ({
-                    url: `${item.baseUrl}=w1200`,
-                    idx: i,
-                    cat: categories[i % 3],
-                    title: item.filename || ('Photo ' + (i + 1))
-                }));
+                allPhotos = items.map((picked, i) => {
+                    const item = picked.mediaFile || picked;
+                    return {
+                        url: `${item.baseUrl}=w1200`,
+                        idx: i,
+                        cat: categories[i % 3],
+                        title: item.filename || ('Photo ' + (i + 1))
+                    };
+                });
                 document.getElementById('photoCount').textContent = allPhotos.length;
                 document.getElementById('loadingState').style.display = 'none';
                 const masonry = document.getElementById('masonry');
@@ -651,7 +743,7 @@
             })
             .catch(err => {
                 console.error(err);
-                renderConnectGate(err.message || 'Could not load photos from Google. Your session may have expired — please reconnect.');
+                renderPickerGate(accessToken, err.message);
             });
     }
 
@@ -661,7 +753,7 @@
         if (token) {
             // Clean the token out of the visible URL without reloading the page.
             window.history.pushState({}, document.title, window.location.pathname + window.location.search);
-            loadGooglePhotos(token);
+            renderPickerGate(token);
         } else {
             renderConnectGate();
         }

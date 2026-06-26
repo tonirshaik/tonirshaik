@@ -544,12 +544,9 @@
     const GOOGLE_REDIRECT_URI = 'https://tonirshaik.github.io/tonirshaik/';
     const GOOGLE_SCOPE = 'https://www.googleapis.com/auth/photoslibrary.readonly';
 
-    // Paste the shareToken of your shared Google Photos album here.
-    // NOTE: this must be a real Library API shareToken (from albums.share
-    // or sharedAlbums.list) — NOT the "key=" value from a photos.google.com
-    // share link, which is a different, incompatible identifier system.
-    // Leave blank ('') to pull from the whole library instead of one album.
-    const ALBUM_KEY = 'cGxhZzZrRWtjTUw5b3hFRWxGb0N0SXFnMVo3eFhR';
+    // Google Photos Library API albumId to scope the gallery to.
+    // Leave blank ('') to pull from the whole library instead.
+    const ALBUM_ID = 'AF1QipPc0OEKXe8DDrXFxIZpRo96HnlNipptaB_ULkq5WDiEzKhLBt4p59Qucanw6YPlMg';
 
     /**
      * Kicks off the OAuth 2.0 implicit grant flow by redirecting the
@@ -599,61 +596,26 @@
     }
 
     /**
-     * Joins a shared album on behalf of the user using its shareToken,
-     * which resolves to the album's real Library API albumId. Required
-     * because mediaItems:search only accepts an albumId, never a
-     * shareToken or a photos.google.com share-link key directly.
+     * Calls mediaItems:search with the given access token, scoped to
+     * ALBUM_ID if set, maps the results into the global allPhotos
+     * array, and renders the gallery.
      */
-    function joinSharedAlbum(accessToken, shareToken) {
-        return fetch('https://photoslibrary.googleapis.com/v1/sharedAlbums:join', {
+    function loadGooglePhotos(accessToken) {
+        const requestBody = { pageSize: 100 };
+        if (ALBUM_ID) requestBody.albumId = ALBUM_ID;
+
+        fetch('https://photoslibrary.googleapis.com/v1/mediaItems:search', {
             method: 'POST',
             headers: {
                 'Authorization': 'Bearer ' + accessToken,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ shareToken: shareToken })
+            body: JSON.stringify(requestBody)
         })
             .then(r => {
-                if (!r.ok) throw new Error('joinSharedAlbum failed (' + r.status + ') — ALBUM_KEY is not a valid Library API shareToken.');
+                if (!r.ok) throw new Error('Google Photos API request failed (' + r.status + ')');
                 return r.json();
             })
-            .then(data => {
-                if (!data.album || !data.album.id) throw new Error('joinSharedAlbum returned no album.');
-                return data.album.id;
-            });
-    }
-
-    /**
-     * Calls mediaItems:search with the given access token, maps the
-     * results into the global allPhotos array, and renders the gallery.
-     * If ALBUM_KEY is set, joins that shared album first to resolve a
-     * real albumId, then scopes the search to it.
-     */
-    function loadGooglePhotos(accessToken) {
-        const search = (albumId) => {
-            const requestBody = { pageSize: 100 };
-            if (albumId) requestBody.albumId = albumId;
-
-            return fetch('https://photoslibrary.googleapis.com/v1/mediaItems:search', {
-                method: 'POST',
-                headers: {
-                    'Authorization': 'Bearer ' + accessToken,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(requestBody)
-            })
-                .then(r => {
-                    if (!r.ok) throw new Error('Google Photos API request failed (' + r.status + ')');
-                    return r.json();
-                });
-        };
-
-        const resolveAlbumId = ALBUM_KEY
-            ? joinSharedAlbum(accessToken, ALBUM_KEY)
-            : Promise.resolve(null);
-
-        resolveAlbumId
-            .then(albumId => search(albumId))
             .then(data => {
                 const items = data.mediaItems || [];
                 allPhotos = items.map((item, i) => ({

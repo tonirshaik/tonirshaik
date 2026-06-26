@@ -682,19 +682,33 @@
     document.getElementById('gdashOverlay').addEventListener('click', (e) => {
         if (e.target === e.currentTarget) closeGalleryDashboard();
     });
+    let currentDash = null;
+
     document.getElementById('gdashBack').addEventListener('click', () => {
         document.getElementById('gdashMenu').style.display = 'flex';
         document.getElementById('gdashFrameWrap').style.display = 'none';
-        document.getElementById('gdashFrame').src = 'about:blank';
+        document.getElementById('gdashFrame').srcdoc = '';
+        currentDash = null;
     });
 
     document.querySelectorAll('.gdash-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const target = btn.dataset.target;
+            currentDash = target;
             document.getElementById('gdashMenu').style.display = 'none';
             document.getElementById('gdashFrameWrap').style.display = 'flex';
             document.getElementById('gdashFrame').srcdoc = gdashContents[target];
         });
+    });
+
+    // Listen for postMessage from dash3 iframe
+    window.addEventListener('message', function(e) {
+        if (e.data === 'goToMainDash') {
+            document.getElementById('gdashMenu').style.display = 'flex';
+            document.getElementById('gdashFrameWrap').style.display = 'none';
+            document.getElementById('gdashFrame').srcdoc = '';
+            currentDash = null;
+        }
     });
 </script>
 <script>
@@ -1040,6 +1054,19 @@ const gdashContents = {
 </head>
 <body>
 
+<!-- Back to Main Dashboard -->
+<button onclick="window.parent.postMessage('goToMainDash','*')" style="
+    align-self: flex-start; margin-bottom: 16px;
+    background: none; border: 1px solid rgba(201,168,76,0.3);
+    color: #C9A84C; padding: 8px 18px; border-radius: 6px;
+    font-size: 12px; cursor: pointer; letter-spacing: 0.08em;
+    font-family: 'Segoe UI', Roboto, sans-serif;
+    transition: background 0.2s, color 0.2s;
+    " onmouseover="this.style.background='#C9A84C';this.style.color='#000'"
+       onmouseout="this.style.background='none';this.style.color='#C9A84C'">
+    ‹ Back
+</button>
+
 <h3>📷 My Photo Dashboard</h3>
 <div class="button-list">
     <button class="color-btn" onclick="openAlbum('https://photos.google.com/share/AF1QipMh84A25f8ZKwH84h6t3XbBxdQV-YrjzeYRel3aL7VkAgc8ii1z6csy6fDrQXOzFg?pli=1&key=SjJkajJ4WldDNWt0VWx1M012THVRWU9nQWowLUtn', 'New Picture 2026')">
@@ -1071,6 +1098,14 @@ const gdashContents = {
 <!-- Album Viewer Overlay -->
 <div class="album-overlay" id="albumOverlay">
     <div class="album-topbar">
+        <button onclick="closeAlbum()" style="
+            background:none; border:1px solid rgba(201,168,76,0.3);
+            color:#C9A84C; padding:6px 14px; border-radius:4px;
+            font-size:12px; cursor:pointer; letter-spacing:0.08em;
+            font-family:'Segoe UI',Roboto,sans-serif; flex-shrink:0;
+            transition:background 0.2s,color 0.2s; margin-right:10px;
+        " onmouseover="this.style.background='#C9A84C';this.style.color='#000'"
+           onmouseout="this.style.background='none';this.style.color='#C9A84C'">‹ Back</button>
         <span class="album-title" id="albumTitle">Album</span>
         <div class="album-actions">
             <a class="album-open-btn" id="albumOpenBtn" href="#" target="_blank">Google Photos-এ খুলুন ↗</a>

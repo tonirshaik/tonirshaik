@@ -148,6 +148,40 @@
             border-color: var(--gold); color: var(--gold);
         }
 
+        /* Google Photos connect gate */
+        .gphotos-connect-wrap {
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; gap: 18px;
+            padding: 90px 20px; text-align: center;
+            border: 1px solid var(--border); border-radius: 8px;
+            background: radial-gradient(ellipse 70% 60% at 50% 0%, rgba(201,168,76,0.06) 0%, transparent 70%);
+        }
+        .gphotos-connect-icon { font-size: 38px; line-height: 1; }
+        .gphotos-connect-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: clamp(24px, 3vw, 32px); font-weight: 300; color: #fff;
+        }
+        .gphotos-connect-title em { font-style: italic; color: var(--gold-light); }
+        .gphotos-connect-sub {
+            font-size: 12px; letter-spacing: 0.08em; color: var(--muted);
+            max-width: 360px; line-height: 1.6;
+        }
+        .gphotos-connect-btn {
+            font-family: 'Inter', sans-serif;
+            font-size: 12px; font-weight: 500;
+            letter-spacing: 0.15em; text-transform: uppercase;
+            color: #000; text-decoration: none;
+            background: linear-gradient(to right, var(--gold), var(--gold-light));
+            border: none; padding: 16px 36px; border-radius: 2px;
+            cursor: pointer; transition: opacity 0.25s, transform 0.25s;
+            display: inline-flex; align-items: center; gap: 10px;
+        }
+        .gphotos-connect-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+        .gphotos-connect-error {
+            font-size: 11px; letter-spacing: 0.05em; color: #E08A6A;
+            max-width: 360px;
+        }
+
         .gallery-section { padding: 0 24px 80px; max-width: 1400px; margin: 0 auto; }
         .masonry { columns: 4; column-gap: 16px; }
         @media (max-width: 1100px) { .masonry { columns: 3; } }
@@ -503,28 +537,120 @@
     let visibleCount = 0;
     let currentIdx = 0;
 
-    const csvUrl = 'https://raw.githubusercontent.com/tonirshaik/tonirshaik/refs/heads/main/Tonir%20photo%20Link.txt?t=' + Date.now();
+    // ---------------------------------------------------------------
+    // Google Photos Library API integration
+    // ---------------------------------------------------------------
+    const GOOGLE_CLIENT_ID = '1030639151924-4g7jv16ev3blgkgth1iaodlp4m0s2lh7.apps.googleusercontent.com';
+    const GOOGLE_REDIRECT_URI = 'https://tonirshaik.github.io/tonirshaik/';
+    const GOOGLE_SCOPE = 'https://www.googleapis.com/auth/photoslibrary.readonly';
 
-    fetch(csvUrl)
-        .then(r => r.text())
-        .then(data => {
-            const links = data.split('\n').map(l => l.trim()).filter(l => l.startsWith('http'));
-            allPhotos = links.map((url, i) => ({
-                url, idx: i,
-                cat: categories[i % 3],
-                title: 'Photo ' + (i + 1)
-            }));
-            document.getElementById('photoCount').textContent = allPhotos.length;
-            document.getElementById('loadingState').style.display = 'none';
-            document.getElementById('masonry').style.display = '';
-            currentList = allPhotos;
-            renderGallery(currentList, true);
-            buildStrip(allPhotos);
-        })
-        .catch(() => {
-            document.getElementById('loadingState').innerHTML =
-                '<p style="color:var(--muted)">Could not load photos. Check your connection.</p>';
+    // Paste your Google Photos Album ID here. Leave blank ('') to pull
+    // from the whole library instead of one specific album.
+    const ALBUM_ID = 'YOUR_GOOGLE_PHOTOS_ALBUM_ID';
+
+    /**
+     * Kicks off the OAuth 2.0 implicit grant flow by redirecting the
+     * browser to Google's consent screen. On approval, Google redirects
+     * back to GOOGLE_REDIRECT_URI with the token in the URL hash
+     * (e.g. #access_token=...&token_type=Bearer&expires_in=3599).
+     */
+    function authenticateWithGoogle() {
+        const params = new URLSearchParams({
+            client_id: GOOGLE_CLIENT_ID,
+            redirect_uri: GOOGLE_REDIRECT_URI,
+            response_type: 'token',
+            scope: GOOGLE_SCOPE,
+            include_granted_scopes: 'true',
+            prompt: 'consent'
         });
+        window.location.href = 'https://accounts.google.com/o/oauth2/v2/auth?' + params.toString();
+    }
+
+    /**
+     * Reads an access_token out of the URL hash left behind by Google's
+     * OAuth redirect, if one is present.
+     */
+    function getAccessTokenFromUrl() {
+        if (!window.location.hash) return null;
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        return hashParams.get('access_token');
+    }
+
+    /**
+     * Renders the "Connect Google Photos" gate inside #masonry when no
+     * access token is available yet.
+     */
+    function renderConnectGate(errorMessage) {
+        document.getElementById('loadingState').style.display = 'none';
+        const masonry = document.getElementById('masonry');
+        masonry.style.display = '';
+        masonry.style.columns = '1';
+        masonry.innerHTML = `
+            <div class="gphotos-connect-wrap">
+                <div class="gphotos-connect-icon">🔐</div>
+                <div class="gphotos-connect-title">Connect <em>Google Photos</em></div>
+                <p class="gphotos-connect-sub">Sign in with Google to load this gallery directly from your Google Photos library.</p>
+                <button class="gphotos-connect-btn" onclick="authenticateWithGoogle()">🔐 Connect Google Photos</button>
+                ${errorMessage ? `<p class="gphotos-connect-error">${errorMessage}</p>` : ''}
+            </div>`;
+    }
+
+    /**
+     * Calls mediaItems:search with the given access token, maps the
+     * results into the global allPhotos array, and renders the gallery.
+     */
+    function loadGooglePhotos(accessToken) {
+        const requestBody = { pageSize: 100 };
+        if (ALBUM_ID && ALBUM_ID !== 'YOUR_GOOGLE_PHOTOS_ALBUM_ID') {
+            requestBody.albumId = ALBUM_ID;
+        }
+
+        fetch('https://photoslibrary.googleapis.com/v1/mediaItems:search', {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + accessToken,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestBody)
+        })
+            .then(r => {
+                if (!r.ok) throw new Error('Google Photos API request failed (' + r.status + ')');
+                return r.json();
+            })
+            .then(data => {
+                const items = data.mediaItems || [];
+                allPhotos = items.map((item, i) => ({
+                    url: `${item.baseUrl}=w1200`,
+                    idx: i,
+                    cat: categories[i % 3],
+                    title: item.filename || ('Photo ' + (i + 1))
+                }));
+                document.getElementById('photoCount').textContent = allPhotos.length;
+                document.getElementById('loadingState').style.display = 'none';
+                const masonry = document.getElementById('masonry');
+                masonry.style.display = '';
+                masonry.style.columns = '';
+                currentList = allPhotos;
+                renderGallery(currentList, true);
+                buildStrip(allPhotos);
+            })
+            .catch(err => {
+                console.error(err);
+                renderConnectGate('Could not load photos from Google. Your session may have expired — please reconnect.');
+            });
+    }
+
+    // ---- Initialization ----
+    (function initGooglePhotos() {
+        const token = getAccessTokenFromUrl();
+        if (token) {
+            // Clean the token out of the visible URL without reloading the page.
+            window.history.pushState({}, document.title, window.location.pathname + window.location.search);
+            loadGooglePhotos(token);
+        } else {
+            renderConnectGate();
+        }
+    })();
 
     const imgObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {

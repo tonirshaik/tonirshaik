@@ -705,8 +705,28 @@
     }
 
     /**
-     * Loads every picked media item (following nextPageToken), maps
-     * them into the global allPhotos array, and renders the gallery.
+     * Fetches a single picked media item's image bytes using an
+     * authenticated request (required — Google rejects unauthenticated
+     * requests to baseUrl, which is why a plain <img src="baseUrl">
+     * shows a broken-image icon), and returns a local blob: URL that
+     * <img> elements CAN load without any auth header.
+     */
+    function fetchAuthenticatedImageUrl(accessToken, baseUrl, width) {
+        return fetch(`${baseUrl}=w${width}`, {
+            headers: { 'Authorization': 'Bearer ' + accessToken }
+        })
+            .then(r => {
+                if (!r.ok) throw new Error('Could not download photo (' + r.status + ')');
+                return r.blob();
+            })
+            .then(blob => URL.createObjectURL(blob));
+    }
+
+    /**
+     * Loads every picked media item (following nextPageToken), fetches
+     * each one as an authenticated blob (see fetchAuthenticatedImageUrl),
+     * maps them into the global allPhotos array, and renders the
+     * gallery once every blob URL is ready.
      */
     function loadPickedMediaItems(accessToken, sessionId) {
         let allItems = [];
@@ -723,15 +743,19 @@
 
         loadPage(null)
             .then(items => {
-                allPhotos = items.map((picked, i) => {
+                return Promise.all(items.map((picked, i) => {
                     const item = picked.mediaFile || picked;
-                    return {
-                        url: `${item.baseUrl}=w1200`,
-                        idx: i,
-                        cat: categories[i % 3],
-                        title: item.filename || ('Photo ' + (i + 1))
-                    };
-                });
+                    return fetchAuthenticatedImageUrl(accessToken, item.baseUrl, 1200)
+                        .then(blobUrl => ({
+                            url: blobUrl,
+                            idx: i,
+                            cat: categories[i % 3],
+                            title: item.filename || ('Photo ' + (i + 1))
+                        }));
+                }));
+            })
+            .then(mapped => {
+                allPhotos = mapped;
                 document.getElementById('photoCount').textContent = allPhotos.length;
                 document.getElementById('loadingState').style.display = 'none';
                 const masonry = document.getElementById('masonry');

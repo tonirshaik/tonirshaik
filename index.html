@@ -554,6 +554,100 @@
     const PICKER_SESSION_STORAGE_KEY = 'gphotos_picker_session_id';
     let pollTimer = null;
 
+    // -----------------------------------------------------------
+    // Persistence layer (IndexedDB)
+    //
+    // localStorage can't be used here: blob: URLs only exist in the
+    // current page's memory (they're gone on reload), and storing the
+    // raw image bytes as a base64 string would blow past localStorage's
+    // ~5-10MB quota after just a few photos. IndexedDB has a much
+    // larger quota and stores Blob objects natively, so it's the
+    // correct tool for "keep my actual photo files around after a
+    // refresh."
+    // -----------------------------------------------------------
+    const DB_NAME = 'tonir_gphotos_cache';
+    const DB_STORE = 'photos';
+
+    function openPhotoCacheDb() {
+        return new Promise((resolve, reject) => {
+            const req = indexedDB.open(DB_NAME, 1);
+            req.onupgradeneeded = () => {
+                req.result.createObjectStore(DB_STORE, { keyPath: 'idx' });
+            };
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error);
+        });
+    }
+
+    /** Wipes and rewrites the entire cached photo set (called after a fresh pick). */
+    function savePhotosToCache(photoRecords) {
+        return openPhotoCacheDb().then(db => new Promise((resolve, reject) => {
+            const tx = db.transaction(DB_STORE, 'readwrite');
+            tx.objectStore(DB_STORE).clear();
+            photoRecords.forEach(rec => tx.objectStore(DB_STORE).put(rec));
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+        }));
+    }
+
+    /** Returns the cached photo records (each with a real Blob, not a blob: URL), or [] if none cached. */
+    function loadPhotosFromCache() {
+        return openPhotoCacheDb().then(db => new Promise((resolve, reject) => {
+            const tx = db.transaction(DB_STORE, 'readonly');
+            const req = tx.objectStore(DB_STORE).getAll();
+            req.onsuccess = () => resolve(req.result || []);
+            req.onerror = () => reject(req.error);
+        })).catch(() => []);
+    }
+
+    /** Clears the cache entirely — used when the person explicitly wants to pick new photos. */
+    function clearPhotoCache() {
+        return openPhotoCacheDb().then(db => new Promise((resolve, reject) => {
+            const tx = db.transaction(DB_STORE, 'readwrite');
+            tx.objectStore(DB_STORE).clear();
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+        })).catch(() => {});
+    }
+
+    /** Renders allPhotos (with fresh blob: URLs built from cached Blobs) and shows the gallery. */
+    function renderFromCacheRecords(records) {
+        allPhotos = records
+            .sort((a, b) => a.idx - b.idx)
+            .map(rec => ({
+                url: URL.createObjectURL(rec.blob),
+                idx: rec.idx,
+                cat: rec.cat,
+                title: rec.title
+            }));
+        document.getElementById('photoCount').textContent = allPhotos.length;
+        document.getElementById('loadingState').style.display = 'none';
+        const masonry = document.getElementById('masonry');
+        masonry.style.display = '';
+        masonry.style.columns = '';
+        currentList = allPhotos;
+        renderGallery(currentList, true);
+        buildStrip(allPhotos);
+    }
+
+    /**
+     * Called whenever a live Picker/OAuth step fails. If a cached photo
+     * set already exists, that stays on screen (the gallery is never
+     * wiped just because a background refresh attempt failed) and the
+     * error is logged quietly. Only shows the picker gate with an error
+     * message when there's nothing cached to fall back to.
+     */
+    function handleGooglePhotosError(accessToken, err) {
+        console.error(err);
+        loadPhotosFromCache().then(records => {
+            if (records.length > 0) {
+                console.warn('Google Photos refresh failed, keeping last cached photos on screen:', err.message);
+                return;
+            }
+            renderPickerGate(accessToken, err.message);
+        });
+    }
+
     /**
      * Kicks off the OAuth 2.0 implicit grant flow by redirecting the
      * browser to Google's consent screen. On approval, Google redirects
@@ -647,10 +741,7 @@
                 renderPickerGate(accessToken);
                 pollPickerSession(accessToken, session.id, session.pollingConfig);
             })
-            .catch(err => {
-                console.error(err);
-                renderPickerGate(accessToken, err.message);
-            });
+            .catch(err => handleGooglePhotosError(accessToken, err));
     }
 
     /**
@@ -682,9 +773,8 @@
                 }, interval || 2000);
             })
             .catch(err => {
-                console.error(err);
                 sessionStorage.removeItem(PICKER_SESSION_STORAGE_KEY);
-                renderPickerGate(accessToken, err.message);
+                handleGooglePhotosError(accessToken, err);
             });
     }
 
@@ -708,25 +798,23 @@
      * Fetches a single picked media item's image bytes using an
      * authenticated request (required — Google rejects unauthenticated
      * requests to baseUrl, which is why a plain <img src="baseUrl">
-     * shows a broken-image icon), and returns a local blob: URL that
-     * <img> elements CAN load without any auth header.
+     * shows a broken-image icon), and returns the raw Blob.
      */
-    function fetchAuthenticatedImageUrl(accessToken, baseUrl, width) {
+    function fetchAuthenticatedImageBlob(accessToken, baseUrl, width) {
         return fetch(`${baseUrl}=w${width}`, {
             headers: { 'Authorization': 'Bearer ' + accessToken }
-        })
-            .then(r => {
-                if (!r.ok) throw new Error('Could not download photo (' + r.status + ')');
-                return r.blob();
-            })
-            .then(blob => URL.createObjectURL(blob));
+        }).then(r => {
+            if (!r.ok) throw new Error('Could not download photo (' + r.status + ')');
+            return r.blob();
+        });
     }
 
     /**
-     * Loads every picked media item (following nextPageToken), fetches
-     * each one as an authenticated blob (see fetchAuthenticatedImageUrl),
-     * maps them into the global allPhotos array, and renders the
-     * gallery once every blob URL is ready.
+     * Loads every picked media item (following nextPageToken), downloads
+     * each one as a Blob, saves the whole set to the IndexedDB cache
+     * (so it survives a page refresh — picker baseUrls themselves
+     * expire in ~60 minutes and can't be re-fetched after reload), and
+     * renders the gallery from that freshly-saved cache.
      */
     function loadPickedMediaItems(accessToken, sessionId) {
         let allItems = [];
@@ -745,42 +833,73 @@
             .then(items => {
                 return Promise.all(items.map((picked, i) => {
                     const item = picked.mediaFile || picked;
-                    return fetchAuthenticatedImageUrl(accessToken, item.baseUrl, 1200)
-                        .then(blobUrl => ({
-                            url: blobUrl,
+                    return fetchAuthenticatedImageBlob(accessToken, item.baseUrl, 1200)
+                        .then(blob => ({
                             idx: i,
                             cat: categories[i % 3],
-                            title: item.filename || ('Photo ' + (i + 1))
+                            title: item.filename || ('Photo ' + (i + 1)),
+                            blob: blob
                         }));
                 }));
             })
-            .then(mapped => {
-                allPhotos = mapped;
-                document.getElementById('photoCount').textContent = allPhotos.length;
-                document.getElementById('loadingState').style.display = 'none';
-                const masonry = document.getElementById('masonry');
-                masonry.style.display = '';
-                masonry.style.columns = '';
-                currentList = allPhotos;
-                renderGallery(currentList, true);
-                buildStrip(allPhotos);
+            .then(records => savePhotosToCache(records).then(() => records))
+            .then(records => {
+                renderFromCacheRecords(records);
+                addRepickControl(accessToken);
             })
-            .catch(err => {
-                console.error(err);
-                renderPickerGate(accessToken, err.message);
-            });
+            .catch(err => handleGooglePhotosError(accessToken, err));
+    }
+
+    /**
+     * Adds a small "Pick new Google Photos" link below the gallery
+     * once real photos are showing, so the person can deliberately
+     * replace the cached set without it ever happening automatically.
+     */
+    function addRepickControl(accessToken) {
+        if (document.getElementById('repickGphotosBtn')) return;
+        const wrap = document.getElementById('loadMoreWrap');
+        const btn = document.createElement('button');
+        btn.id = 'repickGphotosBtn';
+        btn.className = 'filter-btn';
+        btn.style.marginLeft = '8px';
+        btn.textContent = '🖼️ Pick New Google Photos';
+        btn.onclick = () => {
+            clearPhotoCache().then(() => renderPickerGate(accessToken));
+        };
+        (wrap && wrap.parentElement ? wrap.parentElement : document.getElementById('masonry').parentElement)
+            .appendChild(btn);
     }
 
     // ---- Initialization ----
+    // 1. Always try the IndexedDB cache first — this is what makes the
+    //    gallery survive a page refresh, since Picker baseUrls and the
+    //    OAuth access token both die on reload anyway.
+    // 2. If there's a fresh OAuth token in the URL hash, that takes
+    //    priority (the person just came back from Google login).
+    // 3. Otherwise, if there's no cache, show the connect gate.
     (function initGooglePhotos() {
         const token = getAccessTokenFromUrl();
+
         if (token) {
             // Clean the token out of the visible URL without reloading the page.
             window.history.pushState({}, document.title, window.location.pathname + window.location.search);
             renderPickerGate(token);
-        } else {
-            renderConnectGate();
+            return;
         }
+
+        loadPhotosFromCache().then(records => {
+            if (records.length > 0) {
+                renderFromCacheRecords(records);
+                // No live access token after a refresh, so "pick new photos"
+                // needs a fresh login first rather than reusing an old token.
+                addRepickControl(null);
+                document.getElementById('repickGphotosBtn').onclick = () => {
+                    clearPhotoCache().then(() => authenticateWithGoogle());
+                };
+            } else {
+                renderConnectGate();
+            }
+        });
     })();
 
     const imgObserver = new IntersectionObserver((entries) => {

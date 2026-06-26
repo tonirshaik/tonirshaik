@@ -755,7 +755,6 @@ const gdashContents = {
         }
         .show-btn { display: block !important; animation: fadeIn 0.6s cubic-bezier(0.175,0.885,0.32,1.275); }
 
-        /* MediaFire overlay */
         .mf-overlay {
             display: none; position: fixed; inset: 0; z-index: 500;
             background: rgba(0,0,0,0.96); flex-direction: column; align-items: center;
@@ -787,7 +786,6 @@ const gdashContents = {
             color: rgba(255,255,255,0.45); font-size: 12px; text-align: center;
         }
     </style>
-    <!-- সব লিংক ডিফল্টভাবে mfIframe-এর ভেতরে খুলবে -->
     <base target="mfIframe">
 </head>
 <body>
@@ -802,7 +800,6 @@ const gdashContents = {
     <button id="submit-btn" onclick="openMfOverlay()">ডাউনলোড করুন</button>
 </div>
 
-<!-- Google Drive Folder Overlay -->
 <div class="mf-overlay" id="mfOverlay">
     <div class="mf-bar">
         <span class="mf-bar-title">5 Feet Size Photo — Google Drive</span>
@@ -812,7 +809,6 @@ const gdashContents = {
         </div>
     </div>
     <div class="mf-iframe-wrap">
-        <!-- name="mfIframe" দিলে base target এই iframe-এ লিংক খুলবে -->
         <iframe id="mfIframe" name="mfIframe" title="Google Drive folder"></iframe>
     </div>
     <div class="mf-hint">কোনো ফাইলে ক্লিক করলে নিচের ফ্রেমেই প্রিভিউ দেখাবে। ডাউনলোড করতে প্রিভিউ পেজ থেকে ↓ বাটন ব্যবহার করুন।</div>
@@ -952,26 +948,7 @@ const gdashContents = {
             box-shadow: 0 15px 35px rgba(0,0,0,0.5); text-align: center;
             width: 350px; border: 1px solid rgba(201,168,76,0.18);
         }
-        h2, h3 { color: #fff; margin-bottom: 20px; }
-        .pass-wrapper { position: relative; margin-bottom: 20px; }
-        input {
-            width: 100%; padding: 15px; border: 2px solid rgba(201,168,76,0.3);
-            border-radius: 10px; box-sizing: border-box; font-size: 16px;
-            transition: 0.3s; background-color: #161410; color: #fff;
-        }
-        input::placeholder { color: rgba(255,255,255,0.38); }
-        input:focus { border-color: #C9A84C; outline: none; }
-        .toggle-password {
-            position: absolute; right: 15px; top: 50%; transform: translateY(-50%);
-            cursor: pointer; font-size: 20px; color: rgba(255,255,255,0.5);
-        }
-        #submit-btn {
-            display: none; width: 100%; padding: 15px;
-            background: linear-gradient(to right, #C9A84C, #E8C96A);
-            color: #000; border: none; border-radius: 10px; cursor: pointer;
-            font-weight: bold; font-size: 16px; animation: fadeIn 0.5s;
-        }
-        #dashboard { display: none; }
+        h3 { color: #fff; margin-bottom: 20px; }
         .button-list { display: flex; flex-direction: column; gap: 12px; }
         .color-btn {
             color: #fff; padding: 15px; text-decoration: none; font-size: 14px;
@@ -984,50 +961,22 @@ const gdashContents = {
             transform: translateY(-2px); box-shadow: 0 6px 12px rgba(201,168,76,0.2);
             border-color: #C9A84C; color: #E8C96A;
         }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
-<div class="container" id="login-box">
-    <h2>Google Photo Albums</h2>
-    <div class="pass-wrapper">
-        <input type="password" id="passInput" placeholder="Password লিখুন..." oninput="checkRealtime()">
-        <span class="toggle-password" id="eyeIcon" onclick="toggleVisibility()">👁️</span>
-    </div>
-    <button id="submit-btn" onclick="openDashboard()">প্রবেশ করুন</button>
-</div>
-<div class="container" id="dashboard">
+<div class="container">
     <h3>My Photo Dashboard</h3>
     <div class="button-list">
-        <a href="https://photos.google.com/share/AF1QipMh84A25f8ZKwH84h6t3XbBxdQV-YrjzeYRel3aL7VkAgc8ii1z6csy6fDrQXOzFg?pli=1&key=SjJkajJ4WldDNWt0VWx1M012THVRWU9nQWowLUtn" class="color-btn">New Picture 2026</a>
-        <a href="https://photos.google.com/share/AF1QipPc0OEKXe8DDrXFxIZpRo96HnlNipptaB_ULkq5WDiEzKhLBt4p59Qucanw6YPlMg?key=cGxhZzZrRWtjTUw5b3hFRWxGb0N0SXFnMVo3eFhR" class="color-btn">All Pictures Mother Gmail</a>
-        <a href="https://photos.google.com/share/AF1QipNUBtXdQeciaNRYz0Wl72hufnieSrtm1j-LNZi7Z3L9IqlIyvCLFwLL5FECFkz8nA?key=U1E3NEpkYUYtcXg0U1ZxSnBRSDcteXFuWlVDSGNR" class="color-btn">All Photo in tonirsheikh@gmail.com</a>
-        <a href="https://photos.google.com/share/AF1QipM9cgX9UbjOuhKd4bPU3zNP8gpI_sfhWYxvk3pm1kDgX8GoXYptzNuLTx6aI_zCEQ?key=NmRkemw1MV9BNnBFM2plblhfWFZDU1hMN2pWUmJB" class="color-btn">Remini tonirshaik2</a>
-        <a href="https://photos.google.com/share/AF1QipP9PO99CE9V0gaHfk-Oq1YjhbaGrZ5FQLwCpsdpoju3wr8P2ZLn0wK6QzllL1NKDA?key=NXMzMlJHMm1WbTI5TjZmRktza2I0Q2Vha1VPMjFn" class="color-btn">photo in tonirfshaik3</a>
-        <a href="https://photos.google.com/share/AF1QipPNcnrUEbu9bJS6-BB6-YxwnYIDJU1hH7eRUQAOsCFg9SkzHZsD1QthI1LdlH3Y-w?key=Y01mRXVjRE1ESDVWZjZ0elZsZlBpdUhSODNZUTJB" class="color-btn">photo in tonirshaik4</a>
-        <a href="https://photos.google.com/share/AF1QipNc4Nxu38dwEqxfN3fnCb7AjPgp64zB6t6kxov_t85WT7oResLEIZQTpeoEEdyddQ?key=QUc4NE16LWpVZXFyN0dVUFBEdEJlZ3BsQjg1dUVR" class="color-btn">photo in tonirshaik5</a>
-        <a href="https://photos.google.com/share/AF1QipPt6Kk6DOjVyrNiiNTFNebi9Ce96rVDuVAIw0bboofqcIXexs8xXuipVBXrrUkxlQ?key=UDdxZnBoY1RvdzZGd0MzdjRjU0VpVDFQSUJ6bTVR" class="color-btn">Rudro all pictstonir@gmail.com</a>
+        <a href="https://photos.google.com/share/AF1QipMh84A25f8ZKwH84h6t3XbBxdQV-YrjzeYRel3aL7VkAgc8ii1z6csy6fDrQXOzFg?pli=1&key=SjJkajJ4WldDNWt0VWx1M012THVRWU9nQWowLUtn" target="_blank" class="color-btn">New Picture 2026</a>
+        <a href="https://photos.google.com/share/AF1QipPc0OEKXe8DDrXFxIZpRo96HnlNipptaB_ULkq5WDiEzKhLBt4p59Qucanw6YPlMg?key=cGxhZzZrRWtjTUw5b3hFRWxGb0N0SXFnMVo3eFhR" target="_blank" class="color-btn">All Pictures Mother Gmail</a>
+        <a href="https://photos.google.com/share/AF1QipNUBtXdQeciaNRYz0Wl72hufnieSrtm1j-LNZi7Z3L9IqlIyvCLFwLL5FECFkz8nA?key=U1E3NEpkYUYtcXg0U1ZxSnBRSDcteXFuWlVDSGNR" target="_blank" class="color-btn">All Photo in tonirsheikh@gmail.com</a>
+        <a href="https://photos.google.com/share/AF1QipM9cgX9UbjOuhKd4bPU3zNP8gpI_sfhWYxvk3pm1kDgX8GoXYptzNuLTx6aI_zCEQ?key=NmRkemw1MV9BNnBFM2plblhfWFZDU1hMN2pWUmJB" target="_blank" class="color-btn">Remini tonirshaik2</a>
+        <a href="https://photos.google.com/share/AF1QipP9PO99CE9V0gaHfk-Oq1YjhbaGrZ5FQLwCpsdpoju3wr8P2ZLn0wK6QzllL1NKDA?key=NXMzMlJHMm1WbTI5TjZmRktza2I0Q2Vha1VPMjFn" target="_blank" class="color-btn">photo in tonirfshaik3</a>
+        <a href="https://photos.google.com/share/AF1QipPNcnrUEbu9bJS6-BB6-YxwnYIDJU1hH7eRUQAOsCFg9SkzHZsD1QthI1LdlH3Y-w?key=Y01mRXVjRE1ESDVWZjZ0elZsZlBpdUhSODNZUTJB" target="_blank" class="color-btn">photo in tonirshaik4</a>
+        <a href="https://photos.google.com/share/AF1QipNc4Nxu38dwEqxfN3fnCb7AjPgp64zB6t6kxov_t85WT7oResLEIZQTpeoEEdyddQ?key=QUc4NE16LWpVZXFyN0dVUFBEdEJlZ3BsQjg1dUVR" target="_blank" class="color-btn">photo in tonirshaik5</a>
+        <a href="https://photos.google.com/share/AF1QipPt6Kk6DOjVyrNiiNTFNebi9Ce96rVDuVAIw0bboofqcIXexs8xXuipVBXrrUkxlQ?key=UDdxZnBoY1RvdzZGd0MzdjRjU0VpVDFQSUJ6bTVR" target="_blank" class="color-btn">Rudro all pictstonir@gmail.com</a>
     </div>
 </div>
-<script>
-    const correctPass = "photo2002";
-    function toggleVisibility() {
-        const input = document.getElementById('passInput');
-        const eyeIcon = document.getElementById('eyeIcon');
-        if (input.type === "password") { input.type = "text"; eyeIcon.textContent = "🙈"; }
-        else { input.type = "password"; eyeIcon.textContent = "👁️"; }
-    }
-    function checkRealtime() {
-        const inputVal = document.getElementById('passInput').value;
-        const btn = document.getElementById('submit-btn');
-        if (inputVal === correctPass) { btn.style.display = "block"; }
-        else { btn.style.display = "none"; }
-    }
-    function openDashboard() {
-        document.getElementById('login-box').style.display = 'none';
-        document.getElementById('dashboard').style.display = 'block';
-    }
-<\/script>
 </body>
 </html>
 `

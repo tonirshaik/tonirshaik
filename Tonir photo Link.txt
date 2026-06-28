@@ -40,9 +40,9 @@ https://drive.google.com/uc?export=download&id=1rmSTil4Xvq2thKUfnF4_SsY_01uW3T-S
 https://drive.google.com/uc?export=download&id=1XmGqeF3HGpa9pcixWstKwHwYDGF1NWY6,বাড়ি,Bari
 https://drive.google.com/uc?export=download&id=10oza7NkFlqnzsjoFLQymHtc49qlSy7OZ,বাড়ি,Bari
 https://drive.google.com/uc?export=download&id=1WxbjnluLYZsO0mipJ7diiWcijY0UDwy9,বু,Bu
-https://drive.google.com/uc?export=download&id=15FJggxXLksX3AFLnAcJIhKVWDuN0ZzTm,বিড়াল,Biral
-https://drive.google.com/uc?export=download&id=1-NAQXAMzNTHPYgz5_xxq_UlhjcngJSpJ,বিড়াল,Biral
-https://drive.google.com/uc?export=download&id=14TbS9arJICpEfSJHc8PhUNrX3Q8mRwoD,বিড়াল,Biral
+https://drive.google.com/uc?export=download&id=15FJggxXLksX3AFLnAcJIhKVWDuN0ZzTm,বিড়াল, বিড়াল, Biral
+https://drive.google.com/uc?export=download&id=1-NAQXAMzNTHPYgz5_xxq_UlhjcngJSpJ,বিড়াল, বিড়াল, Biral
+https://drive.google.com/uc?export=download&id=14TbS9arJICpEfSJHc8PhUNrX3Q8mRwoD,বিড়াল, বিড়াল, Biral
 https://drive.google.com/uc?export=download&id=1I5MNqhni4q3kgjv1P6fh-XCogjNDhrWC,ফারিয়া,Fariya
 https://drive.google.com/uc?export=download&id=1hB3F0m6BkSiZC071xVYfDG2WIRuuyuz_,খাবার,Khabar
 https://drive.google.com/uc?export=download&id=1hB9uU5_QO8DepR1GMG8PgFssyBzpr51t,খাবার,Khabar
@@ -1238,7 +1238,7 @@ https://drive.google.com/uc?export=download&id=1xvOhYKRDJEU0xpPAq6QHnJLlR6J7t7Ck
 https://drive.google.com/uc?export=download&id=1tDFGT2AEjidNBOUHTYePnCU-3-Y_hsKP,রিয়ন,Rion,পারভেজ,Parvej,রিয়াদ,Riyad,তনির,Tonir,রয়েল,royal,নয়ন,Nayon,সাকিব,Shakib
 https://drive.google.com/uc?export=download&id=11k25m6yuEXNJGUhm4Kqat59w22yjT8BG,তনির,Tonir,মাহাবুব,Mahabub,রয়েল,royal,সবুজ,Sobuj
 https://drive.google.com/uc?export=download&id=1hAd_lps0rVaereERiB0w6yeSqH-OwQxI,রিয়াদ,Riyad,পারভেজ,Parvej,রিয়ন,Rion
-https://drive.google.com/uc?export=download&id=16VBgeN6KkNw9YbreVU2uMrAa-NPlZyHd,বিড়াল,Biral
+https://drive.google.com/uc?export=download&id=16VBgeN6KkNw9YbreVU2uMrAa-NPlZyHd,বিড়াল, বিড়াল, Biral
 https://drive.google.com/uc?export=download&id=1smJu0UPairPoFgdvvltEAK1qJIoW0E2J,তনির,Tonir,মাহাবুব,Mahabub,প্রান্তর,Prantor,রিয়াদ,Riyad,পারভেজ,Parvej,সিরাজুল,Sirajul
 https://drive.google.com/uc?export=download&id=1Ru2ddZwbS0nAiqyzoqLoAYb2kqZ8zM7o,তনির,Tonir,মাহাবুব,Mahabub,পারভেজ,Parvej,সয়ন,Soyon,শুভ,Shuvo
 https://drive.google.com/uc?export=download&id=1UtdIFxgsf9IAhw1QJ6JaM1jbpAn2HD-b,তনির,Tonir,মাহাবুব,Mahabub,শুভ,Shuvo,মনিরুল,Monirul,সয়ন,Soyon,নয়ন,Nayon

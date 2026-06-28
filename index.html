@@ -432,9 +432,9 @@
 
     <div class="filters reveal">
         <button class="filter-btn active" data-filter="all">All</button>
-        <button class="filter-btn" data-filter="portrait">Portrait</button>
-        <button class="filter-btn" data-filter="lifestyle">Lifestyle</button>
-        <button class="filter-btn" data-filter="editorial">Editorial</button>
+        <button class="filter-btn" data-filter="single">Single</button>
+        <button class="filter-btn" data-filter="dual">Dual</button>
+        <button class="filter-btn" data-filter="group">Group</button>
     </div>
 
     <div class="gallery-section">
@@ -505,8 +505,9 @@
         cursor.style.top = e.clientY + 'px';
     });
 
-    const categories = ['portrait','lifestyle','editorial'];
-    const catLabels = ['Portrait','Lifestyle','Editorial'];
+    // Maps the section header found in the text file (e.g. "#SINGLE")
+    // to the internal category key and the label shown in the gallery overlay.
+    const CATEGORY_LABELS = { single: 'Single', dual: 'Dual', group: 'Group' };
     const PAGE_SIZE = 15;
 
     let allPhotos = [];
@@ -557,18 +558,43 @@
         return url;
     }
 
+    // Parses the text file line by line, tracking which #SECTION header
+    // (#SINGLE, #DUAL, #GROUP) the reader is currently under. Every URL line
+    // is tagged with whatever section it falls beneath. A URL that appears
+    // before any header, or under an unrecognized header, falls back to
+    // 'uncategorized' so it still shows under "All" but won't match a filter.
+    function parsePhotoFile(text) {
+        const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+        const photos = [];
+        let currentCat = 'uncategorized';
+
+        lines.forEach(line => {
+            const headerMatch = line.match(/^#\s*(single|dual|group)\b/i);
+            if (headerMatch) {
+                currentCat = headerMatch[1].toLowerCase();
+                return;
+            }
+            if (line.startsWith('http')) {
+                const idx = photos.length;
+                photos.push({
+                    url: toRenderableUrl(line, 1000),
+                    rawUrl: line,
+                    downloadUrl: toDownloadUrl(line),
+                    idx: idx,
+                    cat: currentCat,
+                    title: 'Photo ' + (idx + 1)
+                });
+            }
+            // Any other line (blank already filtered, stray text, etc.) is ignored.
+        });
+
+        return photos;
+    }
+
     fetch(csvUrl)
         .then(r => r.text())
         .then(data => {
-            const links = data.split('\n').map(l => l.trim()).filter(l => l.startsWith('http'));
-            allPhotos = links.map((url, i) => ({
-                url: toRenderableUrl(url, 1000),   // what gets rendered in <img>
-                rawUrl: url,                        // original link, kept for reference
-                downloadUrl: toDownloadUrl(url),    // what the Download button uses
-                idx: i,
-                cat: categories[i % 3],
-                title: 'Photo ' + (i + 1)
-            }));
+            allPhotos = parsePhotoFile(data);
             document.getElementById('photoCount').textContent = allPhotos.length;
             document.getElementById('loadingState').style.display = 'none';
             document.getElementById('masonry').style.display = '';
@@ -627,7 +653,7 @@
                 <img data-src="${p.url}" src="${placeholder}" alt="${p.title}" style="background:#1C1A16;">
                 <div class="photo-overlay">
                     <div class="photo-meta">
-                        <div class="photo-tag">${catLabels[categories.indexOf(p.cat)]}</div>
+                        <div class="photo-tag">${CATEGORY_LABELS[p.cat] || ''}</div>
                         <div class="photo-title">${p.title}</div>
                     </div>
                     <div class="photo-actions">

@@ -505,12 +505,56 @@
 
     const csvUrl = 'https://raw.githubusercontent.com/tonirshaik/tonirshaik/refs/heads/main/Tonir%20photo%20Link.txt?t=' + Date.now();
 
+    // ---- Google Drive link handling ----
+    // Recognizes share links (file/d/ID/view), open?id=ID, and uc?...id=ID,
+    // and normalizes all of them to Google's image-serving thumbnail endpoint,
+    // which renders reliably in <img> tags (the uc?export=download endpoint
+    // can return an HTML interstitial instead of image bytes for some files).
+    function getDriveFileId(url) {
+        let m = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+        if (m) return m[1];
+        m = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+        if (m) return m[1];
+        return null;
+    }
+
+    function isGoogleDriveUrl(url) {
+        return /drive\.google\.com/.test(url);
+    }
+
+    // Returns the best <img>-renderable URL for a given raw link.
+    // Non-Drive links (e.g. ImgBB) are returned unchanged.
+    function toRenderableUrl(url, size) {
+        if (isGoogleDriveUrl(url)) {
+            const id = getDriveFileId(url);
+            if (id) {
+                return 'https://drive.google.com/thumbnail?id=' + id + '&sz=w' + (size || 1000);
+            }
+        }
+        return url;
+    }
+
+    // Returns a direct-download URL used for the Download button,
+    // so saved files come through as the original image rather than a thumbnail.
+    function toDownloadUrl(url) {
+        if (isGoogleDriveUrl(url)) {
+            const id = getDriveFileId(url);
+            if (id) {
+                return 'https://drive.google.com/uc?export=download&id=' + id;
+            }
+        }
+        return url;
+    }
+
     fetch(csvUrl)
         .then(r => r.text())
         .then(data => {
             const links = data.split('\n').map(l => l.trim()).filter(l => l.startsWith('http'));
             allPhotos = links.map((url, i) => ({
-                url, idx: i,
+                url: toRenderableUrl(url, 1000),   // what gets rendered in <img>
+                rawUrl: url,                        // original link, kept for reference
+                downloadUrl: toDownloadUrl(url),    // what the Download button uses
+                idx: i,
                 cat: categories[i % 3],
                 title: 'Photo ' + (i + 1)
             }));
@@ -539,6 +583,24 @@
         });
     }, { rootMargin: '300px 0px' });
 
+    // If a Drive thumbnail URL fails to load (rare, but can happen for
+    // restricted-sharing files), fall back once to the uc?export=view endpoint
+    // before giving up — keeps a single bad link from looking broken needlessly.
+    function attachImgFallback(imgEl, photo) {
+        let triedFallback = false;
+        imgEl.addEventListener('error', function onErr() {
+            if (triedFallback) return;
+            triedFallback = true;
+            if (isGoogleDriveUrl(photo.rawUrl)) {
+                const id = getDriveFileId(photo.rawUrl);
+                if (id) {
+                    imgEl.src = 'https://drive.google.com/uc?export=view&id=' + id;
+                    return;
+                }
+            }
+        });
+    }
+
     function renderGallery(photos, reset) {
         const masonry = document.getElementById('masonry');
         if (reset) { masonry.innerHTML = ''; visibleCount = 0; }
@@ -559,12 +621,14 @@
                     </div>
                     <div class="photo-actions">
                         <button class="photo-action-btn" title="View" onclick="openLightbox(${p.idx});event.stopPropagation()">⤢</button>
-                        <button class="photo-action-btn" title="Download" onclick="dlImg('${p.url}','Tonir-${p.idx + 1}.jpg');event.stopPropagation()">↓</button>
+                        <button class="photo-action-btn" title="Download" onclick="dlImg('${p.downloadUrl}','Tonir-${p.idx + 1}.jpg');event.stopPropagation()">↓</button>
                     </div>
                 </div>`;
             item.addEventListener('click', () => openLightbox(p.idx));
             masonry.appendChild(item);
-            imgObserver.observe(item.querySelector('img'));
+            const imgEl = item.querySelector('img');
+            attachImgFallback(imgEl, p);
+            imgObserver.observe(imgEl);
             setTimeout(() => item.classList.add('visible'), i * 40);
         });
         visibleCount = end;
@@ -592,8 +656,11 @@
         const stripSource = photos.length > 40 ? photos.slice(0, 40) : photos;
         const doubled = [...stripSource, ...stripSource];
         track.innerHTML = doubled.map(p =>
-            `<div class="strip-item"><img src="${p.url}" alt="" loading="lazy"></div>`
+            `<div class="strip-item"><img src="${p.url}" alt="" loading="lazy" onerror="this.onerror=null;${isGoogleDriveUrl(p.rawUrl) ? '' : ''}"></div>`
         ).join('');
+        // Attach fallback handlers for the strip images too.
+        const stripImgs = track.querySelectorAll('img');
+        doubled.forEach((p, i) => attachImgFallback(stripImgs[i], p));
         document.getElementById('stripSection').style.display = 'block';
     }
 
@@ -623,7 +690,7 @@
         document.getElementById('lbImg').src = p.url;
         document.getElementById('lbTitle').textContent = p.title;
         document.getElementById('lbCounter').textContent = (currentIdx + 1) + ' / ' + currentList.length;
-        document.getElementById('lbDl').onclick = () => dlImg(p.url, 'Tonir-' + (p.idx + 1) + '.jpg');
+        document.getElementById('lbDl').onclick = () => dlImg(p.downloadUrl, 'Tonir-' + (p.idx + 1) + '.jpg');
     }
 
     document.getElementById('lbClose').onclick = closeLightbox;

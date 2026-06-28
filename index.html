@@ -132,6 +132,60 @@
             margin: 20px auto 0;
         }
 
+        .search-wrap {
+            display: flex; flex-direction: column; align-items: center;
+            padding: 0 20px 32px;
+        }
+        .search-bar {
+            display: flex; align-items: center; gap: 10px;
+            width: 100%; max-width: 480px;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 30px;
+            padding: 10px 16px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .search-bar:focus-within {
+            border-color: var(--gold);
+            box-shadow: 0 0 0 3px var(--gold-dim);
+        }
+        .search-icon { width: 16px; height: 16px; color: var(--muted); flex-shrink: 0; }
+        .search-input {
+            flex: 1; background: none; border: none; outline: none;
+            color: #fff; font-family: 'Inter', sans-serif;
+            font-size: 14px; letter-spacing: 0.01em;
+            min-width: 0;
+        }
+        .search-input::placeholder { color: var(--muted); }
+        .search-clear {
+            background: none; border: none; color: var(--muted);
+            font-size: 18px; cursor: pointer; line-height: 1;
+            padding: 0 2px; flex-shrink: 0; transition: color 0.2s;
+        }
+        .search-clear:hover { color: var(--gold); }
+        .mic-btn {
+            width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--gold-dim); border: 1px solid var(--border);
+            color: var(--gold); cursor: pointer;
+            transition: background 0.2s, border-color 0.2s, transform 0.2s;
+        }
+        .mic-btn svg { width: 15px; height: 15px; }
+        .mic-btn:hover { border-color: var(--gold); }
+        .mic-btn.listening {
+            background: var(--gold); color: #000;
+            animation: micPulse 1.2s ease-in-out infinite;
+        }
+        @keyframes micPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(201,168,76,0.5); }
+            50% { box-shadow: 0 0 0 8px rgba(201,168,76,0); }
+        }
+        .search-status {
+            margin-top: 10px; font-size: 11px; letter-spacing: 0.08em;
+            color: var(--muted); min-height: 14px; text-align: center;
+        }
+        .search-status.active { color: var(--gold); }
+
         .filters {
             display: flex; justify-content: center; flex-wrap: wrap;
             gap: 8px; padding: 0 20px 48px;
@@ -430,6 +484,27 @@
         </div>
     </div>
 
+    <div class="search-wrap reveal">
+        <div class="search-bar">
+            <svg class="search-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.6"/>
+                <path d="M20 20L16.5 16.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            </svg>
+            <input type="text" id="searchInput" class="search-input"
+                   placeholder="Search by name… নাম লিখে খুঁজুন…"
+                   autocomplete="off" spellcheck="false">
+            <button class="search-clear" id="searchClear" title="Clear" style="display:none;">×</button>
+            <button class="mic-btn" id="micBtn" title="Voice search">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Z" stroke="currentColor" stroke-width="1.6"/>
+                    <path d="M19 11a7 7 0 0 1-14 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                    <path d="M12 18v3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                </svg>
+            </button>
+        </div>
+        <p class="search-status" id="searchStatus"></p>
+    </div>
+
     <div class="filters reveal">
         <button class="filter-btn active" data-filter="all">All</button>
         <button class="filter-btn" data-filter="single">Single</button>
@@ -514,6 +589,8 @@
     let currentList = [];
     let visibleCount = 0;
     let currentIdx = 0;
+    let activeFilter = 'all';   // which filter button is selected
+    let searchQuery = '';       // current lowercased search text
 
     const csvUrl = 'https://raw.githubusercontent.com/tonirshaik/tonirshaik/refs/heads/main/Tonir%20photo%20Link.txt?t=' + Date.now();
 
@@ -563,6 +640,29 @@
     // is tagged with whatever section it falls beneath. A URL that appears
     // before any header, or under an unrecognized header, falls back to
     // 'uncategorized' so it still shows under "All" but won't match a filter.
+    //
+    // Optional per-photo names: a line can be just a URL, or
+    // "URL, name1 name2 ..." — anything after the first comma is treated as
+    // free-text names/tags (English and/or Bengali, space-separated) and
+    // folded into that photo's search index. This is the "keyword index"
+    // approach: raw Drive/ImgBB links carry no filename metadata themselves
+    // (Drive's image-serving endpoints return image bytes, not a title — and
+    // the actual Drive API needed for real filenames requires a server-side
+    // key, not something this page can call directly), so names have to be
+    // supplied here once and then search instantly against this index.
+    //
+    // Bengali-English search note: matching is done by direct substring
+    // comparison against whatever scripts are present in the name field, so
+    // "rakib" only matches if an English form was provided and "রাকিব" only
+    // matches if a Bengali form was provided. There's no automatic
+    // transliteration between the two — to support both spellings for a
+    // photo, include both in the name field for that line.
+    const SECTION_SEARCH_WORDS = {
+        single: ['single', 'একজন'],
+        dual: ['dual', 'couple', 'দুইজন', 'কাপল'],
+        group: ['group', 'দলগত', 'গ্রুপ']
+    };
+
     function parsePhotoFile(text) {
         const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
         const photos = [];
@@ -575,14 +675,25 @@
                 return;
             }
             if (line.startsWith('http')) {
+                const commaIdx = line.indexOf(',');
+                const url = (commaIdx === -1 ? line : line.slice(0, commaIdx)).trim();
+                const namesRaw = commaIdx === -1 ? '' : line.slice(commaIdx + 1).trim();
+
                 const idx = photos.length;
+                const sectionWords = SECTION_SEARCH_WORDS[currentCat] || [];
+                const searchIndex = [namesRaw, ...sectionWords]
+                    .join(' ')
+                    .toLowerCase();
+
                 photos.push({
-                    url: toRenderableUrl(line, 1000),
-                    rawUrl: line,
-                    downloadUrl: toDownloadUrl(line),
+                    url: toRenderableUrl(url, 1000),
+                    rawUrl: url,
+                    downloadUrl: toDownloadUrl(url),
                     idx: idx,
                     cat: currentCat,
-                    title: 'Photo ' + (idx + 1)
+                    names: namesRaw,            // raw display string, e.g. "Rakib রাকিব"
+                    searchIndex: searchIndex,   // lowercased, used for matching
+                    title: namesRaw || ('Photo ' + (idx + 1))
                 });
             }
             // Any other line (blank already filtered, stray text, etc.) is ignored.
@@ -701,14 +812,136 @@
         document.getElementById('stripSection').style.display = 'block';
     }
 
+    // Recomputes currentList from allPhotos using both the active category
+    // filter and the active search query, then re-renders the grid from
+    // scratch. Called whenever either the filter buttons or the search box
+    // change, so the two always combine rather than override each other.
+    function applyFiltersAndSearch() {
+        let list = activeFilter === 'all' ? allPhotos : allPhotos.filter(p => p.cat === activeFilter);
+        if (searchQuery) {
+            list = list.filter(p => p.searchIndex.indexOf(searchQuery) !== -1);
+        }
+        currentList = list;
+        renderGallery(currentList, true);
+        updateSearchStatus(list.length);
+    }
+
+    function updateSearchStatus(count) {
+        const status = document.getElementById('searchStatus');
+        if (!searchQuery) {
+            status.textContent = '';
+            status.classList.remove('active');
+            return;
+        }
+        status.classList.add('active');
+        status.textContent = count + (count === 1 ? ' result' : ' results') + ' for "' + searchQuery + '"';
+    }
+
     document.querySelectorAll('.filter-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            const f = btn.dataset.filter;
-            currentList = f === 'all' ? allPhotos : allPhotos.filter(p => p.cat === f);
-            renderGallery(currentList, true);
+            activeFilter = btn.dataset.filter;
+            applyFiltersAndSearch();
         });
+    });
+
+    // ---- Typing search (debounced, instant filter) ----
+    const searchInput = document.getElementById('searchInput');
+    const searchClear = document.getElementById('searchClear');
+    let searchDebounce = null;
+
+    searchInput.addEventListener('input', () => {
+        searchClear.style.display = searchInput.value ? 'block' : 'none';
+        clearTimeout(searchDebounce);
+        searchDebounce = setTimeout(() => {
+            searchQuery = searchInput.value.trim().toLowerCase();
+            applyFiltersAndSearch();
+        }, 150);
+    });
+
+    searchClear.addEventListener('click', () => {
+        searchInput.value = '';
+        searchClear.style.display = 'none';
+        searchQuery = '';
+        applyFiltersAndSearch();
+        searchInput.focus();
+    });
+
+    // ---- Voice search (Web Speech API, English + Bengali) ----
+    const micBtn = document.getElementById('micBtn');
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognizer = null;
+    let isListening = false;
+
+    // The Web Speech API only accepts one recognition language per session,
+    // so true simultaneous bn+en listening isn't possible in one instance.
+    // Instead: try Bengali first (since it's the less common of the two and
+    // more likely to be misrecognized by an English-default engine), and if
+    // nothing usable comes back, automatically retry the same recording
+    // window in English. This covers a single voice search working for
+    // either language without asking the user to pick one upfront.
+    function runRecognition(lang, isRetry) {
+        const rec = new SpeechRecognition();
+        rec.lang = lang;
+        rec.interimResults = false;
+        rec.maxAlternatives = 1;
+        let gotResult = false;
+        let retried = false;
+
+        function retryOrStop() {
+            if (retried) return;
+            retried = true;
+            if (!isRetry && !gotResult) {
+                runRecognition(lang === 'bn-BD' ? 'en-US' : 'bn-BD', true);
+            } else {
+                stopListening();
+            }
+        }
+
+        rec.onresult = (e) => {
+            const transcript = e.results[0][0].transcript.trim();
+            if (!transcript) return;
+            gotResult = true;
+            searchInput.value = transcript;
+            searchClear.style.display = 'block';
+            searchQuery = transcript.toLowerCase();
+            applyFiltersAndSearch();
+        };
+
+        rec.onerror = retryOrStop;
+        rec.onend = retryOrStop;
+
+        recognizer = rec;
+        rec.start();
+    }
+
+    function startListening() {
+        if (!SpeechRecognition) {
+            document.getElementById('searchStatus').textContent =
+                'Voice search isn\'t supported in this browser.';
+            return;
+        }
+        isListening = true;
+        micBtn.classList.add('listening');
+        runRecognition('bn-BD', false);
+    }
+
+    function stopListening() {
+        isListening = false;
+        micBtn.classList.remove('listening');
+        if (recognizer) {
+            try { recognizer.onend = null; recognizer.onerror = null; recognizer.stop(); } catch (e) {}
+            recognizer = null;
+        }
+    }
+
+    micBtn.addEventListener('click', () => {
+        if (isListening) {
+            stopListening();
+        } else {
+            startListening();
+        }
     });
 
     function openLightbox(idx) {

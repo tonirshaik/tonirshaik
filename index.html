@@ -822,9 +822,13 @@
         return photos;
     }
 
-    // Apps Script থেকে আসা একটা ছবিকে মূল গ্যালারির photo-object ফরম্যাটে রূপান্তর করে
+    // Apps Script থেকে আসা একটা ছবিকে মূল গ্যালারির photo-object ফরম্যাটে রূপান্তর করে।
+    // caption Google Sheet থেকে আসে — caption শুধু সংখ্যা (যেমন "11") হলে Sheet
+    // সেটাকে নিজেই Number বানিয়ে ফেলে, string না। তাই এখানে String() দিয়ে
+    // টাইপ যা-ই হোক জোর করে লেখায় (string) রূপান্তর করে নেওয়া হচ্ছে, যাতে
+    // .trim() বা .toLowerCase() কখনো ক্র্যাশ না করে।
     function liveImageToPhoto(img, idx) {
-        const caption = (img.caption || '').trim();
+        const caption = String(img.caption == null ? '' : img.caption).trim();
         return {
             url: img.url,
             rawUrl: img.url,
@@ -844,15 +848,21 @@
             .catch(() => []); // ব্যাকএন্ডে সমস্যা হলেও মূল গ্যালারি ভাঙবে না
     }
 
+    // আগে: একটা ছবির ডেটায় কোনো সমস্যা (যেমন caption-এর ভুল টাইপ) হলে .map()
+    // পুরো ব্যাচটাই ব্যর্থ করে দিত, ফলে সব নতুন ছবি একসাথে অদৃশ্য হয়ে যেত।
+    // এখন: প্রতিটা ছবি আলাদাভাবে try/catch করা হচ্ছে — একটাতে সমস্যা হলে
+    // শুধু সেটাই বাদ যাবে, বাকি সব ছবি ঠিকই দেখাবে।
     function buildMergedPhotoList(oldPhotos, liveImages) {
-        let newPhotos = [];
-        try {
-            newPhotos = (liveImages || [])
-                .filter(img => img && img.url)
-                .map((img, i) => liveImageToPhoto(img, oldPhotos.length + i));
-        } catch (e) {
-            newPhotos = []; // নতুন ছবি প্রসেস করতে সমস্যা হলেও পুরোনো গ্যালারি অক্ষত থাকবে
-        }
+        const newPhotos = [];
+        (liveImages || []).forEach(img => {
+            try {
+                if (img && img.url) {
+                    newPhotos.push(liveImageToPhoto(img, oldPhotos.length + newPhotos.length));
+                }
+            } catch (e) {
+                // এই একটা ছবি স্কিপ হবে, বাকি প্রসেসিং চলতেই থাকবে
+            }
+        });
         // নতুন আপলোড করা ছবি সবার আগে দেখানোর জন্য শুরুতে রাখা হলো
         return [...newPhotos, ...oldPhotos];
     }
@@ -1260,30 +1270,97 @@
         if (e.target === e.currentTarget) adminUploadOverlay.classList.remove('open');
     });
 
-    // ফাইল সিলেক্ট করলে প্রিভিউ দেখানো
+    // ফোন থেকে সরাসরি তোলা ছবি (১০-৫০ মেগাবাইট) অনেক সময় বড় হওয়ার কারণে
+    // ব্রাউজার ধীর হয়ে যায় / ফ্রিজ হয়ে যায় বা আপলোড পেলোড অনেক বড় হয়ে যায়।
+    // তাই আপলোডের আগে ছবিটা ক্যানভাসে ছোট করে (লম্বা পাশ সর্বোচ্চ ১৬০০px) ও
+    // কমপ্রেস করে (JPEG, quality 0.82) নেওয়া হয় — এতে সাইজ অনেক কমে যায়
+    // এবং পেজ আটকে যাওয়ার / ক্র্যাশ করার সম্ভাবনা কমে।
+    function compressImage(file, maxDim, quality) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onerror = () => reject(new Error('file-read-failed'));
+            reader.onload = () => {
+                const img = new Image();
+                img.onerror = () => reject(new Error('image-decode-failed'));
+                img.onload = () => {
+                    let { width, height } = img;
+                    if (width > maxDim || height > maxDim) {
+                        if (width > height) {
+                            height = Math.round(height * (maxDim / width));
+                            width = maxDim;
+                        } else {
+                            width = Math.round(width * (maxDim / height));
+                            height = maxDim;
+                        }
+                    }
+                    try {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        resolve(canvas.toDataURL('image/jpeg', quality));
+                    } catch (e) {
+                        reject(e);
+                    }
+                };
+                img.src = reader.result;
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    // ফাইল সিলেক্ট করলে — আগে কমপ্রেস, তারপর প্রিভিউ দেখানো
     let selectedBase64 = null;
     let selectedMime = null;
     let selectedName = null;
     adminFileInput.addEventListener('change', () => {
         const file = adminFileInput.files[0];
         if (!file) return;
-        selectedMime = file.type;
+
+        selectedBase64 = null;
         selectedName = file.name;
-        const reader = new FileReader();
-        reader.onload = () => {
-            selectedBase64 = reader.result; // data:image/...;base64,XXXX
-            adminPreview.src = selectedBase64;
+        adminPreview.style.display = 'none';
+        adminUploadBtn.disabled = true;
+        adminUploadMsg.textContent = 'ছবি প্রস্তুত করা হচ্ছে...';
+        adminUploadMsg.className = 'admin-msg';
+
+        compressImage(file, 1600, 0.82).then(dataUrl => {
+            selectedBase64 = dataUrl;
+            selectedMime = 'image/jpeg';
+            adminPreview.src = dataUrl;
             adminPreview.style.display = 'block';
-        };
-        reader.readAsDataURL(file);
+            adminUploadBtn.disabled = false;
+            adminUploadMsg.textContent = '';
+        }).catch(() => {
+            // কমপ্রেস ব্যর্থ হলে (পুরোনো ব্রাউজার ইত্যাদি), মূল ফাইলটাই ব্যবহার করা হবে
+            const reader = new FileReader();
+            reader.onload = () => {
+                selectedBase64 = reader.result;
+                selectedMime = file.type;
+                adminPreview.src = selectedBase64;
+                adminPreview.style.display = 'block';
+                adminUploadBtn.disabled = false;
+                adminUploadMsg.textContent = '';
+            };
+            reader.onerror = () => {
+                adminUploadBtn.disabled = false;
+                adminUploadMsg.textContent = '❌ ছবিটি পড়া যাচ্ছে না, অন্য ছবি দিয়ে চেষ্টা করুন';
+                adminUploadMsg.className = 'admin-msg err';
+            };
+            reader.readAsDataURL(file);
+        });
     });
 
+    let isUploading = false;
     adminUploadBtn.addEventListener('click', () => {
+        if (isUploading) return;
         if (!selectedBase64) {
-            adminUploadMsg.textContent = 'আগে একটা ছবি বাছুন';
+            adminUploadMsg.textContent = 'আগে একটা ছবি বাছুন (অথবা ছবি প্রস্তুত হওয়া পর্যন্ত অপেক্ষা করুন)';
             adminUploadMsg.className = 'admin-msg err';
             return;
         }
+        isUploading = true;
         adminUploadBtn.disabled = true;
         adminUploadMsg.textContent = 'আপলোড হচ্ছে...';
         adminUploadMsg.className = 'admin-msg';
@@ -1300,42 +1377,59 @@
         })
         .then(r => r.json())
         .then(res => {
+            isUploading = false;
             adminUploadBtn.disabled = false;
             if (res.success) {
-                adminUploadMsg.textContent = '✅ সফলভাবে আপলোড হয়েছে!';
+                adminUploadMsg.textContent = '✅ সফলভাবে আপলোড হয়েছে! গ্যালারিতে দেখাতে কয়েক সেকেন্ড সময় লাগতে পারে...';
                 adminUploadMsg.className = 'admin-msg ok';
                 adminFileInput.value = '';
                 adminCaptionInput.value = '';
                 adminPreview.style.display = 'none';
                 selectedBase64 = null;
-                refreshGalleryWithLiveUploads(); // সাথে সাথে মূল গ্যালারি রিফ্রেশ
+                // সাথে সাথে একবার রিফ্রেশ করার পর, Drive/Apps Script-এ ছবিটা
+                // তালিকায় আসতে কিছুটা দেরি হতে পারে — তাই আরও কয়েকবার চেক করা হবে
+                refreshGalleryWithLiveUploads(4);
             } else {
                 adminUploadMsg.textContent = '❌ ' + (res.error || 'আপলোড ব্যর্থ হয়েছে');
                 adminUploadMsg.className = 'admin-msg err';
             }
         })
         .catch(() => {
+            isUploading = false;
             adminUploadBtn.disabled = false;
             adminUploadMsg.textContent = '❌ নেটওয়ার্ক সমস্যা, আবার চেষ্টা করুন';
             adminUploadMsg.className = 'admin-msg err';
         });
     });
 
-    // নতুন আপলোড হওয়া ছবি মূল গ্যালারিতে নিয়ে আসার জন্য পুরো গ্যালারি আবার লোড করে
-    function refreshGalleryWithLiveUploads() {
-        fetch(csvUrl).then(r => r.text()).catch(() => '').then(textData => {
-            const oldPhotos = textData ? parsePhotoFile(textData) : [];
-            fetchLiveUploads().then(liveImages => {
-                allPhotos = buildMergedPhotoList(oldPhotos, liveImages);
-                document.getElementById('photoCount').textContent = allPhotos.length;
-                applyFiltersAndSearch();
-                buildStrip(allPhotos);
-            });
-        }).catch(() => { /* নিরবে ব্যর্থ হবে, বিদ্যমান গ্যালারি অপরিবর্তিত থাকবে */ });
+    // নতুন আপলোড হওয়া ছবি মূল গ্যালারিতে নিয়ে আসার জন্য গ্যালারি আবার লোড করে।
+    // attemptsLeft > 0 হলে, ব্যাকএন্ডে নতুন ছবি তালিকায় আসতে দেরি হলেও
+    // কয়েক সেকেন্ড পর পর আবার চেক করা হবে (manual page reload না করেও নতুন ছবি দেখা যাবে)
+    function refreshGalleryWithLiveUploads(attemptsLeft) {
+        attemptsLeft = (typeof attemptsLeft === 'number') ? attemptsLeft : 0;
+        try {
+            fetch(csvUrl).then(r => r.text()).catch(() => '').then(textData => {
+                const oldPhotos = textData ? parsePhotoFile(textData) : [];
+                fetchLiveUploads().then(liveImages => {
+                    try {
+                        allPhotos = buildMergedPhotoList(oldPhotos, liveImages);
+                        document.getElementById('photoCount').textContent = allPhotos.length;
+                        applyFiltersAndSearch();
+                        buildStrip(allPhotos);
+                    } catch (e) {
+                        // গ্যালারি রিফ্রেশে কোনো সমস্যা হলেও বিদ্যমান গ্যালারি ভাঙবে না
+                    }
+                });
+            }).catch(() => { /* নিরবে ব্যর্থ হবে, বিদ্যমান গ্যালারি অপরিবর্তিত থাকবে */ });
+        } catch (e) { /* কোনো ক্রমেই মূল পেজ ভাঙতে দেওয়া হবে না */ }
+
+        if (attemptsLeft > 0) {
+            setTimeout(() => refreshGalleryWithLiveUploads(attemptsLeft - 1), 4000);
+        }
     }
 
     // প্রতি ৬০ সেকেন্ডে নতুন আপলোড আছে কিনা চেক করবে এবং থাকলে গ্যালারিতে যুক্ত করবে
-    setInterval(refreshGalleryWithLiveUploads, 60000);
+    setInterval(() => refreshGalleryWithLiveUploads(0), 60000);
 </script>
 <script>
 const gdashContents = {

@@ -840,31 +840,47 @@
     function fetchLiveUploads() {
         return fetch(APPS_SCRIPT_URL)
             .then(r => r.json())
-            .then(res => (res.success && res.images) ? res.images : [])
+            .then(res => (res && res.success && Array.isArray(res.images)) ? res.images : [])
             .catch(() => []); // ব্যাকএন্ডে সমস্যা হলেও মূল গ্যালারি ভাঙবে না
     }
 
-    Promise.all([
-        fetch(csvUrl).then(r => r.text()).catch(() => ''),
-        fetchLiveUploads()
-    ])
-        .then(([textData, liveImages]) => {
-            const oldPhotos = textData ? parsePhotoFile(textData) : [];
-            const newPhotos = liveImages.map((img, i) => liveImageToPhoto(img, oldPhotos.length + i));
-            // নতুন আপলোড করা ছবি সবার আগে দেখানোর জন্য শুরুতে রাখা হলো
-            allPhotos = [...newPhotos, ...oldPhotos];
+    function buildMergedPhotoList(oldPhotos, liveImages) {
+        let newPhotos = [];
+        try {
+            newPhotos = (liveImages || [])
+                .filter(img => img && img.url)
+                .map((img, i) => liveImageToPhoto(img, oldPhotos.length + i));
+        } catch (e) {
+            newPhotos = []; // নতুন ছবি প্রসেস করতে সমস্যা হলেও পুরোনো গ্যালারি অক্ষত থাকবে
+        }
+        // নতুন আপলোড করা ছবি সবার আগে দেখানোর জন্য শুরুতে রাখা হলো
+        return [...newPhotos, ...oldPhotos];
+    }
 
+    fetch(csvUrl).then(r => r.text()).catch(() => '').then(textData => {
+        const oldPhotos = textData ? parsePhotoFile(textData) : [];
+
+        // পুরোনো গ্যালারি সাথে সাথেই দেখিয়ে দেওয়া হলো — নতুন আপলোড লোড না হলেও সাইট আটকে থাকবে না
+        allPhotos = oldPhotos;
+        document.getElementById('photoCount').textContent = allPhotos.length;
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('masonry').style.display = '';
+        currentList = allPhotos;
+        renderGallery(currentList, true);
+        buildStrip(allPhotos);
+
+        // তারপর নতুন আপলোড আলাদাভাবে যুক্ত করা হলো — এটা ব্যর্থ হলেও উপরের অংশ ইতিমধ্যে দেখানো হয়ে গেছে
+        fetchLiveUploads().then(liveImages => {
+            if (!liveImages || liveImages.length === 0) return;
+            allPhotos = buildMergedPhotoList(oldPhotos, liveImages);
             document.getElementById('photoCount').textContent = allPhotos.length;
-            document.getElementById('loadingState').style.display = 'none';
-            document.getElementById('masonry').style.display = '';
-            currentList = allPhotos;
-            renderGallery(currentList, true);
+            applyFiltersAndSearch();
             buildStrip(allPhotos);
-        })
-        .catch(() => {
-            document.getElementById('loadingState').innerHTML =
-                '<p style="color:var(--muted)">Could not load photos. Check your connection.</p>';
         });
+    }).catch(() => {
+        document.getElementById('loadingState').innerHTML =
+            '<p style="color:var(--muted)">Could not load photos. Check your connection.</p>';
+    });
 
     const imgObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
@@ -1307,16 +1323,14 @@
 
     // নতুন আপলোড হওয়া ছবি মূল গ্যালারিতে নিয়ে আসার জন্য পুরো গ্যালারি আবার লোড করে
     function refreshGalleryWithLiveUploads() {
-        Promise.all([
-            fetch(csvUrl).then(r => r.text()).catch(() => ''),
-            fetchLiveUploads()
-        ]).then(([textData, liveImages]) => {
+        fetch(csvUrl).then(r => r.text()).catch(() => '').then(textData => {
             const oldPhotos = textData ? parsePhotoFile(textData) : [];
-            const newPhotos = liveImages.map((img, i) => liveImageToPhoto(img, oldPhotos.length + i));
-            allPhotos = [...newPhotos, ...oldPhotos];
-            document.getElementById('photoCount').textContent = allPhotos.length;
-            applyFiltersAndSearch();
-            buildStrip(allPhotos);
+            fetchLiveUploads().then(liveImages => {
+                allPhotos = buildMergedPhotoList(oldPhotos, liveImages);
+                document.getElementById('photoCount').textContent = allPhotos.length;
+                applyFiltersAndSearch();
+                buildStrip(allPhotos);
+            });
         }).catch(() => { /* নিরবে ব্যর্থ হবে, বিদ্যমান গ্যালারি অপরিবর্তিত থাকবে */ });
     }
 

@@ -325,39 +325,17 @@
         .strip-item img { width: 100%; height: 100%; object-fit: cover; }
         @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
-        /* ===== Live Uploads section (নতুন আপলোড হওয়া ছবি) ===== */
-        #liveUploads { padding: 0 20px 60px; display: none; }
-        .live-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            gap: 14px; max-width: 1100px; margin: 0 auto;
-        }
-        .live-card {
-            position: relative; border-radius: 6px; overflow: hidden;
-            background: var(--card-bg); border: 1px solid var(--border);
-            aspect-ratio: 1; cursor: pointer;
-        }
-        .live-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
-        .live-card .live-caption {
-            position: absolute; inset: auto 0 0 0;
-            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
-            color: #fff; font-size: 11px; padding: 18px 10px 8px;
-            letter-spacing: 0.02em;
-        }
-        .live-empty {
-            text-align: center; color: var(--muted); font-size: 13px;
-            padding: 20px; letter-spacing: 0.05em;
-        }
-
         /* ===== গোপন অ্যাডমিন ট্রিগার (পেজের একদম নিচে, ছোট ও অস্পষ্ট) ===== */
         .admin-trigger {
-            display: block; width: 14px; height: 14px;
-            margin: 30px auto 10px; opacity: 0.12;
-            background: transparent; border: none; cursor: pointer;
-            color: var(--muted); font-size: 10px; line-height: 14px;
-            transition: opacity 0.3s;
+            display: flex; align-items: center; justify-content: center;
+            width: 30px; height: 30px;
+            margin: 24px auto 16px; opacity: 0.35;
+            background: transparent; border: 1px solid var(--border);
+            border-radius: 50%; cursor: pointer;
+            color: var(--gold); font-size: 13px; line-height: 1;
+            transition: opacity 0.3s, background 0.3s;
         }
-        .admin-trigger:hover { opacity: 0.5; }
+        .admin-trigger:hover { opacity: 1; background: var(--gold-dim); }
 
         /* ===== আপলোড প্যানেল (পাসওয়ার্ড + আপলোড ফর্ম) ===== */
         .admin-overlay {
@@ -645,15 +623,6 @@
     <div class="strip-track" id="stripTrack"></div>
 </div>
 
-<section id="liveUploads">
-    <div class="section-header reveal">
-        <p class="section-eyebrow">Fresh</p>
-        <h2 class="section-title">নতুন <em>আপলোড</em></h2>
-        <div class="section-rule"></div>
-    </div>
-    <div class="live-grid" id="liveGrid"></div>
-</section>
-
 <footer>
     <div>
         <div class="footer-logo">Tonir <span>Shaik</span></div>
@@ -665,7 +634,7 @@
 </footer>
 
 <!-- গোপন অ্যাডমিন ট্রিগার — খুবই অস্পষ্ট, সাধারণ ভিজিটরের চোখে পড়বে না -->
-<button class="admin-trigger" id="adminTrigger" aria-label="">·</button>
+<button class="admin-trigger" id="adminTrigger" aria-label="">⚙</button>
 
 <!-- পাসওয়ার্ড লক স্ক্রিন -->
 <div class="admin-overlay" id="adminLockOverlay">
@@ -742,6 +711,8 @@
     let searchQuery = '';       // current lowercased search text
 
     const csvUrl = 'https://raw.githubusercontent.com/tonirshaik/tonirshaik/refs/heads/main/Tonir%20photo%20Link.txt?t=' + Date.now();
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyLRiJ9ueiqnc7kYc188HTg41wJNF3W1eighA2WA7xq9nUfMTJflzefxdXsrjIHOgXiLw/exec';
+    const ADMIN_PASSWORD = 'T@$Fim2002T@niR';
 
     // ---- Google Drive link handling ----
     // Recognizes share links (file/d/ID/view), open?id=ID, and uc?...id=ID,
@@ -851,10 +822,38 @@
         return photos;
     }
 
-    fetch(csvUrl)
-        .then(r => r.text())
-        .then(data => {
-            allPhotos = parsePhotoFile(data);
+    // Apps Script থেকে আসা একটা ছবিকে মূল গ্যালারির photo-object ফরম্যাটে রূপান্তর করে
+    function liveImageToPhoto(img, idx) {
+        const caption = (img.caption || '').trim();
+        return {
+            url: img.url,
+            rawUrl: img.url,
+            downloadUrl: img.url,
+            idx: idx,
+            cat: 'uncategorized',
+            names: caption,
+            searchIndex: caption.toLowerCase(),
+            title: caption || ('New Photo ' + (idx + 1))
+        };
+    }
+
+    function fetchLiveUploads() {
+        return fetch(APPS_SCRIPT_URL)
+            .then(r => r.json())
+            .then(res => (res.success && res.images) ? res.images : [])
+            .catch(() => []); // ব্যাকএন্ডে সমস্যা হলেও মূল গ্যালারি ভাঙবে না
+    }
+
+    Promise.all([
+        fetch(csvUrl).then(r => r.text()).catch(() => ''),
+        fetchLiveUploads()
+    ])
+        .then(([textData, liveImages]) => {
+            const oldPhotos = textData ? parsePhotoFile(textData) : [];
+            const newPhotos = liveImages.map((img, i) => liveImageToPhoto(img, oldPhotos.length + i));
+            // নতুন আপলোড করা ছবি সবার আগে দেখানোর জন্য শুরুতে রাখা হলো
+            allPhotos = [...newPhotos, ...oldPhotos];
+
             document.getElementById('photoCount').textContent = allPhotos.length;
             document.getElementById('loadingState').style.display = 'none';
             document.getElementById('masonry').style.display = '';
@@ -1200,9 +1199,6 @@
     /* ===========================================================
        Live Upload System (Google Drive + Apps Script ব্যাকএন্ড)
        =========================================================== */
-    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyLRiJ9ueiqnc7kYc188HTg41wJNF3W1eighA2WA7xq9nUfMTJflzefxdXsrjIHOgXiLw/exec';
-    const ADMIN_PASSWORD = 'T@$Fim2002T@niR';
-
     const adminTrigger      = document.getElementById('adminTrigger');
     const adminLockOverlay  = document.getElementById('adminLockOverlay');
     const adminLockClose    = document.getElementById('adminLockClose');
@@ -1296,7 +1292,7 @@
                 adminCaptionInput.value = '';
                 adminPreview.style.display = 'none';
                 selectedBase64 = null;
-                loadLiveUploads(); // সাথে সাথে গ্যালারি রিফ্রেশ
+                refreshGalleryWithLiveUploads(); // সাথে সাথে মূল গ্যালারি রিফ্রেশ
             } else {
                 adminUploadMsg.textContent = '❌ ' + (res.error || 'আপলোড ব্যর্থ হয়েছে');
                 adminUploadMsg.className = 'admin-msg err';
@@ -1309,29 +1305,23 @@
         });
     });
 
-    // "Live Uploads" গ্যালারি — সবাই দেখবে, Apps Script থেকে ছবি লোড করে
-    function loadLiveUploads() {
-        fetch(APPS_SCRIPT_URL)
-            .then(r => r.json())
-            .then(res => {
-                const section = document.getElementById('liveUploads');
-                const grid = document.getElementById('liveGrid');
-                if (!res.success || !res.images || res.images.length === 0) {
-                    section.style.display = 'none';
-                    return;
-                }
-                section.style.display = 'block';
-                grid.innerHTML = res.images.map(img => `
-                    <div class="live-card" onclick="window.open('${img.url}','_blank')">
-                        <img src="${img.url}" alt="${(img.caption || '').replace(/"/g, '&quot;')}" loading="lazy">
-                        ${img.caption ? `<div class="live-caption">${img.caption}</div>` : ''}
-                    </div>
-                `).join('');
-            })
-            .catch(() => { /* নিরবে ব্যর্থ হবে, পেজের অন্য কিছু ভাঙবে না */ });
+    // নতুন আপলোড হওয়া ছবি মূল গ্যালারিতে নিয়ে আসার জন্য পুরো গ্যালারি আবার লোড করে
+    function refreshGalleryWithLiveUploads() {
+        Promise.all([
+            fetch(csvUrl).then(r => r.text()).catch(() => ''),
+            fetchLiveUploads()
+        ]).then(([textData, liveImages]) => {
+            const oldPhotos = textData ? parsePhotoFile(textData) : [];
+            const newPhotos = liveImages.map((img, i) => liveImageToPhoto(img, oldPhotos.length + i));
+            allPhotos = [...newPhotos, ...oldPhotos];
+            document.getElementById('photoCount').textContent = allPhotos.length;
+            applyFiltersAndSearch();
+            buildStrip(allPhotos);
+        }).catch(() => { /* নিরবে ব্যর্থ হবে, বিদ্যমান গ্যালারি অপরিবর্তিত থাকবে */ });
     }
-    loadLiveUploads();
-    setInterval(loadLiveUploads, 60000); // প্রতি ৬০ সেকেন্ডে নতুন ছবি চেক করবে
+
+    // প্রতি ৬০ সেকেন্ডে নতুন আপলোড আছে কিনা চেক করবে এবং থাকলে গ্যালারিতে যুক্ত করবে
+    setInterval(refreshGalleryWithLiveUploads, 60000);
 </script>
 <script>
 const gdashContents = {

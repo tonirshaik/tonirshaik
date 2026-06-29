@@ -286,6 +286,12 @@
         }
         .photo-action-btn:hover { background: var(--gold); color: #000; border-color: var(--gold); }
 
+        /* মুছে ফেলার (×) বাটন — শুধু লাইভ-আপলোড করা ছবিতে থাকে, এবং
+           অ্যাডমিন পাসওয়ার্ড দিয়ে আনলক করার আগে অদৃশ্য থাকে */
+        .delete-btn { display: none; }
+        body.admin-mode .delete-btn { display: flex; }
+        .delete-btn:hover { background: #c0392b !important; color: #fff !important; border-color: #c0392b !important; }
+
         .load-more-wrap {
             display: flex; justify-content: center;
             margin-top: 40px;
@@ -364,6 +370,14 @@
             font-size: 13px; margin-bottom: 12px; font-family: inherit;
         }
         .admin-textarea { resize: vertical; min-height: 50px; }
+        .pw-field-wrap { position: relative; margin-bottom: 12px; }
+        .pw-field-wrap .admin-input { margin-bottom: 0; padding-right: 40px; }
+        .pw-eye-btn {
+            position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+            background: none; border: none; cursor: pointer; font-size: 16px;
+            color: var(--muted); padding: 6px; line-height: 1;
+        }
+        .pw-eye-btn:hover { color: var(--gold); }
         .admin-btn {
             width: 100%; background: linear-gradient(to right, var(--gold), var(--gold-light));
             color: #000; font-weight: 600; border: none; border-radius: 6px;
@@ -372,6 +386,8 @@
         }
         .admin-btn:hover { opacity: 0.85; }
         .admin-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        /* সঠিক পাসওয়ার্ড না দেওয়া পর্যন্ত Unlock বাটন দেখা যাবে না */
+        #adminUnlockBtn { display: none; }
         .admin-msg {
             text-align: center; font-size: 12px; margin-top: 10px;
             min-height: 16px; letter-spacing: 0.03em;
@@ -548,7 +564,7 @@
 <nav>
     <a href="#" class="nav-logo">Tonir <span>Shaik</span></a>
     <ul class="nav-links">
-        <li><a href="#gallery" id="navGalleryLink">Gallery</a></li>
+        <li><a href="#" id="navGalleryLink">Upload</a></li>
         <li><a href="https://sites.google.com/view/tonirshaik2/" target="_blank">Official Site</a></li>
     </ul>
 </nav>
@@ -633,15 +649,15 @@
     </a>
 </footer>
 
-<!-- গোপন অ্যাডমিন ট্রিগার — খুবই অস্পষ্ট, সাধারণ ভিজিটরের চোখে পড়বে না -->
-<button class="admin-trigger" id="adminTrigger" aria-label="">⚙</button>
-
 <!-- পাসওয়ার্ড লক স্ক্রিন -->
 <div class="admin-overlay" id="adminLockOverlay">
     <div class="admin-box">
         <button class="admin-close" id="adminLockClose">×</button>
         <h4>🔒 Admin Access</h4>
-        <input type="password" class="admin-input" id="adminPasswordInput" placeholder="পাসওয়ার্ড লিখুন" autocomplete="off">
+        <div class="pw-field-wrap">
+            <input type="password" class="admin-input" id="adminPasswordInput" placeholder="Enter password" autocomplete="off">
+            <button type="button" class="pw-eye-btn" id="pwEyeBtn" aria-label="Show password" tabindex="-1">👁</button>
+        </div>
         <button class="admin-btn" id="adminUnlockBtn">Unlock</button>
         <p class="admin-msg err" id="adminLockMsg"></p>
     </div>
@@ -657,23 +673,6 @@
         <textarea class="admin-textarea" id="adminCaptionInput" placeholder="ক্যাপশন / নাম লিখুন (যেমন: New Picture 2026)"></textarea>
         <button class="admin-btn" id="adminUploadBtn">Upload</button>
         <p class="admin-msg" id="adminUploadMsg"></p>
-    </div>
-</div>
-
-<div class="gdash-overlay" id="gdashOverlay">
-    <button class="gdash-close" id="gdashClose">×</button>
-
-    <div class="gdash-menu" id="gdashMenu">
-        <h3 class="gdash-title">Dashboard</h3>
-        <p class="gdash-subtitle">Select a category</p>
-        <button class="gdash-btn" data-target="dash1">📏 5 Feet Size Photo</button>
-        <button class="gdash-btn" data-target="dash2">🔒 Sorme All Photo</button>
-        <button class="gdash-btn" data-target="dash3">📷 Google Photo Albums</button>
-    </div>
-
-    <div class="gdash-frame-wrap" id="gdashFrameWrap">
-        <button class="gdash-back" id="gdashBack">‹ Back</button>
-        <iframe id="gdashFrame" class="gdash-iframe" title="dashboard content"></iframe>
     </div>
 </div>
 
@@ -837,7 +836,8 @@
             cat: 'uncategorized',
             names: caption,
             searchIndex: caption.toLowerCase(),
-            title: caption || ('New Photo ' + (idx + 1))
+            title: caption || ('New Photo ' + (idx + 1)),
+            fileId: img.id || null // শুধু লাইভ-আপলোড ছবিতেই থাকে, ডিলিট বাটনের জন্য লাগবে
         };
     }
 
@@ -867,26 +867,25 @@
         return [...newPhotos, ...oldPhotos];
     }
 
-    fetch(csvUrl).then(r => r.text()).catch(() => '').then(textData => {
-        const oldPhotos = textData ? parsePhotoFile(textData) : [];
+    // আগে: টেক্সট ফাইলের পুরোনো ছবি প্রথমে দেখানো হতো, তারপর নতুন আপলোড আলাদাভাবে
+    // লোড হয়ে যুক্ত হতো — এতে পেজ খোলার পর একটা "refresh/flash" এর মতো লাগতো।
+    // এখন: দুটো সোর্স (টেক্সট ফাইল + লাইভ আপলোড) একসাথে (parallel-এ) লোড করে,
+    // দুটোই রেডি হওয়ার পরেই একবারে সব ছবি দেখানো হচ্ছে।
+    const oldPhotosPromise = fetch(csvUrl)
+        .then(r => r.text())
+        .then(textData => textData ? parsePhotoFile(textData) : [])
+        .catch(() => []);
 
-        // পুরোনো গ্যালারি সাথে সাথেই দেখিয়ে দেওয়া হলো — নতুন আপলোড লোড না হলেও সাইট আটকে থাকবে না
-        allPhotos = oldPhotos;
+    const liveImagesPromise = fetchLiveUploads(); // ব্যর্থ হলে নিজেই [] রিটার্ন করে
+
+    Promise.all([oldPhotosPromise, liveImagesPromise]).then(([oldPhotos, liveImages]) => {
+        allPhotos = buildMergedPhotoList(oldPhotos, liveImages);
         document.getElementById('photoCount').textContent = allPhotos.length;
         document.getElementById('loadingState').style.display = 'none';
         document.getElementById('masonry').style.display = '';
         currentList = allPhotos;
         renderGallery(currentList, true);
         buildStrip(allPhotos);
-
-        // তারপর নতুন আপলোড আলাদাভাবে যুক্ত করা হলো — এটা ব্যর্থ হলেও উপরের অংশ ইতিমধ্যে দেখানো হয়ে গেছে
-        fetchLiveUploads().then(liveImages => {
-            if (!liveImages || liveImages.length === 0) return;
-            allPhotos = buildMergedPhotoList(oldPhotos, liveImages);
-            document.getElementById('photoCount').textContent = allPhotos.length;
-            applyFiltersAndSearch();
-            buildStrip(allPhotos);
-        });
     }).catch(() => {
         document.getElementById('loadingState').innerHTML =
             '<p style="color:var(--muted)">Could not load photos. Check your connection.</p>';
@@ -958,6 +957,7 @@
                     <div class="photo-actions">
                         <button class="photo-action-btn" title="View" onclick="openLightbox(${p.idx});event.stopPropagation()">⤢</button>
                         <button class="photo-action-btn" title="Download" onclick="dlImg('${p.downloadUrl}','Tonir-${p.idx + 1}.jpg');event.stopPropagation()">↓</button>
+                        ${p.fileId ? `<button class="photo-action-btn delete-btn" title="Delete" onclick="event.stopPropagation();deletePhotoConfirm('${p.fileId}', this)">×</button>` : ''}
                     </div>
                 </div>`;
             item.addEventListener('click', () => openLightbox(p.idx));
@@ -1187,64 +1187,27 @@
     }, { threshold: 0.1 });
     document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
+    // "Upload" নেভ-বাটনে ক্লিক করলে সরাসরি অ্যাডমিন পাসওয়ার্ড লক স্ক্রিন খুলবে
     document.getElementById('navGalleryLink').addEventListener('click', (e) => {
         e.preventDefault();
-        openGalleryDashboard();
-    });
-
-    function openGalleryDashboard() {
-        document.getElementById('gdashOverlay').classList.add('open');
-        document.getElementById('gdashMenu').style.display = 'flex';
-        document.getElementById('gdashFrameWrap').style.display = 'none';
-        document.body.style.overflow = 'hidden';
-    }
-    function closeGalleryDashboard() {
-        document.getElementById('gdashOverlay').classList.remove('open');
-        document.getElementById('gdashFrame').src = 'about:blank';
-        document.body.style.overflow = '';
-    }
-    document.getElementById('gdashClose').addEventListener('click', closeGalleryDashboard);
-    document.getElementById('gdashOverlay').addEventListener('click', (e) => {
-        if (e.target === e.currentTarget) closeGalleryDashboard();
-    });
-    let currentDash = null;
-
-    document.getElementById('gdashBack').addEventListener('click', () => {
-        document.getElementById('gdashMenu').style.display = 'flex';
-        document.getElementById('gdashFrameWrap').style.display = 'none';
-        document.getElementById('gdashFrame').srcdoc = '';
-        currentDash = null;
-    });
-
-    document.querySelectorAll('.gdash-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const target = btn.dataset.target;
-            currentDash = target;
-            document.getElementById('gdashMenu').style.display = 'none';
-            document.getElementById('gdashFrameWrap').style.display = 'flex';
-            document.getElementById('gdashFrame').srcdoc = gdashContents[target];
-        });
-    });
-
-    // Listen for postMessage from dash3 iframe
-    window.addEventListener('message', function(e) {
-        if (e.data === 'goToMainDash') {
-            document.getElementById('gdashMenu').style.display = 'flex';
-            document.getElementById('gdashFrameWrap').style.display = 'none';
-            document.getElementById('gdashFrame').srcdoc = '';
-            currentDash = null;
-        }
+        adminLockOverlay.classList.add('open');
+        adminPasswordInput.value = '';
+        adminPasswordInput.type = 'password';
+        pwEyeBtn.textContent = '👁';
+        adminLockMsg.textContent = '';
+        adminUnlockBtn.style.display = 'none';
+        adminPasswordInput.focus();
     });
 
     /* ===========================================================
        Live Upload System (Google Drive + Apps Script ব্যাকএন্ড)
        =========================================================== */
-    const adminTrigger      = document.getElementById('adminTrigger');
     const adminLockOverlay  = document.getElementById('adminLockOverlay');
     const adminLockClose    = document.getElementById('adminLockClose');
     const adminPasswordInput= document.getElementById('adminPasswordInput');
     const adminUnlockBtn    = document.getElementById('adminUnlockBtn');
     const adminLockMsg      = document.getElementById('adminLockMsg');
+    const pwEyeBtn          = document.getElementById('pwEyeBtn');
 
     const adminUploadOverlay= document.getElementById('adminUploadOverlay');
     const adminUploadClose  = document.getElementById('adminUploadClose');
@@ -1254,13 +1217,6 @@
     const adminUploadBtn    = document.getElementById('adminUploadBtn');
     const adminUploadMsg    = document.getElementById('adminUploadMsg');
 
-    // ছোট গোপন বাটনে ক্লিক করলে পাসওয়ার্ড লক স্ক্রিন খুলবে
-    adminTrigger.addEventListener('click', () => {
-        adminLockOverlay.classList.add('open');
-        adminPasswordInput.value = '';
-        adminLockMsg.textContent = '';
-        adminPasswordInput.focus();
-    });
     adminLockClose.addEventListener('click', () => adminLockOverlay.classList.remove('open'));
     adminLockOverlay.addEventListener('click', (e) => {
         if (e.target === e.currentTarget) adminLockOverlay.classList.remove('open');
@@ -1272,12 +1228,29 @@
             adminUploadOverlay.classList.add('open');
             adminUploadMsg.textContent = '';
             adminUploadMsg.className = 'admin-msg';
+            // আনলক হলে গ্যালারির ছবিতে ডিলিট (×) বাটন দেখা যাবে
+            document.body.classList.add('admin-mode');
         } else {
             adminLockMsg.textContent = 'ভুল পাসওয়ার্ড';
         }
     }
     adminUnlockBtn.addEventListener('click', tryUnlock);
     adminPasswordInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') tryUnlock(); });
+
+    // চোখ (👁) আইকনে ক্লিক করলে পাসওয়ার্ড লেখা দেখা/লুকানো টগল হবে
+    pwEyeBtn.addEventListener('click', () => {
+        const showing = adminPasswordInput.type === 'text';
+        adminPasswordInput.type = showing ? 'password' : 'text';
+        pwEyeBtn.textContent = showing ? '👁' : '🙈';
+        pwEyeBtn.setAttribute('aria-label', showing ? 'Show password' : 'Hide password');
+        adminPasswordInput.focus();
+    });
+
+    // টাইপ করার সাথে সাথেই চেক হবে — পাসওয়ার্ড পুরোপুরি ঠিক হলেই Unlock বাটন ভেসে উঠবে
+    adminPasswordInput.addEventListener('input', () => {
+        adminLockMsg.textContent = '';
+        adminUnlockBtn.style.display = (adminPasswordInput.value === ADMIN_PASSWORD) ? 'block' : 'none';
+    });
 
     adminUploadClose.addEventListener('click', () => adminUploadOverlay.classList.remove('open'));
     adminUploadOverlay.addEventListener('click', (e) => {
@@ -1365,6 +1338,48 @@
             reader.readAsDataURL(file);
         });
     });
+
+    // অ্যাডমিন মোডে কার্ডের (×) বাটনে ক্লিক করলে এটা চলে — কনফার্ম করে,
+    // Apps Script-কে delete রিকোয়েস্ট পাঠায়, সফল হলে কার্ডটা সরিয়ে দেয়
+    function deletePhotoConfirm(fileId, btnEl) {
+        if (!confirm('আপনি কি নিশ্চিত এই ছবিটা স্থায়ীভাবে ডিলিট করতে চান?')) return;
+
+        const item = btnEl.closest('.photo-item, .strip-item');
+        if (item) item.style.opacity = '0.4';
+        btnEl.disabled = true;
+
+        fetch(APPS_SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                password: ADMIN_PASSWORD,
+                action: 'delete',
+                fileId: fileId
+            })
+        })
+        .then(r => r.json())
+        .then(res => {
+            if (res.success) {
+                // মূল লিস্ট থেকেও বাদ দেওয়া হলো, যাতে ফিল্টার/সার্চ করলে আর না আসে
+                allPhotos = allPhotos.filter(p => p.fileId !== fileId);
+                currentList = currentList.filter(p => p.fileId !== fileId);
+                if (item) item.remove();
+                const countEl = document.getElementById('photoCount');
+                if (countEl) {
+                    const n = parseInt(countEl.textContent, 10);
+                    if (!isNaN(n) && n > 0) countEl.textContent = n - 1;
+                }
+            } else {
+                if (item) item.style.opacity = '1';
+                btnEl.disabled = false;
+                alert('ডিলিট ব্যর্থ হয়েছে: ' + (res.error || 'অজানা সমস্যা'));
+            }
+        })
+        .catch(() => {
+            if (item) item.style.opacity = '1';
+            btnEl.disabled = false;
+            alert('নেটওয়ার্ক সমস্যা, আবার চেষ্টা করুন');
+        });
+    }
 
     let isUploading = false;
     adminUploadBtn.addEventListener('click', () => {

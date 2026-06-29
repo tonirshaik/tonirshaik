@@ -905,19 +905,33 @@
         });
     }, { rootMargin: '300px 0px' });
 
-    // If a Drive thumbnail URL fails to load (rare, but can happen for
-    // restricted-sharing files), fall back once to the uc?export=view endpoint
-    // before giving up — keeps a single bad link from looking broken needlessly.
+    // Drive thumbnail URL লোড না হলে (rare, restricted-sharing হলে) আগে একবার
+    // uc?export=view endpoint ট্রাই করা হয়। সেটাও ব্যর্থ হলে — মানে ছবিটা
+    // আসলেই Drive থেকে ডিলিট/প্রাইভেট হয়ে গেছে — কালো বক্স না রেখে কার্ডটাই
+    // গ্যালারি থেকে সম্পূর্ণ সরিয়ে দেওয়া হয়।
     function attachImgFallback(imgEl, photo) {
         let triedFallback = false;
         imgEl.addEventListener('error', function onErr() {
-            if (triedFallback) return;
-            triedFallback = true;
-            if (isGoogleDriveUrl(photo.rawUrl)) {
-                const id = getDriveFileId(photo.rawUrl);
-                if (id) {
-                    imgEl.src = 'https://drive.google.com/uc?export=view&id=' + id;
-                    return;
+            if (!triedFallback) {
+                triedFallback = true;
+                if (isGoogleDriveUrl(photo.rawUrl)) {
+                    const id = getDriveFileId(photo.rawUrl);
+                    if (id) {
+                        imgEl.src = 'https://drive.google.com/uc?export=view&id=' + id;
+                        return;
+                    }
+                }
+            }
+            // উভয় চেষ্টাই ব্যর্থ — কার্ডটা সরিয়ে দেওয়া হচ্ছে
+            const item = imgEl.closest('.photo-item, .strip-item');
+            if (item) {
+                item.remove();
+                if (item.classList.contains('photo-item')) {
+                    const countEl = document.getElementById('photoCount');
+                    if (countEl) {
+                        const n = parseInt(countEl.textContent, 10);
+                        if (!isNaN(n) && n > 0) countEl.textContent = n - 1;
+                    }
                 }
             }
         });

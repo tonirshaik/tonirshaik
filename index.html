@@ -325,6 +325,86 @@
         .strip-item img { width: 100%; height: 100%; object-fit: cover; }
         @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
+        /* ===== Live Uploads section (নতুন আপলোড হওয়া ছবি) ===== */
+        #liveUploads { padding: 0 20px 60px; display: none; }
+        .live-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 14px; max-width: 1100px; margin: 0 auto;
+        }
+        .live-card {
+            position: relative; border-radius: 6px; overflow: hidden;
+            background: var(--card-bg); border: 1px solid var(--border);
+            aspect-ratio: 1; cursor: pointer;
+        }
+        .live-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .live-card .live-caption {
+            position: absolute; inset: auto 0 0 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+            color: #fff; font-size: 11px; padding: 18px 10px 8px;
+            letter-spacing: 0.02em;
+        }
+        .live-empty {
+            text-align: center; color: var(--muted); font-size: 13px;
+            padding: 20px; letter-spacing: 0.05em;
+        }
+
+        /* ===== গোপন অ্যাডমিন ট্রিগার (পেজের একদম নিচে, ছোট ও অস্পষ্ট) ===== */
+        .admin-trigger {
+            display: block; width: 14px; height: 14px;
+            margin: 30px auto 10px; opacity: 0.12;
+            background: transparent; border: none; cursor: pointer;
+            color: var(--muted); font-size: 10px; line-height: 14px;
+            transition: opacity 0.3s;
+        }
+        .admin-trigger:hover { opacity: 0.5; }
+
+        /* ===== আপলোড প্যানেল (পাসওয়ার্ড + আপলোড ফর্ম) ===== */
+        .admin-overlay {
+            display: none; position: fixed; inset: 0; z-index: 500;
+            background: rgba(10,9,7,0.92); backdrop-filter: blur(6px);
+            align-items: center; justify-content: center; padding: 20px;
+        }
+        .admin-overlay.open { display: flex; }
+        .admin-box {
+            background: var(--card-bg); border: 1px solid var(--border);
+            border-radius: 10px; padding: 28px; width: 100%; max-width: 360px;
+            position: relative;
+        }
+        .admin-box h4 {
+            font-family: 'Cormorant Garamond', serif; color: #fff;
+            font-size: 20px; margin-bottom: 16px; text-align: center;
+        }
+        .admin-close {
+            position: absolute; top: 12px; right: 14px;
+            background: none; border: none; color: var(--muted);
+            font-size: 20px; cursor: pointer;
+        }
+        .admin-input, .admin-textarea {
+            width: 100%; background: var(--ink); border: 1px solid var(--border);
+            color: #fff; padding: 10px 12px; border-radius: 6px;
+            font-size: 13px; margin-bottom: 12px; font-family: inherit;
+        }
+        .admin-textarea { resize: vertical; min-height: 50px; }
+        .admin-btn {
+            width: 100%; background: linear-gradient(to right, var(--gold), var(--gold-light));
+            color: #000; font-weight: 600; border: none; border-radius: 6px;
+            padding: 11px; font-size: 13px; cursor: pointer; letter-spacing: 0.04em;
+            transition: opacity 0.2s;
+        }
+        .admin-btn:hover { opacity: 0.85; }
+        .admin-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .admin-msg {
+            text-align: center; font-size: 12px; margin-top: 10px;
+            min-height: 16px; letter-spacing: 0.03em;
+        }
+        .admin-msg.err { color: #e07a6b; }
+        .admin-msg.ok { color: var(--gold-light); }
+        .admin-preview {
+            width: 100%; max-height: 140px; object-fit: contain;
+            border-radius: 6px; margin-bottom: 12px; display: none;
+        }
+
         .stats-row {
             display: flex; justify-content: center; gap: 40px;
             padding: 8px 20px 24px; flex-wrap: wrap;
@@ -565,6 +645,15 @@
     <div class="strip-track" id="stripTrack"></div>
 </div>
 
+<section id="liveUploads">
+    <div class="section-header reveal">
+        <p class="section-eyebrow">Fresh</p>
+        <h2 class="section-title">নতুন <em>আপলোড</em></h2>
+        <div class="section-rule"></div>
+    </div>
+    <div class="live-grid" id="liveGrid"></div>
+</section>
+
 <footer>
     <div>
         <div class="footer-logo">Tonir <span>Shaik</span></div>
@@ -574,6 +663,33 @@
         Visit Official Site →
     </a>
 </footer>
+
+<!-- গোপন অ্যাডমিন ট্রিগার — খুবই অস্পষ্ট, সাধারণ ভিজিটরের চোখে পড়বে না -->
+<button class="admin-trigger" id="adminTrigger" aria-label="">·</button>
+
+<!-- পাসওয়ার্ড লক স্ক্রিন -->
+<div class="admin-overlay" id="adminLockOverlay">
+    <div class="admin-box">
+        <button class="admin-close" id="adminLockClose">×</button>
+        <h4>🔒 Admin Access</h4>
+        <input type="password" class="admin-input" id="adminPasswordInput" placeholder="পাসওয়ার্ড লিখুন" autocomplete="off">
+        <button class="admin-btn" id="adminUnlockBtn">Unlock</button>
+        <p class="admin-msg err" id="adminLockMsg"></p>
+    </div>
+</div>
+
+<!-- আপলোড প্যানেল -->
+<div class="admin-overlay" id="adminUploadOverlay">
+    <div class="admin-box">
+        <button class="admin-close" id="adminUploadClose">×</button>
+        <h4>📤 নতুন ছবি আপলোড</h4>
+        <img class="admin-preview" id="adminPreview" alt="preview">
+        <input type="file" class="admin-input" id="adminFileInput" accept="image/*">
+        <textarea class="admin-textarea" id="adminCaptionInput" placeholder="ক্যাপশন / নাম লিখুন (যেমন: New Picture 2026)"></textarea>
+        <button class="admin-btn" id="adminUploadBtn">Upload</button>
+        <p class="admin-msg" id="adminUploadMsg"></p>
+    </div>
+</div>
 
 <div class="gdash-overlay" id="gdashOverlay">
     <button class="gdash-close" id="gdashClose">×</button>
@@ -1080,6 +1196,142 @@
             currentDash = null;
         }
     });
+
+    /* ===========================================================
+       Live Upload System (Google Drive + Apps Script ব্যাকএন্ড)
+       =========================================================== */
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyLRiJ9ueiqnc7kYc188HTg41wJNF3W1eighA2WA7xq9nUfMTJflzefxdXsrjIHOgXiLw/exec';
+    const ADMIN_PASSWORD = 'T@$Fim2002T@niR';
+
+    const adminTrigger      = document.getElementById('adminTrigger');
+    const adminLockOverlay  = document.getElementById('adminLockOverlay');
+    const adminLockClose    = document.getElementById('adminLockClose');
+    const adminPasswordInput= document.getElementById('adminPasswordInput');
+    const adminUnlockBtn    = document.getElementById('adminUnlockBtn');
+    const adminLockMsg      = document.getElementById('adminLockMsg');
+
+    const adminUploadOverlay= document.getElementById('adminUploadOverlay');
+    const adminUploadClose  = document.getElementById('adminUploadClose');
+    const adminFileInput    = document.getElementById('adminFileInput');
+    const adminPreview      = document.getElementById('adminPreview');
+    const adminCaptionInput = document.getElementById('adminCaptionInput');
+    const adminUploadBtn    = document.getElementById('adminUploadBtn');
+    const adminUploadMsg    = document.getElementById('adminUploadMsg');
+
+    // ছোট গোপন বাটনে ক্লিক করলে পাসওয়ার্ড লক স্ক্রিন খুলবে
+    adminTrigger.addEventListener('click', () => {
+        adminLockOverlay.classList.add('open');
+        adminPasswordInput.value = '';
+        adminLockMsg.textContent = '';
+        adminPasswordInput.focus();
+    });
+    adminLockClose.addEventListener('click', () => adminLockOverlay.classList.remove('open'));
+    adminLockOverlay.addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) adminLockOverlay.classList.remove('open');
+    });
+
+    function tryUnlock() {
+        if (adminPasswordInput.value === ADMIN_PASSWORD) {
+            adminLockOverlay.classList.remove('open');
+            adminUploadOverlay.classList.add('open');
+            adminUploadMsg.textContent = '';
+            adminUploadMsg.className = 'admin-msg';
+        } else {
+            adminLockMsg.textContent = 'ভুল পাসওয়ার্ড';
+        }
+    }
+    adminUnlockBtn.addEventListener('click', tryUnlock);
+    adminPasswordInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') tryUnlock(); });
+
+    adminUploadClose.addEventListener('click', () => adminUploadOverlay.classList.remove('open'));
+    adminUploadOverlay.addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) adminUploadOverlay.classList.remove('open');
+    });
+
+    // ফাইল সিলেক্ট করলে প্রিভিউ দেখানো
+    let selectedBase64 = null;
+    let selectedMime = null;
+    let selectedName = null;
+    adminFileInput.addEventListener('change', () => {
+        const file = adminFileInput.files[0];
+        if (!file) return;
+        selectedMime = file.type;
+        selectedName = file.name;
+        const reader = new FileReader();
+        reader.onload = () => {
+            selectedBase64 = reader.result; // data:image/...;base64,XXXX
+            adminPreview.src = selectedBase64;
+            adminPreview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    });
+
+    adminUploadBtn.addEventListener('click', () => {
+        if (!selectedBase64) {
+            adminUploadMsg.textContent = 'আগে একটা ছবি বাছুন';
+            adminUploadMsg.className = 'admin-msg err';
+            return;
+        }
+        adminUploadBtn.disabled = true;
+        adminUploadMsg.textContent = 'আপলোড হচ্ছে...';
+        adminUploadMsg.className = 'admin-msg';
+
+        fetch(APPS_SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                password: ADMIN_PASSWORD,
+                image: selectedBase64,
+                mimeType: selectedMime,
+                filename: selectedName,
+                caption: adminCaptionInput.value.trim()
+            })
+        })
+        .then(r => r.json())
+        .then(res => {
+            adminUploadBtn.disabled = false;
+            if (res.success) {
+                adminUploadMsg.textContent = '✅ সফলভাবে আপলোড হয়েছে!';
+                adminUploadMsg.className = 'admin-msg ok';
+                adminFileInput.value = '';
+                adminCaptionInput.value = '';
+                adminPreview.style.display = 'none';
+                selectedBase64 = null;
+                loadLiveUploads(); // সাথে সাথে গ্যালারি রিফ্রেশ
+            } else {
+                adminUploadMsg.textContent = '❌ ' + (res.error || 'আপলোড ব্যর্থ হয়েছে');
+                adminUploadMsg.className = 'admin-msg err';
+            }
+        })
+        .catch(() => {
+            adminUploadBtn.disabled = false;
+            adminUploadMsg.textContent = '❌ নেটওয়ার্ক সমস্যা, আবার চেষ্টা করুন';
+            adminUploadMsg.className = 'admin-msg err';
+        });
+    });
+
+    // "Live Uploads" গ্যালারি — সবাই দেখবে, Apps Script থেকে ছবি লোড করে
+    function loadLiveUploads() {
+        fetch(APPS_SCRIPT_URL)
+            .then(r => r.json())
+            .then(res => {
+                const section = document.getElementById('liveUploads');
+                const grid = document.getElementById('liveGrid');
+                if (!res.success || !res.images || res.images.length === 0) {
+                    section.style.display = 'none';
+                    return;
+                }
+                section.style.display = 'block';
+                grid.innerHTML = res.images.map(img => `
+                    <div class="live-card" onclick="window.open('${img.url}','_blank')">
+                        <img src="${img.url}" alt="${(img.caption || '').replace(/"/g, '&quot;')}" loading="lazy">
+                        ${img.caption ? `<div class="live-caption">${img.caption}</div>` : ''}
+                    </div>
+                `).join('');
+            })
+            .catch(() => { /* নিরবে ব্যর্থ হবে, পেজের অন্য কিছু ভাঙবে না */ });
+    }
+    loadLiveUploads();
+    setInterval(loadLiveUploads, 60000); // প্রতি ৬০ সেকেন্ডে নতুন ছবি চেক করবে
 </script>
 <script>
 const gdashContents = {

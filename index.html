@@ -2067,8 +2067,9 @@
         }
     }
 
-    // প্রতি ৬০ সেকেন্ডে নতুন আপলোড আছে কিনা চেক করবে এবং থাকলে গ্যালারিতে যুক্ত করবে
-    setInterval(() => refreshGalleryWithLiveUploads(0), 60000);
+    // অটো-রিফ্রেশ ইন্টারভাল বন্ধ করা হয়েছে — নতুন ছবি upload করলে এমনিতেই
+    // refreshGalleryWithLiveUploads() ফাংশনটা কল হয় (uploadAllPhotos এর পরে),
+    // তাই প্রতি ৬০ সেকেন্ডে বার বার ব্যাকগ্রাউন্ডে চেক করার দরকার নেই।
 
     /* ── 3D Mouse-tracked tilt on photo cards ───────────────────── */
     (function() {

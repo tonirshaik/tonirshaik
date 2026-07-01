@@ -12,6 +12,10 @@
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://tonirshaik.github.io/tonirshaik/">
 
+    <!-- ===== FAVICON ===== -->
+    <link rel="icon" type="image/png" sizes="512x512" href="https://tonirshaik.github.io/tonirshaik/web-app-manifest-512x512.png">
+    <link rel="apple-touch-icon" sizes="512x512" href="https://tonirshaik.github.io/tonirshaik/web-app-manifest-512x512.png">
+
     <!-- ===== Open Graph (Facebook / WhatsApp preview) ===== -->
     <meta property="og:type" content="website">
     <meta property="og:title" content="Tonir Shaik | Official Gallery">
@@ -350,15 +354,26 @@
             gap: 8px; padding: 0 20px 48px;
         }
         .filter-btn {
-            font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
-            padding: 8px 20px; border-radius: 2px;
-            border: 1px solid var(--border);
-            background: transparent; color: var(--muted);
-            cursor: pointer; transition: all 0.2s;
+            font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+            padding: 9px 22px; border-radius: 6px;
+            border: 1px solid rgba(63,168,255,0.45);
+            background: rgba(63,168,255,0.08);
+            color: rgba(255,255,255,0.75);
+            cursor: pointer; transition: all 0.25s ease;
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
         }
-        .filter-btn:hover, .filter-btn.active {
-            background: var(--gold-dim);
-            border-color: var(--gold); color: var(--gold);
+        .filter-btn:hover {
+            background: rgba(63,168,255,0.18);
+            border-color: rgba(63,168,255,0.75);
+            color: #fff;
+            transform: translateY(-1px);
+        }
+        .filter-btn.active {
+            background: rgba(63,168,255,0.22);
+            border-color: var(--gold);
+            color: var(--gold);
+            box-shadow: 0 0 12px rgba(63,168,255,0.35), 0 0 28px rgba(63,168,255,0.15);
         }
 
         .gallery-section { padding: 0 24px 80px; max-width: 1400px; margin: 0 auto; }
@@ -2067,9 +2082,8 @@
         }
     }
 
-    // অটো-রিফ্রেশ ইন্টারভাল বন্ধ করা হয়েছে — নতুন ছবি upload করলে এমনিতেই
-    // refreshGalleryWithLiveUploads() ফাংশনটা কল হয় (uploadAllPhotos এর পরে),
-    // তাই প্রতি ৬০ সেকেন্ডে বার বার ব্যাকগ্রাউন্ডে চেক করার দরকার নেই।
+    // প্রতি ৬০ সেকেন্ডে নতুন আপলোড আছে কিনা চেক করবে এবং থাকলে গ্যালারিতে যুক্ত করবে
+    // অটো-রিফ্রেশ বন্ধ — আপলোডের পরে এমনিতেই refresh হয়।
 
     /* ── 3D Mouse-tracked tilt on photo cards ───────────────────── */
     (function() {

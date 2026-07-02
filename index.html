@@ -15,6 +15,7 @@
     <!-- ===== FAVICON ===== -->
     <link rel="icon" type="image/png" sizes="512x512" href="https://tonirshaik.github.io/tonirshaik/web-app-manifest-512x512.png">
     <link rel="apple-touch-icon" sizes="512x512" href="https://tonirshaik.github.io/tonirshaik/web-app-manifest-512x512.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
     <!-- ===== Open Graph (Facebook / WhatsApp preview) ===== -->
     <meta property="og:type" content="website">
@@ -656,8 +657,26 @@
         footer {
             padding: 48px 40px;
             border-top: 1px solid var(--border);
+            display: flex; flex-direction: column; gap: 22px;
+        }
+        .footer-bottom-row {
             display: flex; justify-content: space-between; align-items: center;
             flex-wrap: wrap; gap: 20px;
+        }
+        .footer-social-row {
+            display: flex; justify-content: center; flex-wrap: wrap; gap: 10px;
+        }
+        .footer-social-row a {
+            width: 34px; height: 34px; border-radius: 50%;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            color: var(--muted);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 13px; text-decoration: none;
+            transition: border-color 0.2s, color 0.2s, transform 0.2s;
+        }
+        .footer-social-row a:hover {
+            border-color: var(--gold); color: var(--gold-light); transform: translateY(-2px);
         }
         .footer-logo {
             font-family: 'Cormorant Garamond', serif;
@@ -849,13 +868,29 @@
 </div>
 
 <footer>
-    <div>
-        <div class="footer-logo">Tonir <span>Shaik</span></div>
-        <div class="footer-copy" style="margin-top:8px;">© 2026 Tonir Shaik. All Rights Reserved.</div>
+    <div class="footer-social-row">
+        <a href="https://www.facebook.com/tonirshaik/" title="Facebook" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-facebook-f"></i></a>
+        <a href="https://www.instagram.com/tonirshaik/" title="Instagram" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-instagram"></i></a>
+        <a href="https://www.linkedin.com/in/tonirshaik/" title="LinkedIn" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-linkedin-in"></i></a>
+        <a href="https://github.com/tonirshaik" title="GitHub" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-github"></i></a>
+        <a href="https://api.whatsapp.com/send?phone=8801887185251&text=" title="WhatsApp" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-whatsapp"></i></a>
+        <a href="http://t.me/tonirshaik" title="Telegram" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-telegram"></i></a>
+        <a href="https://www.tiktok.com/@tonirshaik" title="TikTok" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-tiktok"></i></a>
+        <a href="https://maps.app.goo.gl/xoBB5bubmN75boUv7" title="Google Maps" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-location-dot"></i></a>
+        <a href="https://profile.imo.im/profileshare/shr.AAAAAAAAAAAAAAAAAAAAAMtJ6xMJsaUoPavNx19yv99HoE-vnyCFNdplyDa5qYK7" title="imo" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-comment-dots"></i></a>
+        <a href="https://www.youtube.com/@tonirshaik" title="YouTube" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-youtube"></i></a>
+        <a href="https://www.pinterest.com/tonirshaik/_profile/" title="Pinterest" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-pinterest-p"></i></a>
+        <a href="https://x.com/tonirshaik" title="X" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-x-twitter"></i></a>
     </div>
-    <a href="https://sites.google.com/view/tonirshaik2/" target="_blank" class="footer-site-link">
-        Visit Official Site →
-    </a>
+    <div class="footer-bottom-row">
+        <div>
+            <div class="footer-logo">Tonir <span>Shaik</span></div>
+            <div class="footer-copy" style="margin-top:8px;">© 2026 Tonir Shaik. All Rights Reserved.</div>
+        </div>
+        <a href="https://sites.google.com/view/tonirshaik2/" target="_blank" class="footer-site-link">
+            Visit Official Site →
+        </a>
+    </div>
 </footer>
 
 <!-- পাসওয়ার্ড লক স্ক্রিন -->

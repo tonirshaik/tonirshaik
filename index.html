@@ -91,6 +91,7 @@
         .admin-btn-secondary,
         .gdash-btn,
         .lb-dl,
+        .lb-share,
         .lb-nav,
         .lb-close,
         .mic-btn,
@@ -111,6 +112,7 @@
         .admin-btn-secondary:hover,
         .gdash-btn:hover,
         .lb-dl:hover,
+        .lb-share:hover,
         .lb-nav:hover,
         .lb-close:hover,
         .mic-btn:hover,
@@ -647,12 +649,21 @@
             font-size: 11px; letter-spacing: 0.15em; color: var(--muted);
         }
         .lb-dl {
-            font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase;
+            font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
             color: var(--gold); text-decoration: none;
-            border: 1px solid var(--border); padding: 8px 20px; border-radius: 2px;
+            border: 1px solid var(--border); padding: 8px 18px; border-radius: 3px;
             background: none; cursor: pointer; transition: background 0.2s, color 0.2s;
+            display: inline-flex; align-items: center; gap: 8px;
         }
         .lb-dl:hover { background: var(--gold); color: #000; }
+        .lb-share {
+            font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+            color: var(--gold); text-decoration: none;
+            border: 1px solid var(--border); padding: 8px 18px; border-radius: 3px;
+            background: none; cursor: pointer; transition: background 0.2s, color 0.2s;
+            display: inline-flex; align-items: center; gap: 8px;
+        }
+        .lb-share:hover { background: var(--gold); color: #000; }
 
         footer {
             padding: 48px 40px;
@@ -982,7 +993,14 @@
         <div class="lb-meta">
             <span class="lb-title" id="lbTitle"></span>
             <span class="lb-counter" id="lbCounter"></span>
-            <button class="lb-dl" id="lbDl">↓ Download</button>
+            <button class="lb-dl" id="lbDl">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v11"/><path d="M7.5 10.5L12 15l4.5-4.5"/><path d="M5 20h14"/></svg>
+                <span>Download</span>
+            </button>
+            <button class="lb-share" id="lbShare">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5.5" r="2.4"/><circle cx="6" cy="12" r="2.4"/><circle cx="18" cy="18.5" r="2.4"/><path d="M8.2 10.6l7.5-4.1"/><path d="M8.2 13.4l7.5 4.1"/></svg>
+                <span>Share</span>
+            </button>
         </div>
     </div>
 </div>
@@ -1469,8 +1487,12 @@
                         <div class="photo-title">${p.title}</div>
                     </div>
                     <div class="photo-actions">
-                        <button class="photo-action-btn" title="View" onclick="openLightbox(${p.idx});event.stopPropagation()">⤢</button>
-                        <button class="photo-action-btn" title="Download" onclick="dlImg('${p.downloadUrl}','Tonir-${p.idx + 1}.jpg');event.stopPropagation()">↓</button>
+                        <button class="photo-action-btn" title="Download" onclick="dlImg('${p.downloadUrl}','Tonir-${p.idx + 1}.jpg');event.stopPropagation()">
+                            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v11"/><path d="M7.5 10.5L12 15l4.5-4.5"/><path d="M5 20h14"/></svg>
+                        </button>
+                        <button class="photo-action-btn" title="Share" onclick="shareImg('${p.downloadUrl}','Tonir-${p.idx + 1}.jpg','${(p.title || 'Tonir Shaik').replace(/'/g, "\\'")}');event.stopPropagation()">
+                            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5.5" r="2.4"/><circle cx="6" cy="12" r="2.4"/><circle cx="18" cy="18.5" r="2.4"/><path d="M8.2 10.6l7.5-4.1"/><path d="M8.2 13.4l7.5 4.1"/></svg>
+                        </button>
                         ${p.fileId ? `<button class="photo-action-btn delete-btn" title="Delete" onclick="event.stopPropagation();deletePhotoConfirm('${p.fileId}', this)">×</button>` : ''}
                     </div>
                 </div>`;
@@ -1663,6 +1685,7 @@
         document.getElementById('lbTitle').textContent = p.title;
         document.getElementById('lbCounter').textContent = (currentIdx + 1) + ' / ' + currentList.length;
         document.getElementById('lbDl').onclick = () => dlImg(p.downloadUrl, 'Tonir-' + (p.idx + 1) + '.jpg');
+        document.getElementById('lbShare').onclick = () => shareImg(p.downloadUrl, 'Tonir-' + (p.idx + 1) + '.jpg', p.title || 'Tonir Shaik');
     }
 
     document.getElementById('lbClose').onclick = closeLightbox;
@@ -1694,6 +1717,40 @@
                 a.click();
             })
             .catch(() => window.open(url, '_blank'));
+    }
+
+    function shareImg(url, filename, title) {
+        const pageUrl = 'https://tonirshaik.github.io/tonirshaik/';
+        const shareText = title + ' — Tonir Shaik | Official Gallery';
+
+        // Try sharing the actual photo file (best experience on mobile)
+        fetch(url)
+            .then(r => r.blob())
+            .then(blob => {
+                const file = new File([blob], filename, { type: blob.type || 'image/jpeg' });
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    return navigator.share({
+                        files: [file],
+                        title: shareText,
+                        text: shareText
+                    });
+                }
+                throw new Error('file-share-unsupported');
+            })
+            .catch(() => {
+                // Fallback: share the page link instead of the file
+                if (navigator.share) {
+                    navigator.share({ title: shareText, text: shareText, url: pageUrl }).catch(() => {});
+                } else if (navigator.clipboard) {
+                    navigator.clipboard.writeText(pageUrl).then(() => {
+                        alert('লিংক কপি হয়েছে! এখন যেকোনো জায়গায় পেস্ট করে শেয়ার করতে পারবেন।');
+                    }).catch(() => {
+                        window.open(url, '_blank');
+                    });
+                } else {
+                    window.open(url, '_blank');
+                }
+            });
     }
 
     const observer = new IntersectionObserver(entries => {

@@ -274,12 +274,136 @@
         }
         .nav-logo span { color: var(--gold); }
         .nav-links { display: flex; gap: 32px; list-style: none; }
+        .nav-fx {
+            flex: 1;
+            height: 34px;
+            margin: 0 28px;
+            position: relative;
+            overflow: hidden;
+            pointer-events: none;
+        }
+        .nav-fx canvas { width: 100%; height: 100%; display: block; }
         .nav-links a {
             font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase;
             color: var(--muted); text-decoration: none;
             transition: color 0.2s;
         }
         .nav-links a:hover { color: var(--gold); }
+
+        .chase-wrap { position: relative; display: inline-block; }
+        .nav-chase-btn {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 18px;
+            border: 1px solid rgba(63,168,255,0.3);
+            border-radius: 4px;
+        }
+        .chase-svg {
+            position: absolute; inset: 0;
+            width: 100%; height: 100%;
+            overflow: visible;
+            pointer-events: none;
+        }
+        .chase-line {
+            fill: none;
+            stroke-width: 1.6;
+            vector-effect: non-scaling-stroke;
+            stroke-linecap: round;
+        }
+        .chase-line-a {
+            stroke: #7FCBFF;
+            stroke-dasharray: 22 300;
+            filter: drop-shadow(0 0 4px rgba(127,203,255,0.95));
+            animation: chaseDashFwd 5s linear infinite;
+        }
+        .chase-line-b {
+            stroke: #FFD54F;
+            stroke-dasharray: 22 300;
+            stroke-dashoffset: 161;
+            filter: drop-shadow(0 0 4px rgba(255,213,79,0.9));
+            animation: chaseDashRev 5s linear infinite;
+        }
+        @keyframes chaseDashFwd {
+            to { stroke-dashoffset: -644; }
+        }
+        @keyframes chaseDashRev {
+            to { stroke-dashoffset: 805; }
+        }
+
+        .nav-shine-btn {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 18px;
+            border: 1px solid rgba(63,168,255,0.3);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .nav-shine-btn::after {
+            content: '';
+            position: absolute;
+            top: 0; bottom: 0;
+            left: -60%;
+            width: 40%;
+            background: linear-gradient(
+                100deg,
+                transparent 0%,
+                rgba(140,225,255,0.05) 30%,
+                rgba(190,235,255,0.55) 50%,
+                rgba(140,225,255,0.05) 70%,
+                transparent 100%
+            );
+            transform: skewX(-20deg);
+            animation: navShineSweep 3.4s ease-in-out infinite;
+        }
+        @keyframes navShineSweep {
+            0%   { left: -60%; }
+            35%  { left: 130%; }
+            100% { left: 130%; }
+        }
+
+        /* ── Premium treatment for the Upload button ───────────────── */
+        .nav-premium {
+            font-weight: 600;
+            letter-spacing: 0.18em;
+            backdrop-filter: blur(6px);
+            background: linear-gradient(160deg, rgba(63,168,255,0.14), rgba(10,18,32,0.55) 60%);
+            animation: navPremiumGlow 2.6s ease-in-out infinite;
+            overflow: hidden;
+        }
+        .nav-premium .pl {
+            display: inline-block;
+            color: #ffd76a;
+            text-shadow: 0 0 8px rgba(255,215,110,0.6);
+            opacity: 0;
+            transform: translateY(-16px);
+            animation: letterDrop 2.8s ease-in-out infinite;
+        }
+        .nav-premium .pl:nth-child(1) { animation-delay: 0.00s; }
+        .nav-premium .pl:nth-child(2) { animation-delay: 0.09s; }
+        .nav-premium .pl:nth-child(3) { animation-delay: 0.18s; }
+        .nav-premium .pl:nth-child(4) { animation-delay: 0.27s; }
+        .nav-premium .pl:nth-child(5) { animation-delay: 0.36s; }
+        .nav-premium .pl:nth-child(6) { animation-delay: 0.45s; }
+        @keyframes letterDrop {
+            0%   { opacity: 0; transform: translateY(-16px); }
+            18%  { opacity: 1; transform: translateY(0); }
+            75%  { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(10px); }
+        }
+        @keyframes navPremiumGlow {
+            0%, 100% {
+                box-shadow: 0 0 0 1px rgba(63,168,255,0.18), 0 0 10px rgba(63,168,255,0.15), 0 4px 18px rgba(0,0,0,0.35);
+            }
+            50% {
+                box-shadow: 0 0 0 1px rgba(255,215,110,0.4), 0 0 22px rgba(255,215,110,0.35), 0 0 34px rgba(63,168,255,0.35), 0 4px 18px rgba(0,0,0,0.35);
+            }
+        }
+        .nav-premium:hover {
+            transform: translateY(-2px) scale(1.03);
+        }
+
 
         .section-header { text-align: center; padding: 40px 20px 28px; }
         .section-eyebrow {
@@ -303,6 +427,8 @@
             padding: 0 20px 32px;
         }
         .search-bar {
+            position: relative;
+            overflow: hidden;
             display: flex; align-items: center; gap: 10px;
             width: 100%; max-width: 480px;
             background: var(--card-bg);
@@ -310,8 +436,35 @@
             border-radius: 30px;
             padding: 10px 16px;
             transition: border-color 0.2s, box-shadow 0.2s;
+            animation: searchBarGlow 3.2s ease-in-out infinite;
+        }
+        .search-bar-fx {
+            position: absolute; inset: 0;
+            width: 100%; height: 100%;
+            display: block;
+            pointer-events: none;
+            opacity: 0.6;
+            z-index: 0;
+        }
+        .search-icon, .search-input, .search-clear, .mic-btn {
+            position: relative;
+            z-index: 1;
+        }
+        @keyframes searchBarGlow {
+            0%, 100% {
+                border-color: rgba(63,168,255,0.18);
+                box-shadow: 0 0 0 1px rgba(63,168,255,0.10), 0 0 8px rgba(63,168,255,0.08);
+            }
+            50% {
+                border-color: rgba(63,168,255,0.75);
+                box-shadow:
+                    0 0 0 1px rgba(63,168,255,0.65),
+                    0 0 24px 4px rgba(63,168,255,0.5),
+                    0 0 55px 10px rgba(63,168,255,0.28);
+            }
         }
         .search-bar:focus-within {
+            animation-play-state: paused;
             border-color: var(--gold);
             box-shadow: 0 0 0 3px var(--gold-dim);
         }
@@ -330,13 +483,36 @@
         }
         .search-clear:hover { color: var(--gold); }
         .mic-btn {
+            position: relative;
             width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
             display: flex; align-items: center; justify-content: center;
             background: var(--gold-dim); border: 1px solid var(--border);
             color: var(--gold); cursor: pointer;
             transition: background 0.2s, border-color 0.2s, transform 0.2s;
         }
-        .mic-btn svg { width: 15px; height: 15px; }
+        .mic-btn::before {
+            content: '';
+            position: absolute;
+            inset: -6px;
+            border-radius: 50%;
+            background: conic-gradient(
+                from 0deg,
+                transparent 0deg,
+                transparent 260deg,
+                rgba(140,225,255,0.95) 300deg,
+                var(--gold) 330deg,
+                transparent 360deg
+            );
+            -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #fff calc(100% - 2px));
+            mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #fff calc(100% - 2px));
+            filter: blur(1.5px) drop-shadow(0 0 6px rgba(63,168,255,0.65));
+            animation: micRingSpin 2.4s linear infinite;
+            pointer-events: none;
+        }
+        @keyframes micRingSpin {
+            to { transform: rotate(360deg); }
+        }
+        .mic-btn svg { width: 15px; height: 15px; position: relative; z-index: 1; }
         .mic-btn:hover { border-color: var(--gold); }
         .mic-btn.listening {
             background: var(--gold); color: #000;
@@ -354,29 +530,122 @@
 
         .filters {
             display: flex; justify-content: center; flex-wrap: wrap;
-            gap: 8px; padding: 0 20px 48px;
+            gap: 14px; padding: 0 20px 48px;
         }
         .filter-btn {
-            font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
-            padding: 9px 22px; border-radius: 6px;
-            border: 1px solid rgba(63,168,255,0.45);
-            background: rgba(63,168,255,0.08);
-            color: rgba(255,255,255,0.75);
-            cursor: pointer; transition: all 0.25s ease;
-            backdrop-filter: blur(6px);
-            -webkit-backdrop-filter: blur(6px);
+            position: relative;
+            isolation: isolate;
+            overflow: hidden;
+            font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+            padding: 11px 26px; border-radius: 8px;
+            border: 1px solid rgba(63,168,255,0.35);
+            background: rgba(10,18,32,0.55);
+            color: rgba(255,255,255,0.6);
+            cursor: pointer;
+            transition: color 0.35s ease, border-color 0.35s ease,
+                        transform 0.35s cubic-bezier(0.22,1,0.36,1),
+                        box-shadow 0.35s ease, background 0.35s ease;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            -webkit-tap-highlight-color: transparent;
+        }
+        @property --sweep-angle {
+            syntax: '<angle>';
+            initial-value: 0deg;
+            inherits: false;
+        }
+        .filter-btn::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            padding: 1px;
+            border-radius: inherit;
+            background: conic-gradient(from var(--sweep-angle, 0deg),
+                transparent 0%, rgba(127,203,255,0.9) 8%, transparent 20%);
+            -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0;
+            transition: opacity 0.35s ease;
+            z-index: 1;
+            pointer-events: none;
+            animation: sweepAngle 3.2s linear infinite paused;
+        }
+        .filter-btn::after {
+            content: '';
+            position: absolute;
+            top: 0; bottom: 0; left: -60%;
+            width: 40%;
+            background: linear-gradient(115deg, transparent, rgba(255,255,255,0.22), transparent);
+            transform: skewX(-18deg);
+            transition: left 0.7s ease;
+            z-index: 0;
+            pointer-events: none;
+        }
+        .filter-btn span { position: relative; z-index: 2; }
+        @keyframes sweepAngle {
+            to { --sweep-angle: 360deg; }
         }
         .filter-btn:hover {
-            background: rgba(63,168,255,0.18);
-            border-color: rgba(63,168,255,0.75);
+            background: rgba(63,168,255,0.14);
+            border-color: rgba(127,203,255,0.7);
             color: #fff;
-            transform: translateY(-1px);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(0,0,0,0.35), 0 0 16px rgba(63,168,255,0.25);
+        }
+        .filter-btn:hover::after { left: 130%; }
+        .filter-btn:hover::before { opacity: 1; animation-play-state: running; }
+        .filter-btn:active {
+            transform: translateY(-1px) scale(0.97);
         }
         .filter-btn.active {
-            background: rgba(63,168,255,0.22);
+            background: rgba(63,168,255,0.16);
             border-color: var(--gold);
-            color: var(--gold);
-            box-shadow: 0 0 12px rgba(63,168,255,0.35), 0 0 28px rgba(63,168,255,0.15);
+            color: var(--gold-light);
+            box-shadow:
+                0 0 0 1px rgba(63,168,255,0.25) inset,
+                0 0 14px rgba(63,168,255,0.45),
+                0 0 34px rgba(63,168,255,0.22),
+                0 6px 20px rgba(0,0,0,0.35);
+            animation: activeGlow 2.6s ease-in-out infinite;
+        }
+        .filter-btn.active::before {
+            opacity: 1;
+            animation-play-state: running;
+        }
+        @keyframes activeGlow {
+            0%, 100% {
+                box-shadow:
+                    0 0 0 1px rgba(63,168,255,0.25) inset,
+                    0 0 14px rgba(63,168,255,0.45),
+                    0 0 34px rgba(63,168,255,0.22),
+                    0 6px 20px rgba(0,0,0,0.35);
+            }
+            50% {
+                box-shadow:
+                    0 0 0 1px rgba(127,203,255,0.4) inset,
+                    0 0 20px rgba(63,168,255,0.65),
+                    0 0 46px rgba(63,168,255,0.32),
+                    0 6px 20px rgba(0,0,0,0.35);
+            }
+        }
+        .filter-btn .ripple {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,255,255,0.55) 0%, rgba(127,203,255,0.25) 55%, transparent 75%);
+            transform: scale(0);
+            animation: rippleOut 0.6s ease-out forwards;
+            pointer-events: none;
+            z-index: 1;
+        }
+        @keyframes rippleOut {
+            to { transform: scale(1); opacity: 0; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .filter-btn, .filter-btn::before, .filter-btn::after, .filter-btn.active {
+                animation: none !important;
+                transition: none !important;
+            }
         }
 
         .gallery-section { padding: 0 24px 80px; max-width: 1400px; margin: 0 auto; }
@@ -739,6 +1008,7 @@
             nav { padding: 14px 16px; }
             .nav-links { gap: 12px; }
             .nav-links a { font-size: 9px; letter-spacing: 0.08em; }
+            .nav-fx { display: none; }
             footer { flex-direction: column; text-align: center; }
         }
 
@@ -815,9 +1085,12 @@
 
 <nav>
     <a href="#" class="nav-logo">Tonir <span>Shaik</span></a>
+    <div class="nav-fx"><canvas id="navFxCanvas"></canvas></div>
     <ul class="nav-links">
-        <li><a href="#" id="navGalleryLink">Upload</a></li>
-        <li><a href="https://tonirshaik.github.io/tonirshaik_web/" target="_blank">Official Site</a></li>
+        <li class="chase-wrap"><a href="#" id="navGalleryLink" class="nav-chase-btn nav-premium"><span class="pl">U</span><span class="pl">p</span><span class="pl">l</span><span class="pl">o</span><span class="pl">a</span><span class="pl">d</span></a>
+            <svg class="chase-svg"><rect x="1" y="1" width="100%" height="100%" rx="4" class="chase-line chase-line-a"/><rect x="1" y="1" width="100%" height="100%" rx="4" class="chase-line chase-line-b"/></svg>
+        </li>
+        <li><a href="https://tonirshaik.github.io/tonirshaik_web/" target="_blank" class="nav-shine-btn">Official Site</a></li>
     </ul>
 </nav>
 
@@ -845,6 +1118,7 @@
 
     <div class="search-wrap reveal">
         <div class="search-bar">
+            <canvas class="search-bar-fx" id="searchBarFx"></canvas>
             <svg class="search-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.6"/>
                 <path d="M20 20L16.5 16.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
@@ -865,10 +1139,10 @@
     </div>
 
     <div class="filters reveal">
-        <button class="filter-btn active" data-filter="all">All</button>
-        <button class="filter-btn" data-filter="single">Single</button>
-        <button class="filter-btn" data-filter="dual">Dual</button>
-        <button class="filter-btn" data-filter="group">Group</button>
+        <button class="filter-btn active" data-filter="all"><span>All</span></button>
+        <button class="filter-btn" data-filter="single"><span>Single</span></button>
+        <button class="filter-btn" data-filter="dual"><span>Dual</span></button>
+        <button class="filter-btn" data-filter="group"><span>Group</span></button>
     </div>
 
     <div class="gallery-section">
@@ -1227,6 +1501,166 @@
         draw();
     })();
 
+    /* ── Nav-gap plexus particle network ───────────────────────── */
+    (function() {
+        const canvas = document.getElementById('navFxCanvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        let W, H, nodes = [];
+
+        function resize() {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            W = canvas.width = rect.width;
+            H = canvas.height = rect.height;
+            const count = Math.max(6, Math.min(22, Math.floor(W / 26)));
+            nodes = Array.from({ length: count }, () => ({
+                x: Math.random() * W,
+                y: Math.random() * H,
+                vx: (Math.random() - 0.5) * 0.22,
+                vy: (Math.random() - 0.5) * 0.22,
+                r: 1 + Math.random() * 1.4
+            }));
+        }
+        resize();
+        window.addEventListener('resize', resize);
+
+        const LINK_DIST = 62;
+
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+            nodes.forEach(n => {
+                n.x += n.vx;
+                n.y += n.vy;
+                if (n.x < 0 || n.x > W) n.vx *= -1;
+                if (n.y < 0 || n.y > H) n.vy *= -1;
+                n.x = Math.max(0, Math.min(W, n.x));
+                n.y = Math.max(0, Math.min(H, n.y));
+            });
+
+            for (let i = 0; i < nodes.length; i++) {
+                for (let j = i + 1; j < nodes.length; j++) {
+                    const a = nodes[i], b = nodes[j];
+                    const dist = Math.hypot(a.x - b.x, a.y - b.y);
+                    if (dist < LINK_DIST) {
+                        ctx.strokeStyle = `rgba(120,190,255,${(1 - dist / LINK_DIST) * 0.55})`;
+                        ctx.lineWidth = 0.6;
+                        ctx.beginPath();
+                        ctx.moveTo(a.x, a.y);
+                        ctx.lineTo(b.x, b.y);
+                        ctx.stroke();
+                    }
+                }
+            }
+
+            nodes.forEach(n => {
+                ctx.beginPath();
+                ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(160,215,255,0.95)';
+                ctx.shadowColor = 'rgba(63,168,255,0.9)';
+                ctx.shadowBlur = 6;
+                ctx.fill();
+            });
+            ctx.shadowBlur = 0;
+            requestAnimationFrame(draw);
+        }
+        draw();
+    })();
+
+    /* ── Search-bar tiny wiggling "snake" light traces ─────────── */
+    (function() {
+        const canvas = document.getElementById('searchBarFx');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        let W, H;
+        let traces = [];
+        const colors = ['#3FA8FF', '#FF5C5C', '#57E389', '#FFD54F', '#7FCBFF'];
+
+        function resize() {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            W = canvas.width = rect.width;
+            H = canvas.height = rect.height;
+            generateTraces();
+        }
+
+        // Each "snake" is a short body of a few points; a travelling sine
+        // wave runs along the body (phase offset per point) so it looks
+        // like it's wriggling as it slowly drifts sideways.
+        function makeSnake(headX) {
+            return {
+                headX,
+                segCount: 8 + Math.floor(Math.random() * 4),
+                length: 16 + Math.random() * 18,
+                baseY: 6 + Math.random() * Math.max(H - 12, 8),
+                amp: 7 + Math.random() * 6,
+                waveLen: 2.6 + Math.random() * 1.8,
+                phase: Math.random() * Math.PI * 2,
+                wiggleSpeed: 0.16 + Math.random() * 0.14,
+                vx: 0.18 + Math.random() * 0.24,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                flickerPhase: Math.random() * Math.PI * 2,
+                flickerSpeed: 0.03 + Math.random() * 0.04,
+                baseAlpha: 0.25 + Math.random() * 0.15
+            };
+        }
+
+        function generateTraces() {
+            traces = [];
+            const count = Math.max(6, Math.floor(W / 46));
+            for (let i = 0; i < count; i++) {
+                traces.push(makeSnake(Math.random() * W));
+            }
+        }
+
+        resize();
+        window.addEventListener('resize', resize);
+
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+            traces.forEach((sn, idx) => {
+                sn.headX += sn.vx;
+                sn.phase += sn.wiggleSpeed;
+                sn.flickerPhase += sn.flickerSpeed;
+
+                if (sn.headX - sn.length > W + 10) {
+                    traces[idx] = makeSnake(-10 - Math.random() * 20);
+                    return;
+                }
+
+                const pts = [];
+                for (let i = 0; i < sn.segCount; i++) {
+                    const t = i / (sn.segCount - 1);
+                    const x = sn.headX - t * sn.length;
+                    const y = sn.baseY + Math.sin(sn.phase - t * sn.waveLen * Math.PI) * sn.amp * t;
+                    pts.push({ x, y: Math.max(2, Math.min(H - 2, y)) });
+                }
+
+                const flicker = (Math.sin(sn.flickerPhase) + 1) / 2;
+                const alpha = Math.min(sn.baseAlpha + flicker * 0.6, 0.85);
+
+                ctx.beginPath();
+                ctx.moveTo(pts[0].x, pts[0].y);
+                for (let i = 1; i < pts.length - 1; i++) {
+                    const midX = (pts[i].x + pts[i + 1].x) / 2;
+                    const midY = (pts[i].y + pts[i + 1].y) / 2;
+                    ctx.quadraticCurveTo(pts[i].x, pts[i].y, midX, midY);
+                }
+                ctx.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
+                ctx.strokeStyle = sn.color;
+                ctx.lineWidth = 1.2;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.shadowColor = sn.color;
+                ctx.shadowBlur = 3 + flicker * 5;
+                ctx.globalAlpha = alpha;
+                ctx.stroke();
+            });
+            ctx.globalAlpha = 1;
+            ctx.shadowBlur = 0;
+            requestAnimationFrame(draw);
+        }
+        draw();
+    })();
+
 
 
     // Maps the section header found in the text file (e.g. "#SINGLE")
@@ -1562,11 +1996,22 @@
     }
 
     document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', (e) => {
             document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             activeFilter = btn.dataset.filter;
             applyFiltersAndSearch();
+
+            // premium ripple-from-click-point effect
+            const rect = btn.getBoundingClientRect();
+            const ripple = document.createElement('span');
+            const size = Math.max(rect.width, rect.height) * 1.6;
+            ripple.className = 'ripple';
+            ripple.style.width = ripple.style.height = size + 'px';
+            ripple.style.left = (e.clientX - rect.left - size / 2) + 'px';
+            ripple.style.top = (e.clientY - rect.top - size / 2) + 'px';
+            btn.appendChild(ripple);
+            ripple.addEventListener('animationend', () => ripple.remove());
         });
     });
 

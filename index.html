@@ -1927,7 +1927,9 @@
                         <button class="photo-action-btn" title="Share" onclick="shareImg('${p.downloadUrl}','Tonir-${p.idx + 1}.jpg','${(p.title || 'Tonir Shaik').replace(/'/g, "\\'")}');event.stopPropagation()">
                             <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5.5" r="2.4"/><circle cx="6" cy="12" r="2.4"/><circle cx="18" cy="18.5" r="2.4"/><path d="M8.2 10.6l7.5-4.1"/><path d="M8.2 13.4l7.5 4.1"/></svg>
                         </button>
-                        ${p.fileId ? `<button class="photo-action-btn delete-btn" title="Delete" onclick="event.stopPropagation();deletePhotoConfirm('${p.fileId}', this)">×</button>` : ''}
+                        ${p.fileId
+                            ? `<button class="photo-action-btn delete-btn" title="Delete" onclick="event.stopPropagation();deletePhotoConfirm('${p.fileId}', this)">×</button>`
+                            : `<button class="photo-action-btn delete-btn" title="Delete" onclick="event.stopPropagation();deleteTextPhotoConfirm('${p.rawUrl.replace(/'/g, "\\'")}', this)">×</button>`}
                     </div>
                 </div>`;
             item.addEventListener('click', () => openLightbox(p.idx));
@@ -2529,6 +2531,50 @@
                 // মূল লিস্ট থেকেও বাদ দেওয়া হলো, যাতে ফিল্টার/সার্চ করলে আর না আসে
                 allPhotos = allPhotos.filter(p => p.fileId !== fileId);
                 currentList = currentList.filter(p => p.fileId !== fileId);
+                if (item) item.remove();
+                const countEl = document.getElementById('photoCount');
+                if (countEl) {
+                    const n = parseInt(countEl.textContent, 10);
+                    if (!isNaN(n) && n > 0) countEl.textContent = n - 1;
+                }
+            } else {
+                if (item) item.style.opacity = '1';
+                btnEl.disabled = false;
+                alert('Delete failed: ' + (res.error || 'Unknown error'));
+            }
+        })
+        .catch(() => {
+            if (item) item.style.opacity = '1';
+            btnEl.disabled = false;
+            alert('Network error, please try again');
+        });
+    }
+
+    // টেক্সট ফাইল (GitHub) থেকে আসা ছবি ডিলিট করার জন্য — fileId থাকে না,
+    // তাই fileId-এর বদলে rawUrl (আসল Drive/ImgBB লিংক) পাঠানো হয়। Apps Script
+    // ব্যাকএন্ডে এই action ('deleteText') হ্যান্ডেল করার কোড থাকা লাগবে —
+    // যেটা GitHub-এর raw text ফাইল থেকে ম্যাচিং লাইনটা বাদ দিয়ে GitHub API
+    // দিয়ে ফাইলটা আপডেট (commit) করে দেবে।
+    function deleteTextPhotoConfirm(rawUrl, btnEl) {
+        if (!confirm('Are you sure you want to permanently delete this photo? (removes it from the source file)')) return;
+
+        const item = btnEl.closest('.photo-item, .strip-item');
+        if (item) item.style.opacity = '0.4';
+        btnEl.disabled = true;
+
+        fetch(APPS_SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                password: ADMIN_PASSWORD,
+                action: 'deleteText',
+                url: rawUrl
+            })
+        })
+        .then(r => r.json())
+        .then(res => {
+            if (res.success) {
+                allPhotos = allPhotos.filter(p => p.rawUrl !== rawUrl);
+                currentList = currentList.filter(p => p.rawUrl !== rawUrl);
                 if (item) item.remove();
                 const countEl = document.getElementById('photoCount');
                 if (countEl) {

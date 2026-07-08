@@ -879,6 +879,27 @@
         .tag-face-check input { accent-color: #3FA8FF; width: 15px; height: 15px; flex-shrink: 0; }
         .tag-face-check.checked { border-color: var(--gold); background: var(--gold-dim); }
         .tag-faces-empty { font-size: 12px; color: var(--muted); text-align: center; padding: 10px 0; }
+        .tag-face-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .tag-face-edit-btn {
+            background: none; border: none; color: var(--muted); cursor: pointer;
+            font-size: 13px; padding: 4px 6px; flex-shrink: 0; line-height: 1;
+            transition: color 0.2s;
+        }
+        .tag-face-edit-btn:hover { color: var(--gold); }
+        .tag-face-rename-row { display: flex; align-items: center; gap: 6px; flex: 1; }
+        .tag-face-rename-input {
+            flex: 1; background: rgba(255,255,255,0.06); border: 1px solid var(--gold);
+            border-radius: 4px; color: #fff; font-size: 13px; padding: 5px 8px; outline: none;
+            min-width: 0;
+        }
+        .tag-face-rename-save, .tag-face-rename-cancel {
+            background: none; border: none; cursor: pointer; font-size: 14px;
+            padding: 4px 6px; flex-shrink: 0;
+        }
+        .tag-face-rename-save { color: #3FA8FF; }
+        .tag-face-rename-cancel { color: var(--muted); }
+        .tag-face-rename-save:hover { color: var(--gold); }
+        .tag-face-rename-cancel:hover { color: #fff; }
         .tag-quickadd-row { display: flex; gap: 8px; margin-bottom: 14px; }
         .tag-quickadd-row .admin-input { margin-bottom: 0; flex: 1; }
         .tag-nav-row { display: flex; gap: 10px; }
@@ -2820,17 +2841,69 @@
             const row = document.createElement('div');
             row.className = 'tag-face-check' + (checked ? ' checked' : '');
             row.innerHTML = `
-                <label style="display:flex; align-items:center; gap:10px; flex:1; cursor:pointer; margin:0;">
-                    <input type="checkbox" ${checked ? 'checked' : ''}> <span>${name}</span>
+                <label style="display:flex; align-items:center; gap:10px; flex:1; cursor:pointer; margin:0; min-width:0;">
+                    <input type="checkbox" ${checked ? 'checked' : ''}> <span class="tag-face-name">${name}</span>
                 </label>
+                <button type="button" class="tag-face-edit-btn" title="Edit name"><i class="fa-solid fa-pen"></i></button>
             `;
             row.querySelector('input').addEventListener('change', (e) => {
                 if (e.target.checked) editTagSelected.add(name.toLowerCase());
                 else editTagSelected.delete(name.toLowerCase());
                 row.classList.toggle('checked', e.target.checked);
             });
+            row.querySelector('.tag-face-edit-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                startRenameRow(row, name);
+            });
             editTagFacesList.appendChild(row);
         });
+    }
+
+    // একটা ট্যাগের নাম বদলানোর জন্য — রো-টাকে ইনপুট বক্সে পরিণত করে, Save/Cancel দেখায়।
+    // Save করলে uploadPeople তালিকায় নামটা replace হয়, আর এই ছবিতে সেটা আগে থেকে
+    // বাছাই করা থাকলে (checked) নতুন নামটাও বাছাই-করা অবস্থাতেই থাকে।
+    function startRenameRow(row, oldName) {
+        const wrap = document.createElement('div');
+        wrap.className = 'tag-face-rename-row';
+        wrap.innerHTML = `
+            <input type="text" class="tag-face-rename-input" value="${oldName.replace(/"/g, '&quot;')}">
+            <button type="button" class="tag-face-rename-save" title="Save"><i class="fa-solid fa-check"></i></button>
+            <button type="button" class="tag-face-rename-cancel" title="Cancel"><i class="fa-solid fa-xmark"></i></button>
+        `;
+        row.innerHTML = '';
+        row.appendChild(wrap);
+        const input = wrap.querySelector('.tag-face-rename-input');
+        input.focus();
+        input.select();
+
+        const commit = () => {
+            const newName = input.value.trim();
+            if (!newName || newName === oldName) { renderEditTagFaces(); return; }
+            // নাম আগে থেকেই তালিকায় থাকলে (অন্য কারো নামের সাথে ডুপ্লিকেট), সেভ করা যাবে না
+            const dupIdx = uploadPeople.findIndex(p => p.toLowerCase() === newName.toLowerCase() && p.toLowerCase() !== oldName.toLowerCase());
+            if (dupIdx !== -1) {
+                editTagMsg.textContent = 'এই নামটি আগে থেকেই তালিকায় আছে।';
+                editTagMsg.className = 'admin-msg err';
+                renderEditTagFaces();
+                return;
+            }
+            const idx = uploadPeople.findIndex(p => p.toLowerCase() === oldName.toLowerCase());
+            if (idx !== -1) uploadPeople[idx] = newName;
+            if (editTagSelected.has(oldName.toLowerCase())) {
+                editTagSelected.delete(oldName.toLowerCase());
+                editTagSelected.add(newName.toLowerCase());
+            }
+            renderEditTagFaces();
+        };
+        const cancel = () => renderEditTagFaces();
+
+        wrap.querySelector('.tag-face-rename-save').addEventListener('click', (e) => { e.stopPropagation(); commit(); });
+        wrap.querySelector('.tag-face-rename-cancel').addEventListener('click', (e) => { e.stopPropagation(); cancel(); });
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); commit(); }
+            else if (e.key === 'Escape') { e.preventDefault(); cancel(); }
+        });
+        input.addEventListener('click', (e) => e.stopPropagation());
     }
 
     // uploadPeople-এ নাম case-insensitive-ভাবে থাকে কিনা খুঁজে, না থাকলে যোগ করে —

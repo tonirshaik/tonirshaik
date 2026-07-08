@@ -886,6 +886,12 @@
             transition: color 0.2s;
         }
         .tag-face-edit-btn:hover { color: var(--gold); }
+        .tag-face-delete-btn {
+            background: none; border: none; color: var(--muted); cursor: pointer;
+            font-size: 13px; padding: 4px 6px; flex-shrink: 0; line-height: 1;
+            transition: color 0.2s;
+        }
+        .tag-face-delete-btn:hover { color: #e07a6b; }
         .tag-face-rename-row { display: flex; align-items: center; gap: 6px; flex: 1; }
         .tag-face-rename-input {
             flex: 1; background: rgba(255,255,255,0.06); border: 1px solid var(--gold);
@@ -2858,6 +2864,7 @@
                     <input type="checkbox" ${checked ? 'checked' : ''}> <span class="tag-face-name">${name}</span>
                 </label>
                 <button type="button" class="tag-face-edit-btn" title="Edit name"><i class="fa-solid fa-pen"></i></button>
+                <button type="button" class="tag-face-delete-btn" title="Delete this tag entirely"><i class="fa-solid fa-trash"></i></button>
             `;
             row.querySelector('input').addEventListener('change', (e) => {
                 if (e.target.checked) editTagSelected.add(name.toLowerCase());
@@ -2868,11 +2875,28 @@
                 e.stopPropagation();
                 startRenameRow(row, name);
             });
+            row.querySelector('.tag-face-delete-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                deleteTagEntry(name);
+            });
             editTagFacesList.appendChild(row);
         });
     }
 
+    // একটা ট্যাগ-এন্ট্রি পুরোপুরি মুছে ফেলার জন্য (যেমন — ভুলভাবে জমে যাওয়া কমা-জোড়া-লাগানো
+    // স্ট্রিং, বা টাইপো/জাঙ্ক এন্ট্রি)। এটা শুধু এই ছবি থেকে আনচেক করে না — পুরো
+    // uploadPeople তালিকা থেকেই বাদ দিয়ে দেয়, যাতে ভবিষ্যতেও আর তালিকায় না দেখা যায়।
+    function deleteTagEntry(name) {
+        if (!confirm('"' + name + '" — এই ট্যাগ এন্ট্রিটা লিস্ট থেকে সম্পূর্ণ মুছে ফেলবে (শুধু আনচেক না)। এগোতে চান?')) return;
+        const idx = uploadPeople.findIndex(p => p.toLowerCase() === name.toLowerCase());
+        if (idx !== -1) uploadPeople.splice(idx, 1);
+        editTagSelected.delete(name.toLowerCase());
+        renderEditTagFaces();
+    }
+
     // একটা ট্যাগের নাম বদলানোর জন্য — রো-টাকে ইনপুট বক্সে পরিণত করে, Save/Cancel দেখায়।
+    // এই Cancel (✕) শুধু rename অবস্থা থেকে বেরিয়ে আসে — এটা এন্ট্রিটা ডিলিট করে না।
+    // এন্ট্রি সম্পূর্ণ মুছতে উপরের ট্র্যাশ (🗑) বাটন ব্যবহার করতে হবে।
     // Save করলে uploadPeople তালিকায় নামটা replace হয়, আর এই ছবিতে সেটা আগে থেকে
     // বাছাই করা থাকলে (checked) নতুন নামটাও বাছাই-করা অবস্থাতেই থাকে।
     function startRenameRow(row, oldName) {

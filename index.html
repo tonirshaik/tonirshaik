@@ -704,6 +704,9 @@
         .delete-btn { display: none; }
         body.admin-mode .delete-btn { display: flex; }
         .delete-btn:hover { background: #c0392b !important; color: #fff !important; border-color: #c0392b !important; }
+        .edit-tag-btn { display: none; }
+        body.admin-mode .edit-tag-btn { display: flex; }
+        .edit-tag-btn:hover { background: #3FA8FF !important; color: #fff !important; border-color: #3FA8FF !important; }
 
         .load-more-wrap {
             display: flex; justify-content: center;
@@ -1255,6 +1258,27 @@
             <p class="admin-msg" id="adminUploadMsg"></p>
 
         </div>
+    </div>
+</div>
+
+<!-- Edit Tags Panel — টেক্সট ফাইল ও লাইভ আপলোড দুই ধরনের ছবির ট্যাগই এখান থেকে
+     এডিট করা যায়। UI ঠিক আপলোডের ২য় ধাপের মতোই (Tagger Pro V3 style),
+     শুধু এখানে prev/next নেই কারণ একটাই ছবি এডিট হচ্ছে। -->
+<div class="admin-overlay" id="adminEditTagOverlay">
+    <div class="admin-box admin-box-wide" id="adminEditTagBox">
+        <button class="admin-close" id="adminEditTagClose">×</button>
+        <h4>✎ Edit Tags</h4>
+        <img class="admin-preview" id="editTagPreviewImg" alt="preview" style="display:block;">
+        <div class="tag-faces-list" id="editTagFacesList"></div>
+        <div class="tag-quickadd-row">
+            <input type="text" class="admin-input" id="editTagQuickAddInput" placeholder="Who's in this photo? Type a name...">
+            <button class="admin-btn admin-btn-sm" id="editTagQuickAddBtn">+ Add</button>
+        </div>
+        <div class="tag-nav-row">
+            <button class="admin-btn admin-btn-secondary" id="editTagCancelBtn">Cancel</button>
+            <button class="admin-btn" id="editTagSaveBtn">Save ✓</button>
+        </div>
+        <p class="admin-msg" id="editTagMsg"></p>
     </div>
 </div>
 
@@ -1927,6 +1951,9 @@
                         <button class="photo-action-btn" title="Share" onclick="shareImg('${p.downloadUrl}','Tonir-${p.idx + 1}.jpg','${(p.title || 'Tonir Shaik').replace(/'/g, "\\'")}');event.stopPropagation()">
                             <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5.5" r="2.4"/><circle cx="6" cy="12" r="2.4"/><circle cx="18" cy="18.5" r="2.4"/><path d="M8.2 10.6l7.5-4.1"/><path d="M8.2 13.4l7.5 4.1"/></svg>
                         </button>
+                        <button class="photo-action-btn edit-tag-btn" title="Edit tags" onclick="event.stopPropagation();openEditTagsByIdx(${p.idx})">
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                        </button>
                         ${p.fileId
                             ? `<button class="photo-action-btn delete-btn" title="Delete" onclick="event.stopPropagation();deletePhotoConfirm('${p.fileId}', this)">×</button>`
                             : `<button class="photo-action-btn delete-btn" title="Delete" onclick="event.stopPropagation();deleteTextPhotoConfirm('${p.rawUrl.replace(/'/g, "\\'")}', this)">×</button>`}
@@ -2593,6 +2620,153 @@
             alert('Network error, please try again');
         });
     }
+
+    // ===== ট্যাগ এডিট (Edit Tags) — টেক্সট ফাইল ও লাইভ আপলোড দুই ধরনের ছবির
+    // জন্যই কাজ করে। টেক্সট ফাইলের names ফিল্ড স্পেস-দিয়ে-ভাগ, আর লাইভ আপলোডের
+    // caption কমা-দিয়ে-ভাগ (upload flow-এই এভাবে সেভ হয়) — তাই লোড/সেভ করার
+    // সময় সোর্স অনুযায়ী আলাদা সেপারেটর ব্যবহার করা হচ্ছে।
+    const adminEditTagOverlay   = document.getElementById('adminEditTagOverlay');
+    const adminEditTagClose     = document.getElementById('adminEditTagClose');
+    const editTagPreviewImg     = document.getElementById('editTagPreviewImg');
+    const editTagFacesList      = document.getElementById('editTagFacesList');
+    const editTagQuickAddInput  = document.getElementById('editTagQuickAddInput');
+    const editTagQuickAddBtn    = document.getElementById('editTagQuickAddBtn');
+    const editTagCancelBtn      = document.getElementById('editTagCancelBtn');
+    const editTagSaveBtn        = document.getElementById('editTagSaveBtn');
+    const editTagMsg            = document.getElementById('editTagMsg');
+
+    let editTagPhoto = null;          // এখন যে ছবিটার ট্যাগ এডিট হচ্ছে
+    let editTagSelected = new Set();  // এই ছবিতে বর্তমানে বাছাই করা নামগুলো (lowercase)
+
+    function parseExistingNames(photo) {
+        const raw = (photo.names || '').trim();
+        if (!raw) return [];
+        return photo.fileId
+            ? raw.split(',').map(s => s.trim()).filter(Boolean)   // লাইভ আপলোড: কমা-দিয়ে-ভাগ
+            : raw.split(/\s+/).filter(Boolean);                    // টেক্সট ফাইল: স্পেস-দিয়ে-ভাগ
+    }
+
+    function serializeNames(namesArr, photo) {
+        return photo.fileId ? namesArr.join(', ') : namesArr.join(' ');
+    }
+
+    function renderEditTagFaces() {
+        editTagFacesList.innerHTML = '';
+        if (uploadPeople.length === 0) {
+            editTagFacesList.innerHTML = '<div class="tag-faces-empty">No names added yet — type a name below and tap + Add</div>';
+            return;
+        }
+        uploadPeople.forEach((name) => {
+            const checked = editTagSelected.has(name.toLowerCase());
+            const row = document.createElement('div');
+            row.className = 'tag-face-check' + (checked ? ' checked' : '');
+            row.innerHTML = `
+                <label style="display:flex; align-items:center; gap:10px; flex:1; cursor:pointer; margin:0;">
+                    <input type="checkbox" ${checked ? 'checked' : ''}> <span>${name}</span>
+                </label>
+            `;
+            row.querySelector('input').addEventListener('change', (e) => {
+                if (e.target.checked) editTagSelected.add(name.toLowerCase());
+                else editTagSelected.delete(name.toLowerCase());
+                row.classList.toggle('checked', e.target.checked);
+            });
+            editTagFacesList.appendChild(row);
+        });
+    }
+
+    // uploadPeople-এ নাম case-insensitive-ভাবে থাকে কিনা খুঁজে, না থাকলে যোগ করে —
+    // যোগ করা নামের আসল (original-case) স্ট্রিং-টা রিটার্ন করে
+    function ensureInPeopleList(name) {
+        const idx = uploadPeople.findIndex(p => p.toLowerCase() === name.toLowerCase());
+        if (idx !== -1) return uploadPeople[idx];
+        uploadPeople.push(name);
+        return name;
+    }
+
+    function openEditTagsByIdx(idx) {
+        const photo = allPhotos.find(p => p.idx === idx);
+        if (!photo) return;
+        editTagPhoto = photo;
+        editTagMsg.textContent = '';
+        editTagMsg.className = 'admin-msg';
+        editTagPreviewImg.src = photo.url;
+
+        const existing = parseExistingNames(photo);
+        existing.forEach(n => ensureInPeopleList(n));
+        editTagSelected = new Set(existing.map(n => n.toLowerCase()));
+
+        renderEditTagFaces();
+        adminEditTagOverlay.classList.add('open');
+    }
+
+    function closeEditTagOverlay() {
+        adminEditTagOverlay.classList.remove('open');
+        editTagPhoto = null;
+        editTagQuickAddInput.value = '';
+    }
+    adminEditTagClose.addEventListener('click', closeEditTagOverlay);
+    editTagCancelBtn.addEventListener('click', closeEditTagOverlay);
+    adminEditTagOverlay.addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) closeEditTagOverlay();
+    });
+
+    function quickAddEditTagPerson() {
+        const name = (editTagQuickAddInput.value || '').trim();
+        if (!name) return;
+        if (uploadPeople.length >= 20 && !uploadPeople.some(p => p.toLowerCase() === name.toLowerCase())) {
+            editTagMsg.textContent = 'You can add a maximum of 20 names';
+            editTagMsg.className = 'admin-msg err';
+            return;
+        }
+        const finalName = ensureInPeopleList(name);
+        editTagSelected.add(finalName.toLowerCase());
+        editTagQuickAddInput.value = '';
+        editTagMsg.textContent = '';
+        renderEditTagFaces();
+        editTagQuickAddInput.focus();
+    }
+    editTagQuickAddBtn.addEventListener('click', quickAddEditTagPerson);
+    editTagQuickAddInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') quickAddEditTagPerson(); });
+
+    editTagSaveBtn.addEventListener('click', () => {
+        if (!editTagPhoto) return;
+        // নির্বাচিত lowercase নামগুলোর জন্য uploadPeople থেকে আসল (original-case) নাম বের করা
+        const finalNames = uploadPeople.filter(n => editTagSelected.has(n.toLowerCase()));
+        const newNamesStr = serializeNames(finalNames, editTagPhoto);
+
+        editTagSaveBtn.disabled = true;
+        editTagMsg.textContent = 'Saving...';
+        editTagMsg.className = 'admin-msg';
+
+        const payload = editTagPhoto.fileId
+            ? { password: ADMIN_PASSWORD, action: 'updateCaption', fileId: editTagPhoto.fileId, caption: newNamesStr }
+            : { password: ADMIN_PASSWORD, action: 'updateText', url: editTagPhoto.rawUrl, names: newNamesStr };
+
+        fetch(APPS_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) })
+            .then(r => r.json())
+            .then(res => {
+                editTagSaveBtn.disabled = false;
+                if (res.success) {
+                    // লোকাল photo অবজেক্ট ও সার্চ ইনডেক্স আপডেট করা, যাতে রিফ্রেশ ছাড়াই
+                    // সার্চ/টাইটেল ঠিকভাবে দেখায়
+                    editTagPhoto.names = newNamesStr;
+                    editTagPhoto.title = newNamesStr || editTagPhoto.title;
+                    const sectionWords = SECTION_SEARCH_WORDS[editTagPhoto.cat] || [];
+                    editTagPhoto.searchIndex = [newNamesStr, ...sectionWords].join(' ').toLowerCase();
+                    editTagMsg.textContent = '✅ Saved';
+                    editTagMsg.className = 'admin-msg ok';
+                    setTimeout(closeEditTagOverlay, 600);
+                } else {
+                    editTagMsg.textContent = 'Save failed: ' + (res.error || 'Unknown error');
+                    editTagMsg.className = 'admin-msg err';
+                }
+            })
+            .catch(() => {
+                editTagSaveBtn.disabled = false;
+                editTagMsg.textContent = 'Network error, please try again';
+                editTagMsg.className = 'admin-msg err';
+            });
+    });
 
     // একটা ছবি Apps Script-এ পাঠায়; caption = সেই ছবিতে ট্যাগ করা নামগুলোর তালিকা
     function uploadOnePhoto(photo) {

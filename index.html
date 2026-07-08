@@ -1267,7 +1267,7 @@
 <div class="admin-overlay" id="adminEditTagOverlay">
     <div class="admin-box admin-box-wide" id="adminEditTagBox">
         <button class="admin-close" id="adminEditTagClose">×</button>
-        <h4>✎ Edit Tags</h4>
+        <h4>✎ Edit Tags <span id="editTagProgressText" style="font-size:12px; color:var(--muted); font-weight:normal;"></span></h4>
         <img class="admin-preview" id="editTagPreviewImg" alt="preview" style="display:block;">
         <div class="tag-faces-list" id="editTagFacesList"></div>
         <div class="tag-quickadd-row">
@@ -1275,9 +1275,10 @@
             <button class="admin-btn admin-btn-sm" id="editTagQuickAddBtn">+ Add</button>
         </div>
         <div class="tag-nav-row">
-            <button class="admin-btn admin-btn-secondary" id="editTagCancelBtn">Cancel</button>
-            <button class="admin-btn" id="editTagSaveBtn">Save ✓</button>
+            <button class="admin-btn admin-btn-secondary" id="editTagPrevBtn">← Previous</button>
+            <button class="admin-btn admin-btn-secondary" id="editTagNextBtn">Next →</button>
         </div>
+        <button class="admin-btn" id="editTagSaveBtn" style="margin-top:10px; width:100%;">Save ✓</button>
         <p class="admin-msg" id="editTagMsg"></p>
     </div>
 </div>
@@ -2513,9 +2514,20 @@
     }
 
     function quickAddTagPerson() {
-        const idx = addUploadPerson(tagQuickAddInput.value);
+        const rawName = (tagQuickAddInput.value || '').trim();
+        const idx = addUploadPerson(rawName);
         if (idx === null) return;
         selectedPhotos[currentTagIdx].tagIdxs.add(idx);
+
+        // ইংলিশে নাম টাইপ করলে সাথে সাথে বাংলা প্রতিবর্ণীকরণও (phonetic) যোগ হয়ে যায়
+        if (!isBanglaText(rawName)) {
+            const banglaName = banglaPhonetic(rawName);
+            if (banglaName && banglaName.toLowerCase() !== rawName.toLowerCase()) {
+                const bIdx = addUploadPerson(banglaName);
+                if (bIdx !== null) selectedPhotos[currentTagIdx].tagIdxs.add(bIdx);
+            }
+        }
+
         tagQuickAddInput.value = '';
         adminUploadMsg.textContent = '';
         renderTagFaces();
@@ -2621,22 +2633,109 @@
         });
     }
 
+    // ===== বাংলা ফোনেটিক কনভার্টার (Avro-স্টাইল, ছোট সংস্করণ) =====
+    // ইংলিশে টাইপ করা নাম (যেমন "tonir") থেকে কাছাকাছি বাংলা বানান
+    // ("তনির") বানানোর জন্য। পুরো Avro-এর মতো নিখুঁত না (conjunct/যুক্তাক্ষর,
+    // exception শব্দ ইত্যাদি কভার করে না), কিন্তু বেশিরভাগ নাম/সাধারণ শব্দের
+    // জন্য যথেষ্ট ভালো ফল দেয় — বেশিরভাগ ব্যঞ্জনবর্ণ + স্বরবর্ণের মাত্রা নিয়ম মেনে।
+    const PHONETIC_CONSONANTS = [
+        ['kkh','ক্ষ'], ['kh','খ'], ['k','ক'],
+        ['gh','ঘ'], ['g','গ'], ['ng','ঙ'],
+        ['chh','ছ'], ['ch','চ'],
+        ['jh','ঝ'], ['j','জ'], ['z','জ'],
+        ['th','থ'], ['t','ত'],
+        ['dh','ধ'], ['d','দ'],
+        ['n','ন'],
+        ['ph','ফ'], ['f','ফ'], ['p','প'],
+        ['bh','ভ'], ['v','ভ'], ['b','ব'],
+        ['m','ম'],
+        ['sh','শ'], ['s','স'],
+        ['h','হ'],
+        ['r','র'],
+        ['l','ল'],
+        ['y','য়'],
+        ['w','ও']
+    ];
+    // [pattern, standalone (শব্দের শুরুতে/অন্য স্বরের পরে), matra (ব্যঞ্জনবর্ণের পরে)]
+    const PHONETIC_VOWELS = [
+        ['oi','ঐ','ৈ'], ['ou','ঔ','ৌ'],
+        ['ee','ঈ','ী'], ['ii','ঈ','ী'],
+        ['oo','ঊ','ূ'], ['uu','ঊ','ূ'],
+        ['aa','আ','া'], ['a','আ','া'],
+        ['i','ই','ি'],
+        ['u','উ','ু'],
+        ['e','এ','ে'],
+        ['o','ও','']
+    ];
+
+    function isBanglaText(s) {
+        return /[\u0980-\u09FF]/.test(s);
+    }
+
+    function banglaPhonetic(input) {
+        const s = (input || '').toLowerCase();
+        if (!s) return '';
+        let out = '';
+        let i = 0;
+        let lastWasConsonant = false;
+        while (i < s.length) {
+            const ch = s[i];
+            if (!/[a-z]/.test(ch)) { out += ch; i++; lastWasConsonant = false; continue; }
+
+            let matched = false;
+            for (const [pat, standalone, matra] of PHONETIC_VOWELS) {
+                if (s.startsWith(pat, i)) {
+                    out += lastWasConsonant ? matra : standalone;
+                    i += pat.length;
+                    lastWasConsonant = false;
+                    matched = true;
+                    break;
+                }
+            }
+            if (matched) continue;
+
+            for (const [pat, letter] of PHONETIC_CONSONANTS) {
+                if (s.startsWith(pat, i)) {
+                    out += letter;
+                    i += pat.length;
+                    lastWasConsonant = true;
+                    matched = true;
+                    break;
+                }
+            }
+            if (matched) continue;
+
+            out += ch; // অচেনা ক্যারেক্টার (সংখ্যা ইত্যাদি) যেমন আছে তেমনই থেকে যায়
+            i++;
+            lastWasConsonant = false;
+        }
+        return out;
+    }
+
     // ===== ট্যাগ এডিট (Edit Tags) — টেক্সট ফাইল ও লাইভ আপলোড দুই ধরনের ছবির
     // জন্যই কাজ করে। টেক্সট ফাইলের names ফিল্ড স্পেস-দিয়ে-ভাগ, আর লাইভ আপলোডের
     // caption কমা-দিয়ে-ভাগ (upload flow-এই এভাবে সেভ হয়) — তাই লোড/সেভ করার
     // সময় সোর্স অনুযায়ী আলাদা সেপারেটর ব্যবহার করা হচ্ছে।
+    //
+    // Prev/Next: গ্যালারির সব ছবির (allPhotos, idx অনুযায়ী সাজানো) মধ্য দিয়ে
+    // একের পর এক এডিট করা যায় — Next/Previous চাপলে আগে বর্তমান ছবির
+    // পরিবর্তন সেভ হয়ে যায়, তারপর পরের/আগের ছবিতে চলে যায়।
     const adminEditTagOverlay   = document.getElementById('adminEditTagOverlay');
     const adminEditTagClose     = document.getElementById('adminEditTagClose');
     const editTagPreviewImg     = document.getElementById('editTagPreviewImg');
     const editTagFacesList      = document.getElementById('editTagFacesList');
     const editTagQuickAddInput  = document.getElementById('editTagQuickAddInput');
     const editTagQuickAddBtn    = document.getElementById('editTagQuickAddBtn');
-    const editTagCancelBtn      = document.getElementById('editTagCancelBtn');
+    const editTagPrevBtn        = document.getElementById('editTagPrevBtn');
+    const editTagNextBtn        = document.getElementById('editTagNextBtn');
     const editTagSaveBtn        = document.getElementById('editTagSaveBtn');
     const editTagMsg            = document.getElementById('editTagMsg');
+    const editTagProgressText   = document.getElementById('editTagProgressText');
 
     let editTagPhoto = null;          // এখন যে ছবিটার ট্যাগ এডিট হচ্ছে
     let editTagSelected = new Set();  // এই ছবিতে বর্তমানে বাছাই করা নামগুলো (lowercase)
+    let editTagList = [];             // Prev/Next-এর জন্য গ্যালারির সব ছবির ক্রম
+    let editTagListPos = -1;          // editTagList-এ বর্তমান পজিশন
 
     function parseExistingNames(photo) {
         const raw = (photo.names || '').trim();
@@ -2683,29 +2782,61 @@
         return name;
     }
 
-    function openEditTagsByIdx(idx) {
-        const photo = allPhotos.find(p => p.idx === idx);
+    // একটা নাম যোগ করার সময় — ইংলিশে টাইপ করা হলে সাথে সাথে তার বাংলা
+    // প্রতিবর্ণীকরণ (phonetic) ভার্শনটাও তৈরি করে দুটোই নির্বাচিত-তালিকায় যোগ করে,
+    // যাতে ভবিষ্যতে দুই ভাষাতেই সার্চ করলে ছবিটা পাওয়া যায়।
+    function addNameWithPhonetic(rawName) {
+        const name = (rawName || '').trim();
+        if (!name) return;
+        const finalName = ensureInPeopleList(name);
+        editTagSelected.add(finalName.toLowerCase());
+
+        if (!isBanglaText(name)) {
+            const banglaName = banglaPhonetic(name);
+            if (banglaName && banglaName.toLowerCase() !== name.toLowerCase()) {
+                const finalBangla = ensureInPeopleList(banglaName);
+                editTagSelected.add(finalBangla.toLowerCase());
+            }
+        }
+    }
+
+    function loadEditTagAtPos(pos) {
+        const photo = editTagList[pos];
         if (!photo) return;
+        editTagListPos = pos;
         editTagPhoto = photo;
         editTagMsg.textContent = '';
         editTagMsg.className = 'admin-msg';
         editTagPreviewImg.src = photo.url;
+        editTagQuickAddInput.value = '';
 
         const existing = parseExistingNames(photo);
         existing.forEach(n => ensureInPeopleList(n));
         editTagSelected = new Set(existing.map(n => n.toLowerCase()));
 
         renderEditTagFaces();
+        if (editTagProgressText) editTagProgressText.textContent = (pos + 1) + ' / ' + editTagList.length;
+        editTagPrevBtn.disabled = pos === 0;
+        editTagNextBtn.disabled = pos === editTagList.length - 1;
+    }
+
+    function openEditTagsByIdx(idx) {
+        // allPhotos-কে idx অনুযায়ী সাজিয়ে Prev/Next-এর ক্রম তৈরি করা হচ্ছে
+        editTagList = allPhotos.slice().sort((a, b) => a.idx - b.idx);
+        const pos = editTagList.findIndex(p => p.idx === idx);
+        if (pos === -1) return;
+        loadEditTagAtPos(pos);
         adminEditTagOverlay.classList.add('open');
     }
 
     function closeEditTagOverlay() {
         adminEditTagOverlay.classList.remove('open');
         editTagPhoto = null;
+        editTagList = [];
+        editTagListPos = -1;
         editTagQuickAddInput.value = '';
     }
     adminEditTagClose.addEventListener('click', closeEditTagOverlay);
-    editTagCancelBtn.addEventListener('click', closeEditTagOverlay);
     adminEditTagOverlay.addEventListener('click', (e) => {
         if (e.target === e.currentTarget) closeEditTagOverlay();
     });
@@ -2718,8 +2849,7 @@
             editTagMsg.className = 'admin-msg err';
             return;
         }
-        const finalName = ensureInPeopleList(name);
-        editTagSelected.add(finalName.toLowerCase());
+        addNameWithPhonetic(name);
         editTagQuickAddInput.value = '';
         editTagMsg.textContent = '';
         renderEditTagFaces();
@@ -2728,44 +2858,71 @@
     editTagQuickAddBtn.addEventListener('click', quickAddEditTagPerson);
     editTagQuickAddInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') quickAddEditTagPerson(); });
 
-    editTagSaveBtn.addEventListener('click', () => {
-        if (!editTagPhoto) return;
-        // নির্বাচিত lowercase নামগুলোর জন্য uploadPeople থেকে আসল (original-case) নাম বের করা
+    // বর্তমান ছবির ট্যাগ সেভ করে — Promise<boolean> রিটার্ন করে (সফল হলে true)।
+    // Save বাটন এবং Prev/Next দুটোতেই এই একই ফাংশন ব্যবহার হয়।
+    function saveCurrentEditTagPhoto() {
+        if (!editTagPhoto) return Promise.resolve(false);
         const finalNames = uploadPeople.filter(n => editTagSelected.has(n.toLowerCase()));
         const newNamesStr = serializeNames(finalNames, editTagPhoto);
+        const photo = editTagPhoto;
 
         editTagSaveBtn.disabled = true;
+        editTagPrevBtn.disabled = true;
+        editTagNextBtn.disabled = true;
         editTagMsg.textContent = 'Saving...';
         editTagMsg.className = 'admin-msg';
 
-        const payload = editTagPhoto.fileId
-            ? { password: ADMIN_PASSWORD, action: 'updateCaption', fileId: editTagPhoto.fileId, caption: newNamesStr }
-            : { password: ADMIN_PASSWORD, action: 'updateText', url: editTagPhoto.rawUrl, names: newNamesStr };
+        const payload = photo.fileId
+            ? { password: ADMIN_PASSWORD, action: 'updateCaption', fileId: photo.fileId, caption: newNamesStr }
+            : { password: ADMIN_PASSWORD, action: 'updateText', url: photo.rawUrl, names: newNamesStr };
 
-        fetch(APPS_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) })
+        return fetch(APPS_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) })
             .then(r => r.json())
             .then(res => {
                 editTagSaveBtn.disabled = false;
                 if (res.success) {
-                    // লোকাল photo অবজেক্ট ও সার্চ ইনডেক্স আপডেট করা, যাতে রিফ্রেশ ছাড়াই
-                    // সার্চ/টাইটেল ঠিকভাবে দেখায়
-                    editTagPhoto.names = newNamesStr;
-                    editTagPhoto.title = newNamesStr || editTagPhoto.title;
-                    const sectionWords = SECTION_SEARCH_WORDS[editTagPhoto.cat] || [];
-                    editTagPhoto.searchIndex = [newNamesStr, ...sectionWords].join(' ').toLowerCase();
+                    photo.names = newNamesStr;
+                    photo.title = newNamesStr || photo.title;
+                    const sectionWords = SECTION_SEARCH_WORDS[photo.cat] || [];
+                    photo.searchIndex = [newNamesStr, ...sectionWords].join(' ').toLowerCase();
                     editTagMsg.textContent = '✅ Saved';
                     editTagMsg.className = 'admin-msg ok';
-                    setTimeout(closeEditTagOverlay, 600);
+                    return true;
                 } else {
                     editTagMsg.textContent = 'Save failed: ' + (res.error || 'Unknown error');
                     editTagMsg.className = 'admin-msg err';
+                    return false;
                 }
             })
             .catch(() => {
                 editTagSaveBtn.disabled = false;
                 editTagMsg.textContent = 'Network error, please try again';
                 editTagMsg.className = 'admin-msg err';
+                return false;
             });
+    }
+
+    editTagSaveBtn.addEventListener('click', () => {
+        saveCurrentEditTagPhoto().then(ok => {
+            if (ok) setTimeout(closeEditTagOverlay, 500);
+            else { editTagPrevBtn.disabled = editTagListPos === 0; editTagNextBtn.disabled = editTagListPos === editTagList.length - 1; }
+        });
+    });
+
+    editTagPrevBtn.addEventListener('click', () => {
+        if (editTagListPos <= 0) return;
+        saveCurrentEditTagPhoto().then(ok => {
+            if (ok) loadEditTagAtPos(editTagListPos - 1);
+            else { editTagPrevBtn.disabled = false; editTagNextBtn.disabled = editTagListPos === editTagList.length - 1; }
+        });
+    });
+
+    editTagNextBtn.addEventListener('click', () => {
+        if (editTagListPos >= editTagList.length - 1) return;
+        saveCurrentEditTagPhoto().then(ok => {
+            if (ok) loadEditTagAtPos(editTagListPos + 1);
+            else { editTagNextBtn.disabled = false; editTagPrevBtn.disabled = editTagListPos === 0; }
+        });
     });
 
     // একটা ছবি Apps Script-এ পাঠায়; caption = সেই ছবিতে ট্যাগ করা নামগুলোর তালিকা

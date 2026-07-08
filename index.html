@@ -2887,7 +2887,6 @@
     // স্ট্রিং, বা টাইপো/জাঙ্ক এন্ট্রি)। এটা শুধু এই ছবি থেকে আনচেক করে না — পুরো
     // uploadPeople তালিকা থেকেই বাদ দিয়ে দেয়, যাতে ভবিষ্যতেও আর তালিকায় না দেখা যায়।
     function deleteTagEntry(name) {
-        if (!confirm('"' + name + '" — এই ট্যাগ এন্ট্রিটা লিস্ট থেকে সম্পূর্ণ মুছে ফেলবে (শুধু আনচেক না)। এগোতে চান?')) return;
         const idx = uploadPeople.findIndex(p => p.toLowerCase() === name.toLowerCase());
         if (idx !== -1) uploadPeople.splice(idx, 1);
         editTagSelected.delete(name.toLowerCase());

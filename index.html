@@ -522,6 +522,16 @@
             0%, 100% { box-shadow: 0 0 0 0 rgba(63,168,255,0.5); }
             50% { box-shadow: 0 0 0 8px rgba(63,168,255,0); }
         }
+        .lang-toggle-btn {
+            font-family: 'Inter', sans-serif; font-size: 10.5px; font-weight: 700;
+            letter-spacing: 0.03em; color: var(--gold); flex-shrink: 0;
+            background: var(--gold-dim); border: 1px solid var(--border);
+            border-radius: 7px; padding: 5px 9px; cursor: pointer; line-height: 1;
+            min-width: 30px; text-align: center;
+            transition: background 0.15s, color 0.15s, border-color 0.15s;
+        }
+        .lang-toggle-btn:hover { border-color: var(--gold); color: var(--gold-light); }
+        .lang-toggle-btn.en { background: var(--gold); color: #000; }
         .search-status {
             margin-top: 10px; font-size: 11px; letter-spacing: 0.08em;
             color: var(--muted); min-height: 14px; text-align: center;
@@ -682,13 +692,23 @@
             display: flex; align-items: flex-end; padding: 16px;
         }
         .photo-item:hover .photo-overlay { opacity: 1; }
-        .photo-meta { flex: 1; }
+        .photo-meta { flex: 1; min-width: 0; margin-right: 10px; }
         .photo-tag {
             font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase;
             color: var(--gold); margin-bottom: 4px;
         }
-        .photo-title { font-size: 13px; font-weight: 400; color: #fff; }
-        .photo-actions { display: flex; gap: 8px; }
+        .photo-title {
+            font-size: 13px; font-weight: 400; color: #fff;
+            /* অনেকগুলো নাম কমা দিয়ে জোড়া লাগানো থাকলে (যেমন "নাম,Name,নাম২,Name2")
+               মাঝে কোনো স্পেস না থাকায় ব্রাউজার লাইন-ব্রেক করার জায়গা পায় না,
+               ফলে টেক্সট নিজের বক্সের বাইরে গিয়ে ডাউনলোড/শেয়ার বাটনের নিচে/উপরে
+               চলে যেত। overflow-wrap + word-break জোর করে যেকোনো জায়গায় ভাঙতে দেয়,
+               আর line-clamp খুব লম্বা ট্যাগ-লিস্টকে ২ লাইনে আটকে বাকিটা "..." করে দেয়। */
+            overflow-wrap: anywhere; word-break: break-word;
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+            overflow: hidden; line-height: 1.35;
+        }
+        .photo-actions { display: flex; gap: 8px; flex-shrink: 0; }
         .photo-action-btn {
             width: 32px; height: 32px; border-radius: 50%;
             background: rgba(255,255,255,0.1); backdrop-filter: blur(10px);
@@ -1130,6 +1150,7 @@
                    placeholder="Search by name…"
                    autocomplete="off" spellcheck="false">
             <button class="search-clear" id="searchClear" title="Clear" style="display:none;">×</button>
+            <button class="lang-toggle-btn" id="langToggleBtn" type="button" data-lang="bn-BD" title="ভাষা পরিবর্তন করতে ক্লিক করো">বাং</button>
             <button class="mic-btn" id="micBtn" title="Voice search">
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Z" stroke="currentColor" stroke-width="1.6"/>
@@ -2004,10 +2025,24 @@
     // filter and the active search query, then re-renders the grid from
     // scratch. Called whenever either the filter buttons or the search box
     // change, so the two always combine rather than override each other.
+    // যদি সার্চ বক্সে শুধু একটা সংখ্যা (যেমন "20" বা "800") লেখা হয়, সেটাকে
+    // টেক্সট সার্চ হিসেবে না নিয়ে "এই নাম্বার থেকে শেষ পর্যন্ত" রেঞ্জ হিসেবে
+    // ধরা হয়। photo.idx সবসময় পুরো লিস্টে ধারাবাহিক (0-based) থাকে বলে
+    // idx + 1 = ছবির প্রকৃত ক্রম নাম্বার (1, 2, 3 ... মোট ছবি সংখ্যা)।
+    let searchIsNumberRange = false;
+
     function applyFiltersAndSearch() {
         let list = activeFilter === 'all' ? allPhotos : allPhotos.filter(p => p.cat === activeFilter);
+        searchIsNumberRange = false;
         if (searchQuery) {
-            list = list.filter(p => p.searchIndex.indexOf(searchQuery) !== -1);
+            const isNumberOnly = /^\d+$/.test(searchQuery);
+            if (isNumberOnly) {
+                searchIsNumberRange = true;
+                const startNum = parseInt(searchQuery, 10);
+                list = list.filter(p => (p.idx + 1) >= startNum);
+            } else {
+                list = list.filter(p => p.searchIndex.indexOf(searchQuery) !== -1);
+            }
         }
         currentList = list;
         renderGallery(currentList, true);
@@ -2022,7 +2057,11 @@
             return;
         }
         status.classList.add('active');
-        status.textContent = count + (count === 1 ? ' result' : ' results') + ' for "' + searchQuery + '"';
+        if (searchIsNumberRange) {
+            status.textContent = count + (count === 1 ? ' photo' : ' photos') + ' from #' + searchQuery + ' to the end';
+        } else {
+            status.textContent = count + (count === 1 ? ' result' : ' results') + ' for "' + searchQuery + '"';
+        }
     }
 
     document.querySelectorAll('.filter-btn').forEach(btn => {
@@ -2073,33 +2112,54 @@
     let recognizer = null;
     let isListening = false;
 
-    // The Web Speech API only accepts one recognition language per session,
-    // so true simultaneous bn+en listening isn't possible in one instance.
-    // Instead: try Bengali first (since it's the less common of the two and
-    // more likely to be misrecognized by an English-default engine), and if
-    // nothing usable comes back, automatically retry the same recording
-    // window in English. This covers a single voice search working for
-    // either language without asking the user to pick one upfront.
-    function runRecognition(lang, isRetry) {
+    // একটাই বাটন — ক্লিক করলে বাং ⇄ EN এর মধ্যে সুইচ হয়। বাটনে যেই ভাষা
+    // লেখা/হাইলাইট থাকবে, মাইক বাটনে ক্লিক করলে ঠিক সেই ভাষাতেই শোনা শুরু হবে।
+    let selectedLang = 'bn-BD';
+    const langToggleBtn = document.getElementById('langToggleBtn');
+    langToggleBtn.addEventListener('click', () => {
+        if (isListening) stopListening();
+        if (selectedLang === 'bn-BD') {
+            selectedLang = 'en-IN';
+            langToggleBtn.textContent = 'EN';
+            langToggleBtn.classList.add('en');
+            langToggleBtn.title = 'বাংলায় বদলাতে ক্লিক করো';
+        } else {
+            selectedLang = 'bn-BD';
+            langToggleBtn.textContent = 'বাং';
+            langToggleBtn.classList.remove('en');
+            langToggleBtn.title = 'English-এ বদলাতে ক্লিক করো';
+        }
+    });
+
+    // ইংরেজি নাম প্রায়ই ভুল শোনে speech engine — বিশেষ করে বাংলা উচ্চারণে বলা
+    // ইংরেজি নাম। তাই একটামাত্র অনুমানের বদলে ইঞ্জিনকে কয়েকটা বিকল্প (alternatives)
+    // চাইতে হয়, এবং প্রতিটা বিকল্পকে গ্যালারির ছবিগুলোতে আগে থেকেই থাকা নাম/ট্যাগের
+    // সাথে মিলিয়ে দেখা হয় — যেই বিকল্পটা সবচেয়ে বেশি চেনা নামের সাথে মেলে, সেটাই
+    // ব্যবহার করা হয়, ইঞ্জিনের সবচেয়ে "confident" অনুমান নয়।
+    function pickBestTranscript(alternatives) {
+        const combinedIndex = allPhotos.map(p => p.searchIndex).join(' ');
+        let best = (alternatives[0] && alternatives[0].transcript || '').trim();
+        let bestScore = -1;
+        for (let i = 0; i < alternatives.length; i++) {
+            const t = (alternatives[i].transcript || '').trim();
+            if (!t) continue;
+            const words = t.toLowerCase().split(/\s+/).filter(w => w.length > 1);
+            let score = 0;
+            words.forEach(w => { if (combinedIndex.indexOf(w) !== -1) score++; });
+            if (score > bestScore) { bestScore = score; best = t; }
+        }
+        return best;
+    }
+
+    function runRecognition(lang) {
         const rec = new SpeechRecognition();
         rec.lang = lang;
         rec.interimResults = false;
-        rec.maxAlternatives = 1;
+        rec.maxAlternatives = 5;
         let gotResult = false;
-        let retried = false;
-
-        function retryOrStop() {
-            if (retried) return;
-            retried = true;
-            if (!isRetry && !gotResult) {
-                runRecognition(lang === 'bn-BD' ? 'en-US' : 'bn-BD', true);
-            } else {
-                stopListening();
-            }
-        }
 
         rec.onresult = (e) => {
-            const transcript = e.results[0][0].transcript.trim();
+            const transcript = pickBestTranscript(e.results[0]);
             if (!transcript) return;
             gotResult = true;
             searchInput.value = transcript;
@@ -2108,11 +2168,20 @@
             applyFiltersAndSearch();
         };
 
-        rec.onerror = retryOrStop;
-        rec.onend = retryOrStop;
+        rec.onerror = () => stopListening();
+        rec.onend = () => stopListening();
 
         recognizer = rec;
         rec.start();
+    }
+
+    function stopListening() {
+        isListening = false;
+        micBtn.classList.remove('listening');
+        if (recognizer) {
+            try { recognizer.onend = null; recognizer.onerror = null; recognizer.stop(); } catch (e) {}
+            recognizer = null;
+        }
     }
 
     function startListening() {
@@ -2123,16 +2192,7 @@
         }
         isListening = true;
         micBtn.classList.add('listening');
-        runRecognition('bn-BD', false);
-    }
-
-    function stopListening() {
-        isListening = false;
-        micBtn.classList.remove('listening');
-        if (recognizer) {
-            try { recognizer.onend = null; recognizer.onerror = null; recognizer.stop(); } catch (e) {}
-            recognizer = null;
-        }
+        runRecognition(selectedLang);
     }
 
     micBtn.addEventListener('click', () => {

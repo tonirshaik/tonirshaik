@@ -15,7 +15,8 @@
     <!-- ===== FAVICON ===== -->
     <link rel="icon" type="image/png" sizes="512x512" href="https://tonirshaik.github.io/tonirshaik/web-app-manifest-512x512.png">
     <link rel="apple-touch-icon" sizes="512x512" href="https://tonirshaik.github.io/tonirshaik/web-app-manifest-512x512.png">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"></noscript>
 
     <!-- ===== Open Graph (Facebook / WhatsApp preview) ===== -->
     <meta property="og:type" content="website">
@@ -44,6 +45,13 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://raw.githubusercontent.com">
+    <link rel="preconnect" href="https://script.google.com">
+    <link rel="preconnect" href="https://drive.google.com">
+    <link rel="dns-prefetch" href="https://raw.githubusercontent.com">
+    <link rel="dns-prefetch" href="https://script.google.com">
+    <link rel="dns-prefetch" href="https://drive.google.com">
     <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=Inter:wght@300;400;500&display=swap" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=Inter:wght@300;400;500&display=swap" rel="stylesheet"></noscript>
     <style>
@@ -62,12 +70,6 @@
 
         html { scroll-behavior: smooth; }
 
-        /* ── Aurora animated background canvas ─────────────────── */
-        #aurora-canvas {
-            position: fixed; inset: 0; z-index: -1;
-            width: 100%; height: 100%; pointer-events: none;
-        }
-
         body {
             font-family: 'Inter', sans-serif;
             background: #000;
@@ -83,13 +85,11 @@
         /* Soft electric-blue glow on every clickable element,
            so the whole site feels lit from within. */
         button,
-        a.hero-cta,
         .nav-links a,
         .filter-btn,
         .load-more-btn,
         .admin-btn,
         .admin-btn-secondary,
-        .gdash-btn,
         .lb-dl,
         .lb-share,
         .lb-nav,
@@ -97,33 +97,27 @@
         .mic-btn,
         .search-clear,
         .photo-action-btn,
-        .admin-trigger,
         .footer-site-link {
             box-shadow: 0 0 0 1px rgba(63,168,255,0.15), 0 0 14px rgba(63,168,255,0.18);
             transition: box-shadow 0.3s ease, transform 0.25s ease, border-color 0.3s ease, background 0.3s ease, color 0.3s ease;
         }
         button:hover,
-        a.hero-cta:hover,
         .nav-links a:hover,
         .filter-btn:hover,
         .filter-btn.active,
         .load-more-btn:hover,
         .admin-btn:hover,
         .admin-btn-secondary:hover,
-        .gdash-btn:hover,
         .lb-dl:hover,
         .lb-share:hover,
         .lb-nav:hover,
         .lb-close:hover,
         .mic-btn:hover,
         .photo-action-btn:hover,
-        .admin-trigger:hover,
         .footer-site-link:hover {
             box-shadow: 0 0 0 1px rgba(63,168,255,0.55), 0 0 22px rgba(63,168,255,0.55), 0 0 46px rgba(63,168,255,0.30);
             transform: translateY(-2px);
         }
-        a.hero-cta:hover { transform: translateY(-2px) scale(1.02); }
-
         /* Photos glow blue around their edges, giving a
            floating, lit-from-behind "3D" look. */
         .photo-item {
@@ -149,68 +143,11 @@
         }
 
         /* Cards / panels get a faint blue rim-light too. */
-        .admin-box, .color-btn {
+        .admin-box {
             box-shadow: 0 0 0 1px rgba(63,168,255,0.15), 0 0 26px rgba(63,168,255,0.12) !important;
         }
 
 
-
-        .hero {
-            position: relative;
-            min-height: auto;
-            padding: 100px 20px 40px;
-            display: flex; align-items: center; justify-content: center;
-            overflow: hidden;
-        }
-        .hero-bg {
-            position: absolute; inset: 0;
-            background: radial-gradient(ellipse 80% 60% at 50% 40%, rgba(63,168,255,0.08) 0%, transparent 70%);
-        }
-        .hero-lines {
-            position: absolute; inset: 0;
-            background-image:
-                linear-gradient(rgba(63,168,255,0.04) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(63,168,255,0.04) 1px, transparent 1px);
-            background-size: 60px 60px;
-        }
-        .hero-content { position: relative; text-align: center; z-index: 2; }
-        .hero-eyebrow {
-            font-family: 'Inter', sans-serif;
-            font-size: 11px; font-weight: 500;
-            letter-spacing: 0.25em; text-transform: uppercase;
-            color: var(--gold); margin-bottom: 10px;
-            display: flex; align-items: center; gap: 12px; justify-content: center;
-        }
-        .hero-eyebrow::before, .hero-eyebrow::after {
-            content: ''; display: block;
-            width: 40px; height: 1px; background: var(--gold);
-            opacity: 0.4;
-        }
-        .hero-name {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: clamp(42px, 6vw, 72px);
-            font-weight: 300; line-height: 0.95;
-            letter-spacing: -0.02em;
-            color: #fff;
-        }
-        .hero-name em { font-style: italic; color: var(--gold-light); }
-        .hero-tagline {
-            margin-top: 10px;
-            font-size: 12px; font-weight: 300;
-            letter-spacing: 0.12em; color: var(--muted);
-        }
-        .hero-cta {
-            margin-top: 20px;
-            display: inline-flex; align-items: center; gap: 10px;
-            font-size: 12px; font-weight: 500;
-            letter-spacing: 0.15em; text-transform: uppercase;
-            color: var(--gold); text-decoration: none;
-            border: 1px solid var(--border);
-            padding: 14px 32px; border-radius: 2px;
-            transition: background 0.3s, color 0.3s;
-        }
-        .hero-cta:hover { background: var(--gold); color: #000; }
-        .hero-scroll { display: none; }
 
         /* ── Running neon border animation ──────────────────────── */
         @keyframes neon-border-run {
@@ -218,27 +155,6 @@
             50%  { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
         }
-        @keyframes neon-spin {
-            from { transform: rotate(0deg); }
-            to   { transform: rotate(360deg); }
-        }
-        /* Applied to photo cards on hover via JS class */
-        .neon-border-wrap {
-            position: relative;
-        }
-        .neon-border-wrap::before {
-            content: '';
-            position: absolute;
-            inset: -2px;
-            border-radius: 6px;
-            background: linear-gradient(135deg, #3FA8FF, #0040ff, #7FCBFF, #00c3ff, #3FA8FF);
-            background-size: 300% 300%;
-            animation: neon-border-run 2.5s linear infinite;
-            z-index: -1;
-            opacity: 0;
-            transition: opacity 0.35s;
-        }
-        .photo-item:hover .neon-border-wrap::before,
         .photo-item:hover::before {
             opacity: 1;
         }
@@ -261,9 +177,9 @@
             position: fixed; top: 0; left: 0; right: 0; z-index: 100;
             padding: 16px 40px;
             display: flex; justify-content: space-between; align-items: center;
-            background: rgba(5, 10, 22, 0.55);
-            backdrop-filter: blur(22px) saturate(1.6);
-            -webkit-backdrop-filter: blur(22px) saturate(1.6);
+            background: rgba(5, 10, 22, 0.72);
+            backdrop-filter: blur(10px) saturate(1.3);
+            -webkit-backdrop-filter: blur(10px) saturate(1.3);
             border-bottom: 1px solid rgba(63,168,255,0.18);
             box-shadow: 0 4px 30px rgba(63,168,255,0.08), 0 1px 0 rgba(63,168,255,0.15);
         }
@@ -274,15 +190,6 @@
         }
         .nav-logo span { color: var(--gold); }
         .nav-links { display: flex; gap: 32px; list-style: none; }
-        .nav-fx {
-            flex: 1;
-            height: 34px;
-            margin: 0 28px;
-            position: relative;
-            overflow: hidden;
-            pointer-events: none;
-        }
-        .nav-fx canvas { width: 100%; height: 100%; display: block; }
         .nav-links a {
             font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase;
             color: var(--muted); text-decoration: none;
@@ -299,37 +206,6 @@
             border: 1px solid rgba(63,168,255,0.3);
             border-radius: 4px;
         }
-        .chase-svg {
-            position: absolute; inset: 0;
-            width: 100%; height: 100%;
-            overflow: visible;
-            pointer-events: none;
-        }
-        .chase-line {
-            fill: none;
-            stroke-width: 1.6;
-            vector-effect: non-scaling-stroke;
-            stroke-linecap: round;
-        }
-        .chase-line-a {
-            stroke: #7FCBFF;
-            stroke-dasharray: 22 300;
-            filter: drop-shadow(0 0 4px rgba(127,203,255,0.95));
-            animation: chaseDashFwd 5s linear infinite;
-        }
-        .chase-line-b {
-            stroke: #FFD54F;
-            stroke-dasharray: 22 300;
-            stroke-dashoffset: 161;
-            filter: drop-shadow(0 0 4px rgba(255,213,79,0.9));
-            animation: chaseDashRev 5s linear infinite;
-        }
-        @keyframes chaseDashFwd {
-            to { stroke-dashoffset: -644; }
-        }
-        @keyframes chaseDashRev {
-            to { stroke-dashoffset: 805; }
-        }
 
         .nav-shine-btn {
             position: relative;
@@ -340,28 +216,6 @@
             border-radius: 4px;
             overflow: hidden;
         }
-        .nav-shine-btn::after {
-            content: '';
-            position: absolute;
-            top: 0; bottom: 0;
-            left: -60%;
-            width: 40%;
-            background: linear-gradient(
-                100deg,
-                transparent 0%,
-                rgba(140,225,255,0.05) 30%,
-                rgba(190,235,255,0.55) 50%,
-                rgba(140,225,255,0.05) 70%,
-                transparent 100%
-            );
-            transform: skewX(-20deg);
-            animation: navShineSweep 3.4s ease-in-out infinite;
-        }
-        @keyframes navShineSweep {
-            0%   { left: -60%; }
-            35%  { left: 130%; }
-            100% { left: 130%; }
-        }
 
         /* ── Premium treatment for the Upload button ───────────────── */
         .nav-premium {
@@ -369,36 +223,12 @@
             letter-spacing: 0.18em;
             backdrop-filter: blur(6px);
             background: linear-gradient(160deg, rgba(63,168,255,0.14), rgba(10,18,32,0.55) 60%);
-            animation: navPremiumGlow 2.6s ease-in-out infinite;
             overflow: hidden;
         }
         .nav-premium .pl {
             display: inline-block;
             color: #ffd76a;
             text-shadow: 0 0 8px rgba(255,215,110,0.6);
-            opacity: 0;
-            transform: translateY(-16px);
-            animation: letterDrop 2.8s ease-in-out infinite;
-        }
-        .nav-premium .pl:nth-child(1) { animation-delay: 0.00s; }
-        .nav-premium .pl:nth-child(2) { animation-delay: 0.09s; }
-        .nav-premium .pl:nth-child(3) { animation-delay: 0.18s; }
-        .nav-premium .pl:nth-child(4) { animation-delay: 0.27s; }
-        .nav-premium .pl:nth-child(5) { animation-delay: 0.36s; }
-        .nav-premium .pl:nth-child(6) { animation-delay: 0.45s; }
-        @keyframes letterDrop {
-            0%   { opacity: 0; transform: translateY(-16px); }
-            18%  { opacity: 1; transform: translateY(0); }
-            75%  { opacity: 1; transform: translateY(0); }
-            100% { opacity: 0; transform: translateY(10px); }
-        }
-        @keyframes navPremiumGlow {
-            0%, 100% {
-                box-shadow: 0 0 0 1px rgba(63,168,255,0.18), 0 0 10px rgba(63,168,255,0.15), 0 4px 18px rgba(0,0,0,0.35);
-            }
-            50% {
-                box-shadow: 0 0 0 1px rgba(255,215,110,0.4), 0 0 22px rgba(255,215,110,0.35), 0 0 34px rgba(63,168,255,0.35), 0 4px 18px rgba(0,0,0,0.35);
-            }
         }
         .nav-premium:hover {
             transform: translateY(-2px) scale(1.03);
@@ -437,14 +267,6 @@
             padding: 10px 16px;
             transition: border-color 0.2s, box-shadow 0.2s;
             animation: searchBarGlow 3.2s ease-in-out infinite;
-        }
-        .search-bar-fx {
-            position: absolute; inset: 0;
-            width: 100%; height: 100%;
-            display: block;
-            pointer-events: none;
-            opacity: 0.6;
-            z-index: 0;
         }
         .search-icon, .search-input, .search-clear, .mic-btn {
             position: relative;
@@ -617,27 +439,6 @@
                 0 0 14px rgba(63,168,255,0.45),
                 0 0 34px rgba(63,168,255,0.22),
                 0 6px 20px rgba(0,0,0,0.35);
-            animation: activeGlow 2.6s ease-in-out infinite;
-        }
-        .filter-btn.active::before {
-            opacity: 1;
-            animation-play-state: running;
-        }
-        @keyframes activeGlow {
-            0%, 100% {
-                box-shadow:
-                    0 0 0 1px rgba(63,168,255,0.25) inset,
-                    0 0 14px rgba(63,168,255,0.45),
-                    0 0 34px rgba(63,168,255,0.22),
-                    0 6px 20px rgba(0,0,0,0.35);
-            }
-            50% {
-                box-shadow:
-                    0 0 0 1px rgba(127,203,255,0.4) inset,
-                    0 0 20px rgba(63,168,255,0.65),
-                    0 0 46px rgba(63,168,255,0.32),
-                    0 6px 20px rgba(0,0,0,0.35);
-            }
         }
         .filter-btn .ripple {
             position: absolute;
@@ -699,11 +500,6 @@
         }
         .photo-title {
             font-size: 13px; font-weight: 400; color: #fff;
-            /* অনেকগুলো নাম কমা দিয়ে জোড়া লাগানো থাকলে (যেমন "নাম,Name,নাম২,Name2")
-               মাঝে কোনো স্পেস না থাকায় ব্রাউজার লাইন-ব্রেক করার জায়গা পায় না,
-               ফলে টেক্সট নিজের বক্সের বাইরে গিয়ে ডাউনলোড/শেয়ার বাটনের নিচে/উপরে
-               চলে যেত। overflow-wrap + word-break জোর করে যেকোনো জায়গায় ভাঙতে দেয়,
-               আর line-clamp খুব লম্বা ট্যাগ-লিস্টকে ২ লাইনে আটকে বাকিটা "..." করে দেয়। */
             overflow-wrap: anywhere; word-break: break-word;
             display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
             overflow: hidden; line-height: 1.35;
@@ -719,8 +515,6 @@
         }
         .photo-action-btn:hover { background: var(--gold); color: #000; border-color: var(--gold); }
 
-        /* মুছে ফেলার (×) বাটন — শুধু লাইভ-আপলোড করা ছবিতে থাকে, এবং
-           অ্যাডমিন পাসওয়ার্ড দিয়ে আনলক করার আগে অদৃশ্য থাকে */
         .delete-btn { display: none; }
         body.admin-mode .delete-btn { display: flex; }
         .delete-btn:hover { background: #c0392b !important; color: #fff !important; border-color: #c0392b !important; }
@@ -767,19 +561,6 @@
         .strip-item img { width: 100%; height: 100%; object-fit: cover; }
         @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
-        /* ===== গোপন অ্যাডমিন ট্রিগার (পেজের একদম নিচে, ছোট ও অস্পষ্ট) ===== */
-        .admin-trigger {
-            display: flex; align-items: center; justify-content: center;
-            width: 30px; height: 30px;
-            margin: 24px auto 16px; opacity: 0.35;
-            background: transparent; border: 1px solid var(--border);
-            border-radius: 50%; cursor: pointer;
-            color: var(--gold); font-size: 13px; line-height: 1;
-            transition: opacity 0.3s, background 0.3s;
-        }
-        .admin-trigger:hover { opacity: 1; background: var(--gold-dim); }
-
-        /* ===== আপলোড প্যানেল (পাসওয়ার্ড + আপলোড ফর্ম) ===== */
         .admin-overlay {
             display: none; position: fixed; inset: 0; z-index: 500;
             background: rgba(2,6,16,0.92); backdrop-filter: blur(6px);
@@ -804,12 +585,11 @@
             background: none; border: none; color: var(--muted);
             font-size: 20px; cursor: pointer;
         }
-        .admin-input, .admin-textarea {
+        .admin-input {
             width: 100%; background: var(--ink); border: 1px solid var(--border);
             color: #fff; padding: 10px 12px; border-radius: 6px;
             font-size: 13px; margin-bottom: 12px; font-family: inherit;
         }
-        .admin-textarea { resize: vertical; min-height: 50px; }
         .pw-field-wrap { position: relative; margin-bottom: 12px; }
         .pw-field-wrap .admin-input { margin-bottom: 0; padding-right: 40px; }
         .pw-eye-btn {
@@ -826,7 +606,6 @@
         }
         .admin-btn:hover { opacity: 0.85; }
         .admin-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        /* সঠিক পাসওয়ার্ড না দেওয়া পর্যন্ত Unlock বাটন দেখা যাবে না */
         #adminUnlockBtn { display: none; }
         .admin-msg {
             text-align: center; font-size: 12px; margin-top: 10px;
@@ -1008,12 +787,6 @@
         .footer-social-row a:hover {
             border-color: var(--gold); color: var(--gold-light); transform: translateY(-2px);
         }
-        .footer-about {
-            font-family: 'Inter', sans-serif;
-            font-size: 12.5px; line-height: 1.85; color: var(--muted);
-            text-align: center; max-width: 620px; margin: 0 auto;
-        }
-        .footer-about strong { color: var(--gold-light); font-weight: 500; }
         .intro-about {
             font-family: 'Inter', sans-serif;
             font-size: 13px; line-height: 1.9; color: var(--muted);
@@ -1058,87 +831,17 @@
             nav { padding: 14px 16px; }
             .nav-links { gap: 12px; }
             .nav-links a { font-size: 9px; letter-spacing: 0.08em; }
-            .nav-fx { display: none; }
             footer { flex-direction: column; text-align: center; }
         }
 
-        .gdash-overlay {
-            display: none; position: fixed; inset: 0; z-index: 2000;
-            background: rgba(0,0,0,0.94);
-            align-items: center; justify-content: center;
-        }
-        .gdash-overlay.open { display: flex; }
-        .gdash-close {
-            position: fixed; top: 20px; right: 28px;
-            font-size: 30px; color: var(--muted); background: none; border: none;
-            cursor: pointer; z-index: 2001; transition: color 0.2s; line-height: 1;
-        }
-        .gdash-close:hover { color: var(--gold); }
-        .gdash-menu {
-            display: flex; flex-direction: column; gap: 16px;
-            width: 320px; padding: 28px;
-            background: rgba(6, 12, 28, 0.75);
-            backdrop-filter: blur(24px) saturate(1.5);
-            -webkit-backdrop-filter: blur(24px) saturate(1.5);
-            border: 1px solid rgba(63,168,255,0.22);
-            border-radius: 20px;
-            box-shadow: 0 0 60px rgba(63,168,255,0.18), 0 30px 80px rgba(0,0,0,0.7);
-        }
-        .gdash-title {
-            font-family: 'Cormorant Garamond', serif; font-size: 28px;
-            color: #fff; text-align: center; margin-bottom: 6px; font-weight: 300;
-        }
-        .gdash-subtitle {
-            font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase;
-            color: var(--gold); text-align: center; margin-bottom: 18px;
-        }
-        .gdash-btn {
-            padding: 18px 22px; border-radius: 10px;
-            background: rgba(63,168,255,0.06);
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(63,168,255,0.18);
-            color: #fff; font-size: 14px; letter-spacing: 0.03em;
-            cursor: pointer; text-align: left; transition: all 0.25s;
-            font-family: 'Inter', sans-serif;
-        }
-        .gdash-btn:hover {
-            border-color: rgba(63,168,255,0.7);
-            background: rgba(63,168,255,0.14);
-            color: #7FCBFF;
-            transform: translateY(-2px);
-            box-shadow: 0 0 20px rgba(63,168,255,0.35);
-        }
-        .gdash-frame-wrap {
-            width: 100%; height: 100%; display: none; flex-direction: column;
-        }
-        .gdash-back {
-            align-self: flex-start; margin: 70px 24px 0;
-            background: none; border: 1px solid var(--border); color: var(--gold);
-            padding: 8px 18px; border-radius: 4px; font-size: 12px; cursor: pointer;
-            letter-spacing: 0.08em; transition: background 0.2s, color 0.2s;
-            font-family: 'Inter', sans-serif;
-        }
-        .gdash-back:hover { background: var(--gold); color: #000; }
-        .gdash-iframe {
-            flex: 1; width: 100%; border: none; background: #fff;
-            margin-top: 16px;
-        }
-        @media (max-width: 600px) {
-            .gdash-menu { width: 88%; }
-            .gdash-back { margin: 60px 16px 0; }
-        }
     </style>
 </head>
 <body>
 
-<canvas id="aurora-canvas"></canvas>
-
 <nav>
     <a href="#" class="nav-logo">Tonir <span>Shaik</span></a>
-    <div class="nav-fx"><canvas id="navFxCanvas"></canvas></div>
     <ul class="nav-links">
         <li class="chase-wrap"><a href="#" id="navGalleryLink" class="nav-chase-btn nav-premium"><span class="pl">U</span><span class="pl">p</span><span class="pl">l</span><span class="pl">o</span><span class="pl">a</span><span class="pl">d</span></a>
-            <svg class="chase-svg"><rect x="1" y="1" width="100%" height="100%" rx="4" class="chase-line chase-line-a"/><rect x="1" y="1" width="100%" height="100%" rx="4" class="chase-line chase-line-b"/></svg>
         </li>
         <li><a href="https://tonirshaik.github.io/tonirshaik_web/" target="_blank" class="nav-shine-btn">Official Site</a></li>
     </ul>
@@ -1168,7 +871,6 @@
 
     <div class="search-wrap reveal">
         <div class="search-bar">
-            <canvas class="search-bar-fx" id="searchBarFx"></canvas>
             <svg class="search-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.6"/>
                 <path d="M20 20L16.5 16.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
@@ -1250,7 +952,6 @@
     </div>
 </footer>
 
-<!-- পাসওয়ার্ড লক স্ক্রিন -->
 <div class="admin-overlay" id="adminLockOverlay">
     <div class="admin-box">
         <button class="admin-close" id="adminLockClose">×</button>
@@ -1309,9 +1010,9 @@
     </div>
 </div>
 
-<!-- Edit Tags Panel — টেক্সট ফাইল ও লাইভ আপলোড দুই ধরনের ছবির ট্যাগই এখান থেকে
-     এডিট করা যায়। UI ঠিক আপলোডের ২য় ধাপের মতোই (Tagger Pro V3 style),
-     শুধু এখানে prev/next নেই কারণ একটাই ছবি এডিট হচ্ছে। -->
+<!-- Edit Tags Panel — lets you edit tags on both text-file and live-upload
+     photos. Same UI as the upload step 2 (Tagger Pro V3 style), just without
+     prev/next since only one photo is being edited here. -->
 <div class="admin-overlay" id="adminEditTagOverlay">
     <div class="admin-box admin-box-wide" id="adminEditTagBox">
         <button class="admin-close" id="adminEditTagClose">×</button>
@@ -1353,389 +1054,6 @@
 </div>
 
 <script>
-    /* ── Aurora background ─────────────────────────────────────── */
-    (function() {
-        const canvas = document.getElementById('aurora-canvas');
-        const ctx = canvas.getContext('2d');
-        let W, H;
-        function resize() {
-            W = canvas.width = window.innerWidth;
-            H = canvas.height = window.innerHeight;
-            generateCircuitPaths();
-        }
-
-        /* ── Circuit-board trace network with travelling light pulses ──
-           Generates PCB-style paths (right-angle bends) radiating across
-           the screen; bright pulses repeatedly travel along them, like
-           current flowing through a circuit board. */
-        let circuitPaths = [];
-        let pulses = [];
-
-        function generateCircuitPaths() {
-            circuitPaths = [];
-            const pathCount = Math.max(40, Math.floor((W * H) / 38000));
-            for (let i = 0; i < pathCount; i++) {
-                const points = [];
-                let x = Math.random() * W;
-                let y = Math.random() * H;
-                points.push({ x, y });
-                const segs = 5 + Math.floor(Math.random() * 5);
-                let horizontal = Math.random() < 0.5;
-                for (let s = 0; s < segs; s++) {
-                    const len = 18 + Math.random() * 70;
-                    const dir = Math.random() < 0.5 ? -1 : 1;
-                    if (horizontal) x += len * dir; else y += len * dir;
-                    x = Math.max(-20, Math.min(W + 20, x));
-                    y = Math.max(-20, Math.min(H + 20, y));
-                    points.push({ x, y });
-                    horizontal = !horizontal;
-                }
-                // precompute cumulative lengths
-                let total = 0;
-                const segLens = [];
-                for (let k = 0; k < points.length - 1; k++) {
-                    const d = Math.hypot(points[k+1].x - points[k].x, points[k+1].y - points[k].y);
-                    segLens.push(d);
-                    total += d;
-                }
-                circuitPaths.push({ points, segLens, total });
-            }
-
-            // (Re)spawn pulses — most paths carry an active travelling pulse
-            pulses = [];
-            circuitPaths.forEach((path, idx) => {
-                pulses.push(spawnPulse(idx));
-            });
-        }
-
-        function spawnPulse(pathIdx) {
-            return {
-                pathIdx,
-                t: Math.random() * 0.3,
-                speed: 0.004 + Math.random() * 0.006,
-                glowLen: 0.06 + Math.random() * 0.08,
-            };
-        }
-
-        function pointAtT(path, t) {
-            const targetDist = t * path.total;
-            let acc = 0;
-            for (let i = 0; i < path.segLens.length; i++) {
-                const segLen = path.segLens[i];
-                if (acc + segLen >= targetDist || i === path.segLens.length - 1) {
-                    const localT = segLen === 0 ? 0 : (targetDist - acc) / segLen;
-                    const p1 = path.points[i], p2 = path.points[i + 1];
-                    return { x: p1.x + (p2.x - p1.x) * localT, y: p1.y + (p2.y - p1.y) * localT };
-                }
-                acc += segLen;
-            }
-            return path.points[path.points.length - 1];
-        }
-
-        /* Returns the list of points (including any in-between bends) that
-           lie along the path from t0 to t1, so a trail can be drawn that
-           actually follows the polyline's corners instead of cutting a
-           straight diagonal line across a bend. */
-        function pointsBetween(path, t0, t1) {
-            const d0 = t0 * path.total, d1 = t1 * path.total;
-            const pts = [pointAtT(path, t0)];
-            let acc = 0;
-            for (let i = 0; i < path.segLens.length; i++) {
-                acc += path.segLens[i];
-                if (acc > d0 && acc < d1) pts.push(path.points[i + 1]);
-                if (acc >= d1) break;
-            }
-            pts.push(pointAtT(path, t1));
-            return pts;
-        }
-
-        function strokePolyline(ctx, pts) {
-            ctx.beginPath();
-            ctx.moveTo(pts[0].x, pts[0].y);
-            for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
-            ctx.stroke();
-        }
-
-        resize();
-        window.addEventListener('resize', resize);
-
-        const blobs = [
-            { x: 0.25, y: 0.15, r: 0.55, vx: 0.00018, vy: 0.00012, color: 'rgba(25,90,220,0.22)' },
-            { x: 0.75, y: 0.80, r: 0.50, vx:-0.00015, vy:-0.00010, color: 'rgba(0,160,255,0.18)' },
-            { x: 0.55, y: 0.45, r: 0.40, vx: 0.00012, vy: 0.00018, color: 'rgba(0,80,200,0.14)' },
-            { x: 0.10, y: 0.70, r: 0.35, vx: 0.00020, vy:-0.00016, color: 'rgba(60,180,255,0.12)' },
-            { x: 0.90, y: 0.25, r: 0.38, vx:-0.00022, vy: 0.00014, color: 'rgba(0,40,140,0.16)' },
-        ];
-
-
-
-        let t = 0;
-        function draw() {
-            ctx.clearRect(0, 0, W, H);
-            ctx.fillStyle = '#000';
-            ctx.fillRect(0, 0, W, H);
-
-            blobs.forEach(b => {
-                b.x += b.vx * (W / 1440);
-                b.y += b.vy * (H / 900);
-                if (b.x < -0.2) b.x = 1.2;
-                if (b.x > 1.2)  b.x = -0.2;
-                if (b.y < -0.2) b.y = 1.2;
-                if (b.y > 1.2)  b.y = -0.2;
-
-                const cx = b.x * W + Math.sin(t * 0.00055 + b.r * 10) * W * 0.05;
-                const cy = b.y * H + Math.cos(t * 0.00045 + b.r * 7) * H * 0.04;
-                const rx = b.r * Math.max(W, H);
-
-                const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, rx);
-                grad.addColorStop(0, b.color);
-                grad.addColorStop(1, 'transparent');
-                ctx.fillStyle = grad;
-                ctx.fillRect(0, 0, W, H);
-            });
-
-            // ── Circuit-board traces with travelling light pulses ──────
-            ctx.save();
-
-            // Base traces — visible thin metallic-blue lines
-            ctx.strokeStyle = 'rgba(100,165,225,0.22)';
-            ctx.lineWidth = 1.1;
-            ctx.lineJoin = 'round';
-            circuitPaths.forEach(path => {
-                ctx.beginPath();
-                ctx.moveTo(path.points[0].x, path.points[0].y);
-                for (let k = 1; k < path.points.length; k++) ctx.lineTo(path.points[k].x, path.points[k].y);
-                ctx.stroke();
-            });
-
-            // Junction "via" nodes at every bend — like solder pads on a PCB
-            ctx.fillStyle = 'rgba(120,180,235,0.35)';
-            circuitPaths.forEach(path => {
-                for (let k = 1; k < path.points.length - 1; k++) {
-                    const p = path.points[k];
-                    ctx.beginPath();
-                    ctx.arc(p.x, p.y, 1.6, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-            });
-
-            // Animate + draw pulses travelling along their paths
-            ctx.lineCap = 'round';
-            for (let i = pulses.length - 1; i >= 0; i--) {
-                const pulse = pulses[i];
-                pulse.t += pulse.speed;
-                if (pulse.t > 1) {
-                    // respawn this pulse on a random path
-                    pulses[i] = spawnPulse(Math.floor(Math.random() * circuitPaths.length));
-                    continue;
-                }
-                const path = circuitPaths[pulse.pathIdx];
-                if (!path) continue;
-
-                const headT = pulse.t;
-                const tailT = Math.max(0, pulse.t - pulse.glowLen);
-                const head = pointAtT(path, headT);
-                const tail = pointAtT(path, tailT);
-                const trailPts = pointsBetween(path, tailT, headT);
-
-                // Wide outer glow trail
-                ctx.shadowColor = 'rgba(90,180,255,1)';
-                ctx.shadowBlur = 2.5;
-                const outerGrad = ctx.createLinearGradient(tail.x, tail.y, head.x, head.y);
-                outerGrad.addColorStop(0, 'rgba(80,170,255,0)');
-                outerGrad.addColorStop(1, 'rgba(110,195,255,0.55)');
-                ctx.strokeStyle = outerGrad;
-                ctx.lineWidth = 0.8;
-                strokePolyline(ctx, trailPts);
-
-                // Bright core trail
-                ctx.shadowBlur = 1.2;
-                const coreGrad = ctx.createLinearGradient(tail.x, tail.y, head.x, head.y);
-                coreGrad.addColorStop(0, 'rgba(160,220,255,0)');
-                coreGrad.addColorStop(1, 'rgba(190,230,255,0.95)');
-                ctx.strokeStyle = coreGrad;
-                ctx.lineWidth = 0.4;
-                strokePolyline(ctx, trailPts);
-
-                // Bright pulse head — glowing node
-                ctx.shadowBlur = 4;
-                ctx.fillStyle = 'rgba(235,248,255,1)';
-                ctx.beginPath();
-                ctx.arc(head.x, head.y, 1, 0, Math.PI * 2);
-                ctx.fill();
-            }
-
-            ctx.shadowBlur = 0;
-            ctx.restore();
-
-            t++;
-            requestAnimationFrame(draw);
-        }
-        draw();
-    })();
-
-    /* ── Nav-gap plexus particle network ───────────────────────── */
-    (function() {
-        const canvas = document.getElementById('navFxCanvas');
-        if (!canvas) return;
-        const ctx = canvas.getContext('2d');
-        let W, H, nodes = [];
-
-        function resize() {
-            const rect = canvas.parentElement.getBoundingClientRect();
-            W = canvas.width = rect.width;
-            H = canvas.height = rect.height;
-            const count = Math.max(6, Math.min(22, Math.floor(W / 26)));
-            nodes = Array.from({ length: count }, () => ({
-                x: Math.random() * W,
-                y: Math.random() * H,
-                vx: (Math.random() - 0.5) * 0.22,
-                vy: (Math.random() - 0.5) * 0.22,
-                r: 1 + Math.random() * 1.4
-            }));
-        }
-        resize();
-        window.addEventListener('resize', resize);
-
-        const LINK_DIST = 62;
-
-        function draw() {
-            ctx.clearRect(0, 0, W, H);
-            nodes.forEach(n => {
-                n.x += n.vx;
-                n.y += n.vy;
-                if (n.x < 0 || n.x > W) n.vx *= -1;
-                if (n.y < 0 || n.y > H) n.vy *= -1;
-                n.x = Math.max(0, Math.min(W, n.x));
-                n.y = Math.max(0, Math.min(H, n.y));
-            });
-
-            for (let i = 0; i < nodes.length; i++) {
-                for (let j = i + 1; j < nodes.length; j++) {
-                    const a = nodes[i], b = nodes[j];
-                    const dist = Math.hypot(a.x - b.x, a.y - b.y);
-                    if (dist < LINK_DIST) {
-                        ctx.strokeStyle = `rgba(120,190,255,${(1 - dist / LINK_DIST) * 0.55})`;
-                        ctx.lineWidth = 0.6;
-                        ctx.beginPath();
-                        ctx.moveTo(a.x, a.y);
-                        ctx.lineTo(b.x, b.y);
-                        ctx.stroke();
-                    }
-                }
-            }
-
-            nodes.forEach(n => {
-                ctx.beginPath();
-                ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
-                ctx.fillStyle = 'rgba(160,215,255,0.95)';
-                ctx.shadowColor = 'rgba(63,168,255,0.9)';
-                ctx.shadowBlur = 6;
-                ctx.fill();
-            });
-            ctx.shadowBlur = 0;
-            requestAnimationFrame(draw);
-        }
-        draw();
-    })();
-
-    /* ── Search-bar tiny wiggling "snake" light traces ─────────── */
-    (function() {
-        const canvas = document.getElementById('searchBarFx');
-        if (!canvas) return;
-        const ctx = canvas.getContext('2d');
-        let W, H;
-        let traces = [];
-        const colors = ['#3FA8FF', '#FF5C5C', '#57E389', '#FFD54F', '#7FCBFF'];
-
-        function resize() {
-            const rect = canvas.parentElement.getBoundingClientRect();
-            W = canvas.width = rect.width;
-            H = canvas.height = rect.height;
-            generateTraces();
-        }
-
-        // Each "snake" is a short body of a few points; a travelling sine
-        // wave runs along the body (phase offset per point) so it looks
-        // like it's wriggling as it slowly drifts sideways.
-        function makeSnake(headX) {
-            return {
-                headX,
-                segCount: 8 + Math.floor(Math.random() * 4),
-                length: 16 + Math.random() * 18,
-                baseY: 6 + Math.random() * Math.max(H - 12, 8),
-                amp: 7 + Math.random() * 6,
-                waveLen: 2.6 + Math.random() * 1.8,
-                phase: Math.random() * Math.PI * 2,
-                wiggleSpeed: 0.16 + Math.random() * 0.14,
-                vx: 0.18 + Math.random() * 0.24,
-                color: colors[Math.floor(Math.random() * colors.length)],
-                flickerPhase: Math.random() * Math.PI * 2,
-                flickerSpeed: 0.03 + Math.random() * 0.04,
-                baseAlpha: 0.25 + Math.random() * 0.15
-            };
-        }
-
-        function generateTraces() {
-            traces = [];
-            const count = Math.max(6, Math.floor(W / 46));
-            for (let i = 0; i < count; i++) {
-                traces.push(makeSnake(Math.random() * W));
-            }
-        }
-
-        resize();
-        window.addEventListener('resize', resize);
-
-        function draw() {
-            ctx.clearRect(0, 0, W, H);
-            traces.forEach((sn, idx) => {
-                sn.headX += sn.vx;
-                sn.phase += sn.wiggleSpeed;
-                sn.flickerPhase += sn.flickerSpeed;
-
-                if (sn.headX - sn.length > W + 10) {
-                    traces[idx] = makeSnake(-10 - Math.random() * 20);
-                    return;
-                }
-
-                const pts = [];
-                for (let i = 0; i < sn.segCount; i++) {
-                    const t = i / (sn.segCount - 1);
-                    const x = sn.headX - t * sn.length;
-                    const y = sn.baseY + Math.sin(sn.phase - t * sn.waveLen * Math.PI) * sn.amp * t;
-                    pts.push({ x, y: Math.max(2, Math.min(H - 2, y)) });
-                }
-
-                const flicker = (Math.sin(sn.flickerPhase) + 1) / 2;
-                const alpha = Math.min(sn.baseAlpha + flicker * 0.6, 0.85);
-
-                ctx.beginPath();
-                ctx.moveTo(pts[0].x, pts[0].y);
-                for (let i = 1; i < pts.length - 1; i++) {
-                    const midX = (pts[i].x + pts[i + 1].x) / 2;
-                    const midY = (pts[i].y + pts[i + 1].y) / 2;
-                    ctx.quadraticCurveTo(pts[i].x, pts[i].y, midX, midY);
-                }
-                ctx.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
-                ctx.strokeStyle = sn.color;
-                ctx.lineWidth = 1.2;
-                ctx.lineCap = 'round';
-                ctx.lineJoin = 'round';
-                ctx.shadowColor = sn.color;
-                ctx.shadowBlur = 3 + flicker * 5;
-                ctx.globalAlpha = alpha;
-                ctx.stroke();
-            });
-            ctx.globalAlpha = 1;
-            ctx.shadowBlur = 0;
-            requestAnimationFrame(draw);
-        }
-        draw();
-    })();
-
-
-
     // Maps the section header found in the text file (e.g. "#SINGLE")
     // to the internal category key and the label shown in the gallery overlay.
     const CATEGORY_LABELS = { single: 'Single', dual: 'Dual', group: 'Group' };
@@ -1748,7 +1066,7 @@
     let activeFilter = 'all';   // which filter button is selected
     let searchQuery = '';       // current lowercased search text
 
-    const csvUrl = 'https://raw.githubusercontent.com/tonirshaik/tonirshaik/refs/heads/main/Tonir%20photo%20Link.txt?t=' + Date.now();
+    const csvUrl = 'https://raw.githubusercontent.com/tonirshaik/tonirshaik/refs/heads/main/Tonir%20photo%20Link.txt';
     const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyLRiJ9ueiqnc7kYc188HTg41wJNF3W1eighA2WA7xq9nUfMTJflzefxdXsrjIHOgXiLw/exec';
     const ADMIN_PASSWORD = 'T@$Fim2002T@niR';
 
@@ -1811,7 +1129,6 @@
     //
     // Bengali-English search note: matching is done by direct substring
     // comparison against whatever scripts are present in the name field, so
-    // "rakib" only matches if an English form was provided and "রাকিব" only
     // matches if a Bengali form was provided. There's no automatic
     // transliteration between the two — to support both spellings for a
     // photo, include both in the name field for that line.
@@ -1849,7 +1166,7 @@
                     downloadUrl: toDownloadUrl(url),
                     idx: idx,
                     cat: currentCat,
-                    names: namesRaw,            // raw display string, e.g. "Rakib রাকিব"
+                    names: namesRaw,
                     searchIndex: searchIndex,   // lowercased, used for matching
                     title: namesRaw || ('Photo ' + (idx + 1))
                 });
@@ -1860,11 +1177,6 @@
         return photos;
     }
 
-    // Apps Script থেকে আসা একটা ছবিকে মূল গ্যালারির photo-object ফরম্যাটে রূপান্তর করে।
-    // caption Google Sheet থেকে আসে — caption শুধু সংখ্যা (যেমন "11") হলে Sheet
-    // সেটাকে নিজেই Number বানিয়ে ফেলে, string না। তাই এখানে String() দিয়ে
-    // টাইপ যা-ই হোক জোর করে লেখায় (string) রূপান্তর করে নেওয়া হচ্ছে, যাতে
-    // .trim() বা .toLowerCase() কখনো ক্র্যাশ না করে।
     function liveImageToPhoto(img, idx) {
         const caption = String(img.caption == null ? '' : img.caption).trim();
         return {
@@ -1876,7 +1188,7 @@
             names: caption,
             searchIndex: caption.toLowerCase(),
             title: caption || ('New Photo ' + (idx + 1)),
-            fileId: img.id || null // শুধু লাইভ-আপলোড ছবিতেই থাকে, ডিলিট বাটনের জন্য লাগবে
+            fileId: img.id || null
         };
     }
 
@@ -1884,64 +1196,83 @@
         return fetch(APPS_SCRIPT_URL)
             .then(r => r.json())
             .then(res => (res && res.success && Array.isArray(res.images)) ? res.images : [])
-            .catch(() => []); // ব্যাকএন্ডে সমস্যা হলেও মূল গ্যালারি ভাঙবে না
+            .catch(() => []);
     }
 
-    // আগে: একটা ছবির ডেটায় কোনো সমস্যা (যেমন caption-এর ভুল টাইপ) হলে .map()
-    // পুরো ব্যাচটাই ব্যর্থ করে দিত, ফলে সব নতুন ছবি একসাথে অদৃশ্য হয়ে যেত।
-    // এখন: প্রতিটা ছবি আলাদাভাবে try/catch করা হচ্ছে — একটাতে সমস্যা হলে
-    // শুধু সেটাই বাদ যাবে, বাকি সব ছবি ঠিকই দেখাবে।
     function buildMergedPhotoList(oldPhotos, liveImages) {
         const newPhotos = [];
         (liveImages || []).forEach(img => {
             try {
                 if (img && img.url) {
-                    // এখানে দেওয়া idx সাময়িক — নিচে পুরো লিস্ট জোড়া লাগানোর পর
-                    // প্রকৃত (ফাইনাল, দেখার-ক্রম অনুযায়ী) idx বসিয়ে দেওয়া হবে।
                     newPhotos.push(liveImageToPhoto(img, newPhotos.length));
                 }
             } catch (e) {
-                // এই একটা ছবি স্কিপ হবে, বাকি প্রসেসিং চলতেই থাকবে
             }
         });
-        // নতুন আপলোড করা ছবি সবার আগে দেখানোর জন্য শুরুতে রাখা হলো
         const merged = [...newPhotos, ...oldPhotos];
-        // আগে: টেক্সট ফাইলের ছবি আর লাইভ-আপলোড ছবি দুটো আলাদা উৎস থেকে আলাদাভাবে
-        // idx পেত (oldPhotos নিজেদের মধ্যে 0..N, newPhotos oldPhotos.length থেকে শুরু)।
-        // ফলে সার্চ বক্সে সংখ্যা লিখে "X থেকে শেষ পর্যন্ত" খুঁজলে সেটা আসল
-        // (স্ক্রিনে দেখা) ক্রম না মিলিয়ে idx অনুযায়ী মিলত — তাই নতুন আপলোড করা
-        // ছবিগুলো কখনো ঠিকমতো গোনায় আসত না, সবসময় শুরুতে/বাইরে থেকে যেত।
-        // এখন merge করার পর পুরো লিস্টের আসল, স্ক্রিনে-দেখা অবস্থান অনুযায়ী
-        // ১ম ছবি থেকে ক্রমিক idx (0, 1, 2, ...) বসিয়ে দেওয়া হচ্ছে — তাই
-        // নতুন আপলোড আর পুরনো টেক্সট-ফাইল ছবি উভয়ই একই ধারাবাহিক নাম্বারিং-এ
-        // থাকে এবং নাম্বার-সার্চ সবসময় সঠিকভাবে কাজ করে।
         merged.forEach((p, i) => { p.idx = i; });
         return merged;
     }
 
-    // আগে: টেক্সট ফাইলের পুরোনো ছবি প্রথমে দেখানো হতো, তারপর নতুন আপলোড আলাদাভাবে
-    // লোড হয়ে যুক্ত হতো — এতে পেজ খোলার পর একটা "refresh/flash" এর মতো লাগতো।
-    // এখন: দুটো সোর্স (টেক্সট ফাইল + লাইভ আপলোড) একসাথে (parallel-এ) লোড করে,
-    // দুটোই রেডি হওয়ার পরেই একবারে সব ছবি দেখানো হচ্ছে।
-    const oldPhotosPromise = fetch(csvUrl)
-        .then(r => r.text())
-        .then(textData => textData ? parsePhotoFile(textData) : [])
-        .catch(() => []);
+    //
+    const PHOTO_CACHE_KEY = 'tonir_gallery_cache_v1';
 
-    const liveImagesPromise = fetchLiveUploads(); // ব্যর্থ হলে নিজেই [] রিটার্ন করে
-
-    Promise.all([oldPhotosPromise, liveImagesPromise]).then(([oldPhotos, liveImages]) => {
-        allPhotos = buildMergedPhotoList(oldPhotos, liveImages);
+    function showGallery(photos) {
+        allPhotos = photos;
         document.getElementById('photoCount').textContent = allPhotos.length;
         document.getElementById('loadingState').style.display = 'none';
         document.getElementById('masonry').style.display = '';
         currentList = allPhotos;
         renderGallery(currentList, true);
         buildStrip(allPhotos);
-    }).catch(() => {
-        document.getElementById('loadingState').innerHTML =
-            '<p style="color:var(--muted)">Could not load photos. Check your connection.</p>';
+    }
+
+    // 1) Instant paint from last successful visit, if any — no network wait.
+    //    Deferred one microtask so it runs after the rest of this script
+    //    (imgObserver, etc., declared further down) has finished executing.
+    let paintedFromCache = false;
+    Promise.resolve().then(() => {
+        try {
+            const cached = localStorage.getItem(PHOTO_CACHE_KEY);
+            if (cached) {
+                const cachedPhotos = JSON.parse(cached);
+                if (Array.isArray(cachedPhotos) && cachedPhotos.length && !paintedFromCache) {
+                    showGallery(cachedPhotos);
+                    paintedFromCache = true;
+                }
+            }
+        } catch (e) { /* corrupt/unavailable cache — ignore, fall through to network */ }
     });
+
+    const oldPhotosPromise = fetch(csvUrl)
+        .then(r => r.text())
+        .then(textData => textData ? parsePhotoFile(textData) : [])
+        .catch(() => []);
+
+    const liveImagesPromise = fetchLiveUploads();
+
+    // 2) As soon as the FAST source (old photos) is ready, show it right
+    //    away instead of waiting on the slower Apps Script call too.
+    oldPhotosPromise.then(oldPhotos => {
+        if (!paintedFromCache) {
+            showGallery(oldPhotos);
+        }
+
+        // 3) When live uploads arrive (possibly later), merge them in
+        //    quietly and refresh the cache — no loading spinner shown again.
+        liveImagesPromise.then(liveImages => {
+            const merged = buildMergedPhotoList(oldPhotos, liveImages);
+            showGallery(merged);
+            try { localStorage.setItem(PHOTO_CACHE_KEY, JSON.stringify(merged)); } catch (e) {}
+        });
+    }).catch(() => {
+        if (!paintedFromCache) {
+            document.getElementById('loadingState').innerHTML =
+                '<p style="color:var(--muted)">Could not load photos. Check your connection.</p>';
+        }
+    });
+
+
 
     const imgObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
@@ -1956,10 +1287,6 @@
         });
     }, { rootMargin: '300px 0px' });
 
-    // Drive thumbnail URL লোড না হলে (rare, restricted-sharing হলে) আগে একবার
-    // uc?export=view endpoint ট্রাই করা হয়। সেটাও ব্যর্থ হলে — মানে ছবিটা
-    // আসলেই Drive থেকে ডিলিট/প্রাইভেট হয়ে গেছে — কালো বক্স না রেখে কার্ডটাই
-    // গ্যালারি থেকে সম্পূর্ণ সরিয়ে দেওয়া হয়।
     function attachImgFallback(imgEl, photo) {
         let triedFallback = false;
         imgEl.addEventListener('error', function onErr() {
@@ -1973,7 +1300,6 @@
                     }
                 }
             }
-            // উভয় চেষ্টাই ব্যর্থ — কার্ডটা সরিয়ে দেওয়া হচ্ছে
             const item = imgEl.closest('.photo-item, .strip-item');
             if (item) {
                 item.remove();
@@ -2065,10 +1391,6 @@
     // filter and the active search query, then re-renders the grid from
     // scratch. Called whenever either the filter buttons or the search box
     // change, so the two always combine rather than override each other.
-    // যদি সার্চ বক্সে শুধু একটা সংখ্যা (যেমন "20" বা "800") লেখা হয়, সেটাকে
-    // টেক্সট সার্চ হিসেবে না নিয়ে "এই নাম্বার থেকে শেষ পর্যন্ত" রেঞ্জ হিসেবে
-    // ধরা হয়। photo.idx সবসময় পুরো লিস্টে ধারাবাহিক (0-based) থাকে বলে
-    // idx + 1 = ছবির প্রকৃত ক্রম নাম্বার (1, 2, 3 ... মোট ছবি সংখ্যা)।
     let searchIsNumberRange = false;
 
     function applyFiltersAndSearch() {
@@ -2152,8 +1474,6 @@
     let recognizer = null;
     let isListening = false;
 
-    // একটাই বাটন — ক্লিক করলে বাং ⇄ EN এর মধ্যে সুইচ হয়। বাটনে যেই ভাষা
-    // লেখা/হাইলাইট থাকবে, মাইক বাটনে ক্লিক করলে ঠিক সেই ভাষাতেই শোনা শুরু হবে।
     let selectedLang = 'bn-BD';
     const langToggleBtn = document.getElementById('langToggleBtn');
     langToggleBtn.addEventListener('click', () => {
@@ -2171,11 +1491,6 @@
         }
     });
 
-    // ইংরেজি নাম প্রায়ই ভুল শোনে speech engine — বিশেষ করে বাংলা উচ্চারণে বলা
-    // ইংরেজি নাম। তাই একটামাত্র অনুমানের বদলে ইঞ্জিনকে কয়েকটা বিকল্প (alternatives)
-    // চাইতে হয়, এবং প্রতিটা বিকল্পকে গ্যালারির ছবিগুলোতে আগে থেকেই থাকা নাম/ট্যাগের
-    // সাথে মিলিয়ে দেখা হয় — যেই বিকল্পটা সবচেয়ে বেশি চেনা নামের সাথে মেলে, সেটাই
-    // ব্যবহার করা হয়, ইঞ্জিনের সবচেয়ে "confident" অনুমান নয়।
     function pickBestTranscript(alternatives) {
         const combinedIndex = allPhotos.map(p => p.searchIndex).join(' ');
         let best = (alternatives[0] && alternatives[0].transcript || '').trim();
@@ -2333,7 +1648,6 @@
     }, { threshold: 0.1 });
     document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
-    // "Upload" নেভ-বাটনে ক্লিক করলে সরাসরি অ্যাডমিন পাসওয়ার্ড লক স্ক্রিন খুলবে
     document.getElementById('navGalleryLink').addEventListener('click', (e) => {
         e.preventDefault();
         adminLockOverlay.classList.add('open');
@@ -2346,7 +1660,7 @@
     });
 
     /* ===========================================================
-       Live Upload System (Google Drive + Apps Script ব্যাকএন্ড)
+       Live Upload System (Google Drive + Apps Script backend)
        =========================================================== */
     const adminLockOverlay  = document.getElementById('adminLockOverlay');
     const adminLockClose    = document.getElementById('adminLockClose');
@@ -2378,10 +1692,7 @@
     const uploadTotalCount  = document.getElementById('uploadTotalCount');
     const adminUploadMsg    = document.getElementById('adminUploadMsg');
 
-    // এই সেশনে যোগ করা মানুষের তালিকা — একটা ছবিতে ট্যাগ করলে পরের ছবিতেও
-    // তালিকায় থেকে যায়, যাতে একই মানুষকে আবার আবার টাইপ করতে না হয়
     let uploadPeople = [];
-    // প্রতিটা বাছাই করা ছবি: { base64, mime, name, tagIdxs: Set of uploadPeople-এর index }
     let selectedPhotos = [];
     let currentTagIdx = 0;
 
@@ -2409,7 +1720,6 @@
             adminLockOverlay.classList.remove('open');
             resetUploadFlow();
             adminUploadOverlay.classList.add('open');
-            // আনলক হলে গ্যালারির ছবিতে ডিলিট (×) বাটন দেখা যাবে
             document.body.classList.add('admin-mode');
         } else {
             adminLockMsg.textContent = 'Wrong password';
@@ -2418,7 +1728,6 @@
     adminUnlockBtn.addEventListener('click', tryUnlock);
     adminPasswordInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') tryUnlock(); });
 
-    // চোখ (👁) আইকনে ক্লিক করলে পাসওয়ার্ড লেখা দেখা/লুকানো টগল হবে
     pwEyeBtn.addEventListener('click', () => {
         const showing = adminPasswordInput.type === 'text';
         adminPasswordInput.type = showing ? 'password' : 'text';
@@ -2427,7 +1736,6 @@
         adminPasswordInput.focus();
     });
 
-    // টাইপ করার সাথে সাথেই চেক হবে — পাসওয়ার্ড পুরোপুরি ঠিক হলেই Unlock বাটন ভেসে উঠবে
     adminPasswordInput.addEventListener('input', () => {
         adminLockMsg.textContent = '';
         adminUnlockBtn.style.display = (adminPasswordInput.value === ADMIN_PASSWORD) ? 'block' : 'none';
@@ -2445,11 +1753,6 @@
     });
 
 
-    // ফোন থেকে সরাসরি তোলা ছবি (১০-৫০ মেগাবাইট) অনেক সময় বড় হওয়ার কারণে
-    // ব্রাউজার ধীর হয়ে যায় / ফ্রিজ হয়ে যায় বা আপলোড পেলোড অনেক বড় হয়ে যায়।
-    // তাই আপলোডের আগে ছবিটা ক্যানভাসে ছোট করে (লম্বা পাশ সর্বোচ্চ ১৬০০px) ও
-    // কমপ্রেস করে (JPEG, quality 0.82) নেওয়া হয় — এতে সাইজ অনেক কমে যায়
-    // এবং পেজ আটকে যাওয়ার / ক্র্যাশ করার সম্ভাবনা কমে।
     function compressImage(file, maxDim, quality) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -2485,7 +1788,6 @@
         });
     }
 
-    // একটা ফাইল কমপ্রেস করে base64 বানায়; কমপ্রেস ব্যর্থ হলে মূল ফাইলটাই base64 করে রিটার্ন করে
     function prepareFile(file) {
         return compressImage(file, 1600, 0.82)
             .then(dataUrl => ({ base64: dataUrl, mime: 'image/jpeg' }))
@@ -2515,7 +1817,6 @@
         });
     }
 
-    // একসাথে একাধিক ছবি বাছাই করলে — প্রতিটা আলাদাভাবে কমপ্রেস করে থাম্বনেইল গ্রিডে দেখানো হয়
     adminFileInput.addEventListener('change', () => {
         const files = Array.from(adminFileInput.files || []);
         if (files.length === 0) return;
@@ -2527,7 +1828,7 @@
         Promise.all(files.map(file =>
             prepareFile(file)
                 .then(({ base64, mime }) => ({ base64, mime, name: file.name, tagIdxs: new Set() }))
-                .catch(() => null) // একটা ফাইল পড়তে না পারলে শুধু সেটাই বাদ যাবে, বাকিগুলো ঠিক থাকবে
+                .catch(() => null)
         )).then(results => {
             const ok = results.filter(Boolean);
             selectedPhotos = selectedPhotos.concat(ok);
@@ -2542,8 +1843,6 @@
         });
     });
 
-    // ===== ধাপ ২: ট্যাগিং (Tagger Pro V3 স্টাইল) =====
-    // নতুন মানুষ যোগ করে — uploadPeople-এর index রিটার্ন করে, খালি/ডুপ্লিকেট হলে null
     function addUploadPerson(rawName) {
         const name = (rawName || '').trim();
         if (!name) return null;
@@ -2558,15 +1857,13 @@
         return uploadPeople.length - 1;
     }
 
-    // একটা মানুষকে পুরো তালিকা থেকে বাদ দেয় (ভুল করে যোগ হয়ে গেলে) —
-    // এবং সব ছবির tagIdxs-এ ইনডেক্স ঠিকমতো শিফট করে দেয়
     function removeUploadPerson(idx) {
         uploadPeople.splice(idx, 1);
         selectedPhotos.forEach(photo => {
             const newSet = new Set();
             photo.tagIdxs.forEach(i => {
-                if (i === idx) return;          // এই মানুষটাই বাদ গেলো
-                newSet.add(i > idx ? i - 1 : i); // পরের সবার ইনডেক্স এক ঘর কমে গেলো
+                if (i === idx) return;
+                newSet.add(i > idx ? i - 1 : i);
             });
             photo.tagIdxs = newSet;
         });
@@ -2619,7 +1916,6 @@
         if (idx === null) return;
         selectedPhotos[currentTagIdx].tagIdxs.add(idx);
 
-        // ইংলিশে নাম টাইপ করলে সাথে সাথে বাংলা প্রতিবর্ণীকরণও (phonetic) যোগ হয়ে যায়
         if (!isBanglaText(rawName)) {
             const banglaName = banglaPhonetic(rawName);
             if (banglaName && banglaName.toLowerCase() !== rawName.toLowerCase()) {
@@ -2647,8 +1943,6 @@
         showTagStep(0);
     });
 
-    // অ্যাডমিন মোডে কার্ডের (×) বাটনে ক্লিক করলে এটা চলে — কনফার্ম করে,
-    // Apps Script-কে delete রিকোয়েস্ট পাঠায়, সফল হলে কার্ডটা সরিয়ে দেয়
     function deletePhotoConfirm(fileId, btnEl) {
         if (!confirm('Are you sure you want to permanently delete this photo?')) return;
 
@@ -2667,7 +1961,6 @@
         .then(r => r.json())
         .then(res => {
             if (res.success) {
-                // মূল লিস্ট থেকেও বাদ দেওয়া হলো, যাতে ফিল্টার/সার্চ করলে আর না আসে
                 allPhotos = allPhotos.filter(p => p.fileId !== fileId);
                 currentList = currentList.filter(p => p.fileId !== fileId);
                 if (item) item.remove();
@@ -2689,11 +1982,6 @@
         });
     }
 
-    // টেক্সট ফাইল (GitHub) থেকে আসা ছবি ডিলিট করার জন্য — fileId থাকে না,
-    // তাই fileId-এর বদলে rawUrl (আসল Drive/ImgBB লিংক) পাঠানো হয়। Apps Script
-    // ব্যাকএন্ডে এই action ('deleteText') হ্যান্ডেল করার কোড থাকা লাগবে —
-    // যেটা GitHub-এর raw text ফাইল থেকে ম্যাচিং লাইনটা বাদ দিয়ে GitHub API
-    // দিয়ে ফাইলটা আপডেট (commit) করে দেবে।
     function deleteTextPhotoConfirm(rawUrl, btnEl) {
         if (!confirm('Are you sure you want to permanently delete this photo? (removes it from the source file)')) return;
 
@@ -2733,11 +2021,6 @@
         });
     }
 
-    // ===== বাংলা ফোনেটিক কনভার্টার (Avro-স্টাইল, ছোট সংস্করণ) =====
-    // ইংলিশে টাইপ করা নাম (যেমন "tonir") থেকে কাছাকাছি বাংলা বানান
-    // ("তনির") বানানোর জন্য। পুরো Avro-এর মতো নিখুঁত না (conjunct/যুক্তাক্ষর,
-    // exception শব্দ ইত্যাদি কভার করে না), কিন্তু বেশিরভাগ নাম/সাধারণ শব্দের
-    // জন্য যথেষ্ট ভালো ফল দেয় — বেশিরভাগ ব্যঞ্জনবর্ণ + স্বরবর্ণের মাত্রা নিয়ম মেনে।
     const PHONETIC_CONSONANTS = [
         ['kkh','ক্ষ'], ['kh','খ'], ['k','ক'],
         ['gh','ঘ'], ['g','গ'], ['ng','ঙ'],
@@ -2756,7 +2039,6 @@
         ['y','য়'],
         ['w','ও']
     ];
-    // [pattern, standalone (শব্দের শুরুতে/অন্য স্বরের পরে), matra (ব্যঞ্জনবর্ণের পরে)]
     const PHONETIC_VOWELS = [
         ['oi','ঐ','ৈ'], ['ou','ঔ','ৌ'],
         ['ee','ঈ','ী'], ['ii','ঈ','ী'],
@@ -2805,21 +2087,14 @@
             }
             if (matched) continue;
 
-            out += ch; // অচেনা ক্যারেক্টার (সংখ্যা ইত্যাদি) যেমন আছে তেমনই থেকে যায়
+            out += ch;
             i++;
             lastWasConsonant = false;
         }
         return out;
     }
 
-    // ===== ট্যাগ এডিট (Edit Tags) — টেক্সট ফাইল ও লাইভ আপলোড দুই ধরনের ছবির
-    // জন্যই কাজ করে। টেক্সট ফাইলের names ফিল্ড স্পেস-দিয়ে-ভাগ, আর লাইভ আপলোডের
-    // caption কমা-দিয়ে-ভাগ (upload flow-এই এভাবে সেভ হয়) — তাই লোড/সেভ করার
-    // সময় সোর্স অনুযায়ী আলাদা সেপারেটর ব্যবহার করা হচ্ছে।
     //
-    // Prev/Next: গ্যালারির সব ছবির (allPhotos, idx অনুযায়ী সাজানো) মধ্য দিয়ে
-    // একের পর এক এডিট করা যায় — Next/Previous চাপলে আগে বর্তমান ছবির
-    // পরিবর্তন সেভ হয়ে যায়, তারপর পরের/আগের ছবিতে চলে যায়।
     const adminEditTagOverlay   = document.getElementById('adminEditTagOverlay');
     const adminEditTagClose     = document.getElementById('adminEditTagClose');
     const editTagPreviewImg     = document.getElementById('editTagPreviewImg');
@@ -2832,17 +2107,17 @@
     const editTagMsg            = document.getElementById('editTagMsg');
     const editTagProgressText   = document.getElementById('editTagProgressText');
 
-    let editTagPhoto = null;          // এখন যে ছবিটার ট্যাগ এডিট হচ্ছে
-    let editTagSelected = new Set();  // এই ছবিতে বর্তমানে বাছাই করা নামগুলো (lowercase)
-    let editTagList = [];             // Prev/Next-এর জন্য গ্যালারির সব ছবির ক্রম
-    let editTagListPos = -1;          // editTagList-এ বর্তমান পজিশন
+    let editTagPhoto = null;
+    let editTagSelected = new Set();
+    let editTagList = [];
+    let editTagListPos = -1;
 
     function parseExistingNames(photo) {
         const raw = (photo.names || '').trim();
         if (!raw) return [];
         return photo.fileId
-            ? raw.split(',').map(s => s.trim()).filter(Boolean)   // লাইভ আপলোড: কমা-দিয়ে-ভাগ
-            : raw.split(/\s+/).filter(Boolean);                    // টেক্সট ফাইল: স্পেস-দিয়ে-ভাগ
+            ? raw.split(',').map(s => s.trim()).filter(Boolean)
+            : raw.split(/\s+/).filter(Boolean);
     }
 
     function serializeNames(namesArr, photo) {
@@ -2883,9 +2158,6 @@
         });
     }
 
-    // একটা ট্যাগ-এন্ট্রি পুরোপুরি মুছে ফেলার জন্য (যেমন — ভুলভাবে জমে যাওয়া কমা-জোড়া-লাগানো
-    // স্ট্রিং, বা টাইপো/জাঙ্ক এন্ট্রি)। এটা শুধু এই ছবি থেকে আনচেক করে না — পুরো
-    // uploadPeople তালিকা থেকেই বাদ দিয়ে দেয়, যাতে ভবিষ্যতেও আর তালিকায় না দেখা যায়।
     function deleteTagEntry(name) {
         const idx = uploadPeople.findIndex(p => p.toLowerCase() === name.toLowerCase());
         if (idx !== -1) uploadPeople.splice(idx, 1);
@@ -2893,11 +2165,6 @@
         renderEditTagFaces();
     }
 
-    // একটা ট্যাগের নাম বদলানোর জন্য — রো-টাকে ইনপুট বক্সে পরিণত করে, Save/Cancel দেখায়।
-    // এই Cancel (✕) শুধু rename অবস্থা থেকে বেরিয়ে আসে — এটা এন্ট্রিটা ডিলিট করে না।
-    // এন্ট্রি সম্পূর্ণ মুছতে উপরের ট্র্যাশ (🗑) বাটন ব্যবহার করতে হবে।
-    // Save করলে uploadPeople তালিকায় নামটা replace হয়, আর এই ছবিতে সেটা আগে থেকে
-    // বাছাই করা থাকলে (checked) নতুন নামটাও বাছাই-করা অবস্থাতেই থাকে।
     function startRenameRow(row, oldName) {
         const wrap = document.createElement('div');
         wrap.className = 'tag-face-rename-row';
@@ -2915,7 +2182,6 @@
         const commit = () => {
             const newName = input.value.trim();
             if (!newName || newName === oldName) { renderEditTagFaces(); return; }
-            // নাম আগে থেকেই তালিকায় থাকলে (অন্য কারো নামের সাথে ডুপ্লিকেট), সেভ করা যাবে না
             const dupIdx = uploadPeople.findIndex(p => p.toLowerCase() === newName.toLowerCase() && p.toLowerCase() !== oldName.toLowerCase());
             if (dupIdx !== -1) {
                 editTagMsg.textContent = 'এই নামটি আগে থেকেই তালিকায় আছে।';
@@ -2942,8 +2208,6 @@
         input.addEventListener('click', (e) => e.stopPropagation());
     }
 
-    // uploadPeople-এ নাম case-insensitive-ভাবে থাকে কিনা খুঁজে, না থাকলে যোগ করে —
-    // যোগ করা নামের আসল (original-case) স্ট্রিং-টা রিটার্ন করে
     function ensureInPeopleList(name) {
         const idx = uploadPeople.findIndex(p => p.toLowerCase() === name.toLowerCase());
         if (idx !== -1) return uploadPeople[idx];
@@ -2951,9 +2215,6 @@
         return name;
     }
 
-    // একটা নাম যোগ করার সময় — ইংলিশে টাইপ করা হলে সাথে সাথে তার বাংলা
-    // প্রতিবর্ণীকরণ (phonetic) ভার্শনটাও তৈরি করে দুটোই নির্বাচিত-তালিকায় যোগ করে,
-    // যাতে ভবিষ্যতে দুই ভাষাতেই সার্চ করলে ছবিটা পাওয়া যায়।
     function addNameWithPhonetic(rawName) {
         const name = (rawName || '').trim();
         if (!name) return;
@@ -2990,7 +2251,6 @@
     }
 
     function openEditTagsByIdx(idx) {
-        // allPhotos-কে idx অনুযায়ী সাজিয়ে Prev/Next-এর ক্রম তৈরি করা হচ্ছে
         editTagList = allPhotos.slice().sort((a, b) => a.idx - b.idx);
         const pos = editTagList.findIndex(p => p.idx === idx);
         if (pos === -1) return;
@@ -3027,8 +2287,6 @@
     editTagQuickAddBtn.addEventListener('click', quickAddEditTagPerson);
     editTagQuickAddInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') quickAddEditTagPerson(); });
 
-    // বর্তমান ছবির ট্যাগ সেভ করে — Promise<boolean> রিটার্ন করে (সফল হলে true)।
-    // Save বাটন এবং Prev/Next দুটোতেই এই একই ফাংশন ব্যবহার হয়।
     function saveCurrentEditTagPhoto() {
         if (!editTagPhoto) return Promise.resolve(false);
         const finalNames = uploadPeople.filter(n => editTagSelected.has(n.toLowerCase()));
@@ -3094,7 +2352,6 @@
         });
     });
 
-    // একটা ছবি Apps Script-এ পাঠায়; caption = সেই ছবিতে ট্যাগ করা নামগুলোর তালিকা
     function uploadOnePhoto(photo) {
         const caption = Array.from(photo.tagIdxs).map(i => uploadPeople[i]).join(', ');
         return fetch(APPS_SCRIPT_URL, {
@@ -3133,8 +2390,6 @@
                     : `✅ ${done} succeeded, ❌ ${failed} failed`;
                 adminUploadMsg.className = failed === 0 ? 'admin-msg ok' : 'admin-msg err';
                 isUploading = false;
-                // সাথে সাথে একবার রিফ্রেশ করার পর, Drive/Apps Script-এ ছবি
-                // তালিকায় আসতে কিছুটা দেরি হতে পারে — তাই আরও কয়েকবার চেক করা হবে
                 refreshGalleryWithLiveUploads(4);
                 setTimeout(() => {
                     adminUploadOverlay.classList.remove('open');
@@ -3160,9 +2415,6 @@
         }
     });
 
-    // নতুন আপলোড হওয়া ছবি মূল গ্যালারিতে নিয়ে আসার জন্য গ্যালারি আবার লোড করে।
-    // attemptsLeft > 0 হলে, ব্যাকএন্ডে নতুন ছবি তালিকায় আসতে দেরি হলেও
-    // কয়েক সেকেন্ড পর পর আবার চেক করা হবে (manual page reload না করেও নতুন ছবি দেখা যাবে)
     function refreshGalleryWithLiveUploads(attemptsLeft) {
         attemptsLeft = (typeof attemptsLeft === 'number') ? attemptsLeft : 0;
         try {
@@ -3175,19 +2427,16 @@
                         applyFiltersAndSearch();
                         buildStrip(allPhotos);
                     } catch (e) {
-                        // গ্যালারি রিফ্রেশে কোনো সমস্যা হলেও বিদ্যমান গ্যালারি ভাঙবে না
                     }
                 });
-            }).catch(() => { /* নিরবে ব্যর্থ হবে, বিদ্যমান গ্যালারি অপরিবর্তিত থাকবে */ });
-        } catch (e) { /* কোনো ক্রমেই মূল পেজ ভাঙতে দেওয়া হবে না */ }
+            }).catch(() => { /* fail silently, existing gallery stays unchanged */ });
+        } catch (e) { /* never let this break the main page */ }
 
         if (attemptsLeft > 0) {
             setTimeout(() => refreshGalleryWithLiveUploads(attemptsLeft - 1), 4000);
         }
     }
 
-    // প্রতি ৬০ সেকেন্ডে নতুন আপলোড আছে কিনা চেক করবে এবং থাকলে গ্যালারিতে যুক্ত করবে
-    // অটো-রিফ্রেশ বন্ধ — আপলোডের পরে এমনিতেই refresh হয়।
 
     /* ── 3D Mouse-tracked tilt on photo cards ───────────────────── */
     (function() {
@@ -3243,612 +2492,6 @@
         const observer = new MutationObserver(bindAll);
         observer.observe(document.getElementById('masonry') || document.body, { childList: true, subtree: true });
     })();
-</script>
-<script>
-const gdashContents = {
-  dash1: `<!DOCTYPE html>
-<html lang="bn">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>5 feet size photo PDF Download</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        #aurora-canvas {
-            position: fixed; inset: 0; z-index: -1;
-            width: 100%; height: 100%; pointer-events: none;
-        }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex; justify-content: center; align-items: center;
-            height: 100vh; background: #000000; color: #fff; position: relative;
-        }
-        .card {
-            background: rgba(10,18,32,0.85); backdrop-filter: blur(6px); padding: 40px; border-radius: 20px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.5); width: 380px;
-            text-align: center; border: 1px solid rgba(63,168,255,0.18);
-            transition: all 0.3s ease;
-        }
-        .card:hover { transform: translateY(-8px); }
-        .icon-box { font-size: 50px; color: #3FA8FF; margin-bottom: 20px; }
-        h2 {
-            color: #fff; margin-bottom: 25px; font-size: 20px; font-weight: 700;
-            text-transform: uppercase; letter-spacing: 1px;
-        }
-        .input-group { position: relative; margin-bottom: 25px; }
-        input[type="password"], input[type="text"] {
-            width: 100%; padding: 15px; padding-right: 50px;
-            border: 2px solid rgba(63,168,255,0.3); border-radius: 50px;
-            box-sizing: border-box; outline: none; font-size: 16px;
-            transition: all 0.3s; background-color: #060B14; color: #fff; text-align: center;
-        }
-        input::placeholder { color: rgba(255,255,255,0.38); }
-        input:focus { border-color: #3FA8FF; box-shadow: 0 0 10px rgba(63,168,255,0.2); }
-        .toggle-password {
-            position: absolute; right: 18px; top: 50%; transform: translateY(-50%);
-            cursor: pointer; color: rgba(255,255,255,0.5); font-size: 18px;
-        }
-        #submit-btn {
-            display: none; width: 100%; padding: 15px;
-            background: linear-gradient(to right, #3FA8FF, #7FCBFF);
-            color: #000; border: none; border-radius: 50px; cursor: pointer;
-            font-size: 18px; font-weight: bold; transition: all 0.3s ease;
-            box-shadow: 0 5px 15px rgba(63,168,255,0.3);
-        }
-        #submit-btn:hover {
-            background: linear-gradient(to right, #7FCBFF, #3FA8FF);
-            box-shadow: 0 8px 25px rgba(63,168,255,0.4); transform: scale(1.03);
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(15px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .show-btn { display: block !important; animation: fadeIn 0.6s cubic-bezier(0.175,0.885,0.32,1.275); }
-
-        .mf-overlay {
-            display: none; position: fixed; inset: 0; z-index: 500;
-            background: rgba(0,0,0,0.96); flex-direction: column; align-items: center;
-        }
-        .mf-overlay.open { display: flex; }
-        .mf-bar {
-            width: 100%; display: flex; align-items: center; justify-content: space-between;
-            padding: 14px 20px; border-bottom: 1px solid rgba(63,168,255,0.18);
-            background: #060B14;
-        }
-        .mf-bar-title { font-size: 14px; color: #7FCBFF; letter-spacing: 0.05em; }
-        .mf-bar-actions { display: flex; gap: 10px; align-items: center; }
-        .mf-open-new {
-            font-size: 12px; color: #3FA8FF; text-decoration: none;
-            border: 1px solid rgba(63,168,255,0.3); padding: 6px 14px; border-radius: 4px;
-            transition: background 0.2s, color 0.2s;
-        }
-        .mf-open-new:hover { background: #3FA8FF; color: #000; }
-        .mf-close {
-            background: none; border: none; color: rgba(255,255,255,0.5);
-            font-size: 24px; cursor: pointer; line-height: 1; transition: color 0.2s;
-        }
-        .mf-close:hover { color: #3FA8FF; }
-        .mf-iframe-wrap { flex: 1; width: 100%; position: relative; }
-        .mf-iframe-wrap iframe { width: 100%; height: 100%; border: none; background: #fff; }
-        .mf-hint {
-            width: 100%; box-sizing: border-box; padding: 10px 20px;
-            background: #060B14; border-top: 1px solid rgba(63,168,255,0.18);
-            color: rgba(255,255,255,0.45); font-size: 12px; text-align: center;
-        }
-    </style>
-    <base target="mfIframe">
-</head>
-<body>
-<canvas id="aurora-canvas"></canvas>
-<div class="card">
-    <div class="icon-box"><i class="fas fa-camera-retro"></i></div>
-    <h2>5 feet size photo PDF</h2>
-    <div class="input-group">
-        <input type="password" id="password" placeholder="Enter password...">
-        <i class="fa-solid fa-eye toggle-password" id="eye-icon"></i>
-    </div>
-    <button id="submit-btn" onclick="openMfOverlay()">Download</button>
-</div>
-
-<div class="mf-overlay" id="mfOverlay">
-    <div class="mf-bar">
-        <span class="mf-bar-title">5 Feet Size Photo — Google Drive</span>
-        <div class="mf-bar-actions">
-            <a class="mf-open-new" href="https://drive.google.com/embeddedfolderview?id=1euK6afTC4S0vrwGdynqfrpauwFjdCbEv#grid" target="_blank">Open in new tab ↗</a>
-            <button class="mf-close" id="mfClose">×</button>
-        </div>
-    </div>
-    <div class="mf-iframe-wrap">
-        <iframe id="mfIframe" name="mfIframe" title="Google Drive folder"></iframe>
-    </div>
-    <div class="mf-hint">Click any file to preview it in the frame below. To download, use the ↓ button on the preview page.</div>
-</div>
-
-<script>
-(function(){const canvas=document.getElementById('aurora-canvas');const ctx=canvas.getContext('2d');let W,H;function resize(){W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight;generateCircuitPaths();}
-let circuitPaths=[];let pulses=[];
-function generateCircuitPaths(){circuitPaths=[];const pathCount=Math.max(40,Math.floor((W*H)/38000));for(let i=0;i<pathCount;i++){const points=[];let x=Math.random()*W;let y=Math.random()*H;points.push({x,y});const segs=5+Math.floor(Math.random()*5);let horizontal=Math.random()<0.5;for(let s=0;s<segs;s++){const len=18+Math.random()*70;const dir=Math.random()<0.5?-1:1;if(horizontal)x+=len*dir;else y+=len*dir;x=Math.max(-20,Math.min(W+20,x));y=Math.max(-20,Math.min(H+20,y));points.push({x,y});horizontal=!horizontal;}
-let total=0;const segLens=[];for(let k=0;k<points.length-1;k++){const d=Math.hypot(points[k+1].x-points[k].x,points[k+1].y-points[k].y);segLens.push(d);total+=d;}
-circuitPaths.push({points,segLens,total});}
-pulses=[];circuitPaths.forEach((path,idx)=>{pulses.push(spawnPulse(idx));});}
-function spawnPulse(pathIdx){return{pathIdx,t:Math.random()*0.3,speed:0.004+Math.random()*0.006,glowLen:0.06+Math.random()*0.08};}
-function pointAtT(path,t){const targetDist=t*path.total;let acc=0;for(let i=0;i<path.segLens.length;i++){const segLen=path.segLens[i];if(acc+segLen>=targetDist||i===path.segLens.length-1){const localT=segLen===0?0:(targetDist-acc)/segLen;const p1=path.points[i],p2=path.points[i+1];return{x:p1.x+(p2.x-p1.x)*localT,y:p1.y+(p2.y-p1.y)*localT};}
-acc+=segLen;}
-return path.points[path.points.length-1];}
-function pointsBetween(path,t0,t1){const d0=t0*path.total,d1=t1*path.total;const pts=[pointAtT(path,t0)];let acc=0;for(let i=0;i<path.segLens.length;i++){acc+=path.segLens[i];if(acc>d0&&acc<d1)pts.push(path.points[i+1]);if(acc>=d1)break;}pts.push(pointAtT(path,t1));return pts;}
-function strokePolyline(ctx,pts){ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);for(let i=1;i<pts.length;i++)ctx.lineTo(pts[i].x,pts[i].y);ctx.stroke();}
-resize();window.addEventListener('resize',resize);
-let t=0;
-function draw(){ctx.clearRect(0,0,W,H);ctx.fillStyle='#000';ctx.fillRect(0,0,W,H);
-ctx.save();
-ctx.strokeStyle='rgba(100,165,225,0.22)';ctx.lineWidth=1.1;ctx.lineJoin='round';
-circuitPaths.forEach(path=>{ctx.beginPath();ctx.moveTo(path.points[0].x,path.points[0].y);for(let k=1;k<path.points.length;k++)ctx.lineTo(path.points[k].x,path.points[k].y);ctx.stroke();});
-ctx.fillStyle='rgba(120,180,235,0.35)';
-circuitPaths.forEach(path=>{for(let k=1;k<path.points.length-1;k++){const p=path.points[k];ctx.beginPath();ctx.arc(p.x,p.y,1.6,0,Math.PI*2);ctx.fill();}});
-ctx.lineCap='round';
-for(let i=pulses.length-1;i>=0;i--){const pulse=pulses[i];pulse.t+=pulse.speed;if(pulse.t>1){pulses[i]=spawnPulse(Math.floor(Math.random()*circuitPaths.length));continue;}
-const path=circuitPaths[pulse.pathIdx];if(!path)continue;
-const headT=pulse.t;const tailT=Math.max(0,pulse.t-pulse.glowLen);const head=pointAtT(path,headT);const tail=pointAtT(path,tailT);const trailPts=pointsBetween(path,tailT,headT);
-ctx.shadowColor='rgba(90,180,255,1)';ctx.shadowBlur=2.5;
-const outerGrad=ctx.createLinearGradient(tail.x,tail.y,head.x,head.y);outerGrad.addColorStop(0,'rgba(80,170,255,0)');outerGrad.addColorStop(1,'rgba(110,195,255,0.55)');ctx.strokeStyle=outerGrad;ctx.lineWidth=0.8;strokePolyline(ctx,trailPts);
-ctx.shadowBlur=1.2;const coreGrad=ctx.createLinearGradient(tail.x,tail.y,head.x,head.y);coreGrad.addColorStop(0,'rgba(160,220,255,0)');coreGrad.addColorStop(1,'rgba(190,230,255,0.95)');ctx.strokeStyle=coreGrad;ctx.lineWidth=0.4;strokePolyline(ctx,trailPts);
-ctx.shadowBlur=4;ctx.fillStyle='rgba(235,248,255,1)';ctx.beginPath();ctx.arc(head.x,head.y,1,0,Math.PI*2);ctx.fill();}
-ctx.shadowBlur=0;ctx.restore();
-t++;requestAnimationFrame(draw);}
-draw();})();
-<\/script>
-<script>
-    const passwordInput = document.getElementById('password');
-    const eyeIcon = document.getElementById('eye-icon');
-    const submitBtn = document.getElementById('submit-btn');
-    const correctPassword = "photo2002";
-
-    passwordInput.addEventListener('input', function() {
-        if (this.value === correctPassword) {
-            submitBtn.classList.add('show-btn');
-        } else {
-            submitBtn.classList.remove('show-btn');
-        }
-    });
-
-    eyeIcon.addEventListener('click', function() {
-        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-        passwordInput.setAttribute('type', type);
-        this.classList.toggle('fa-eye');
-        this.classList.toggle('fa-eye-slash');
-    });
-
-    const mfUrl = "https://drive.google.com/embeddedfolderview?id=1euK6afTC4S0vrwGdynqfrpauwFjdCbEv#grid";
-
-    function openMfOverlay() {
-        document.getElementById('mfOverlay').classList.add('open');
-        document.getElementById('mfIframe').src = mfUrl;
-    }
-    document.getElementById('mfClose').addEventListener('click', function() {
-        document.getElementById('mfOverlay').classList.remove('open');
-        document.getElementById('mfIframe').src = 'about:blank';
-    });
-<\/script>
-
-</body>
-</html>
-`,
-  dash2: `<!DOCTYPE html>
-<html lang="bn">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        * { box-sizing: border-box; }
-        #aurora-canvas {
-            position: fixed; inset: 0; z-index: -1;
-            width: 100%; height: 100%; pointer-events: none;
-        }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex; justify-content: center; align-items: center;
-            height: 100vh; margin: 0; background: #000000; color: #fff; position: relative;
-        }
-        .card {
-            background: rgba(10,18,32,0.85); backdrop-filter: blur(6px); padding: 30px; border-radius: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center;
-            width: 360px; min-height: 400px; position: relative;
-            border: 1px solid rgba(63,168,255,0.18);
-        }
-        .icon-top { font-size: 55px; margin-bottom: 10px; }
-        h2 { color: #fff; margin-bottom: 25px; font-size: 20px; text-transform: uppercase; font-weight: bold; }
-        .input-container { position: relative; margin-bottom: 20px; width: 100%; }
-        input {
-            width: 100%; padding: 14px; border: 2px solid #3FA8FF;
-            border-radius: 50px; outline: none; text-align: center; font-size: 16px;
-            background-color: #060B14; color: #fff;
-        }
-        input::placeholder { color: rgba(255,255,255,0.38); }
-        .toggle-password { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); cursor: pointer; color: rgba(255,255,255,0.5); }
-        .btn {
-            display: flex; align-items: center; width: 100%; padding: 15px 20px; margin: 12px 0;
-            border-radius: 12px; font-weight: 600; text-decoration: none; transition: 0.3s;
-            cursor: pointer; border: none; font-size: 16px; background: #060B14; color: #fff;
-            border-left: 6px solid #3FA8FF; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-        .btn i { margin-right: 15px; width: 20px; text-align: center; color: #3FA8FF; }
-        .btn:hover { background: #3FA8FF; color: #000; transform: translateY(-2px); }
-        .btn:hover i { color: #000; }
-        .submit-btn { display: none; background: linear-gradient(to right, #3FA8FF, #7FCBFF); color: #000; border-radius: 50px; justify-content: center; width: 100%; }
-        #main-menu { display: none; animation: fadeIn 0.4s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    </style>
-</head>
-<body>
-<canvas id="aurora-canvas"></canvas>
-<div class="card">
-    <div id="auth-section">
-        <div class="icon-top">🖼️</div>
-        <h2>Sorme All Pic</h2>
-        <div class="input-container">
-            <input type="password" id="passwordField" placeholder="Enter password..." oninput="checkPassword()">
-            <i class="fas fa-eye toggle-password" id="eyeIcon" onclick="toggleVisibility()"></i>
-        </div>
-        <button id="submit-btn" class="btn submit-btn" onclick="loginAction()">Submit</button>
-    </div>
-    <div id="main-menu">
-        <div class="icon-top">📸</div>
-        <h2>DASHBOARD</h2>
-        <a href="https://mega.nz/folder/S0IjCbJZ#CrAgxU2rXZNtcLOaI5Thfg" target="_blank" class="btn"><i class="fas fa-images"></i> Sorme pic</a>
-        <a href="https://mega.nz/file/exQTCRhI#_gVTq4wbE0WkVB2GeLcX-5NCj7K_ymU1YEmVkuFP9J8" target="_blank" class="btn"><i class="fas fa-user-lock"></i> Private pic</a>
-    </div>
-</div>
-<script>
-(function(){const canvas=document.getElementById('aurora-canvas');const ctx=canvas.getContext('2d');let W,H;function resize(){W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight;generateCircuitPaths();}
-let circuitPaths=[];let pulses=[];
-function generateCircuitPaths(){circuitPaths=[];const pathCount=Math.max(40,Math.floor((W*H)/38000));for(let i=0;i<pathCount;i++){const points=[];let x=Math.random()*W;let y=Math.random()*H;points.push({x,y});const segs=5+Math.floor(Math.random()*5);let horizontal=Math.random()<0.5;for(let s=0;s<segs;s++){const len=18+Math.random()*70;const dir=Math.random()<0.5?-1:1;if(horizontal)x+=len*dir;else y+=len*dir;x=Math.max(-20,Math.min(W+20,x));y=Math.max(-20,Math.min(H+20,y));points.push({x,y});horizontal=!horizontal;}
-let total=0;const segLens=[];for(let k=0;k<points.length-1;k++){const d=Math.hypot(points[k+1].x-points[k].x,points[k+1].y-points[k].y);segLens.push(d);total+=d;}
-circuitPaths.push({points,segLens,total});}
-pulses=[];circuitPaths.forEach((path,idx)=>{pulses.push(spawnPulse(idx));});}
-function spawnPulse(pathIdx){return{pathIdx,t:Math.random()*0.3,speed:0.004+Math.random()*0.006,glowLen:0.06+Math.random()*0.08};}
-function pointAtT(path,t){const targetDist=t*path.total;let acc=0;for(let i=0;i<path.segLens.length;i++){const segLen=path.segLens[i];if(acc+segLen>=targetDist||i===path.segLens.length-1){const localT=segLen===0?0:(targetDist-acc)/segLen;const p1=path.points[i],p2=path.points[i+1];return{x:p1.x+(p2.x-p1.x)*localT,y:p1.y+(p2.y-p1.y)*localT};}
-acc+=segLen;}
-return path.points[path.points.length-1];}
-function pointsBetween(path,t0,t1){const d0=t0*path.total,d1=t1*path.total;const pts=[pointAtT(path,t0)];let acc=0;for(let i=0;i<path.segLens.length;i++){acc+=path.segLens[i];if(acc>d0&&acc<d1)pts.push(path.points[i+1]);if(acc>=d1)break;}pts.push(pointAtT(path,t1));return pts;}
-function strokePolyline(ctx,pts){ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);for(let i=1;i<pts.length;i++)ctx.lineTo(pts[i].x,pts[i].y);ctx.stroke();}
-resize();window.addEventListener('resize',resize);
-let t=0;
-function draw(){ctx.clearRect(0,0,W,H);ctx.fillStyle='#000';ctx.fillRect(0,0,W,H);
-ctx.save();
-ctx.strokeStyle='rgba(100,165,225,0.22)';ctx.lineWidth=1.1;ctx.lineJoin='round';
-circuitPaths.forEach(path=>{ctx.beginPath();ctx.moveTo(path.points[0].x,path.points[0].y);for(let k=1;k<path.points.length;k++)ctx.lineTo(path.points[k].x,path.points[k].y);ctx.stroke();});
-ctx.fillStyle='rgba(120,180,235,0.35)';
-circuitPaths.forEach(path=>{for(let k=1;k<path.points.length-1;k++){const p=path.points[k];ctx.beginPath();ctx.arc(p.x,p.y,1.6,0,Math.PI*2);ctx.fill();}});
-ctx.lineCap='round';
-for(let i=pulses.length-1;i>=0;i--){const pulse=pulses[i];pulse.t+=pulse.speed;if(pulse.t>1){pulses[i]=spawnPulse(Math.floor(Math.random()*circuitPaths.length));continue;}
-const path=circuitPaths[pulse.pathIdx];if(!path)continue;
-const headT=pulse.t;const tailT=Math.max(0,pulse.t-pulse.glowLen);const head=pointAtT(path,headT);const tail=pointAtT(path,tailT);const trailPts=pointsBetween(path,tailT,headT);
-ctx.shadowColor='rgba(90,180,255,1)';ctx.shadowBlur=2.5;
-const outerGrad=ctx.createLinearGradient(tail.x,tail.y,head.x,head.y);outerGrad.addColorStop(0,'rgba(80,170,255,0)');outerGrad.addColorStop(1,'rgba(110,195,255,0.55)');ctx.strokeStyle=outerGrad;ctx.lineWidth=0.8;strokePolyline(ctx,trailPts);
-ctx.shadowBlur=1.2;const coreGrad=ctx.createLinearGradient(tail.x,tail.y,head.x,head.y);coreGrad.addColorStop(0,'rgba(160,220,255,0)');coreGrad.addColorStop(1,'rgba(190,230,255,0.95)');ctx.strokeStyle=coreGrad;ctx.lineWidth=0.4;strokePolyline(ctx,trailPts);
-ctx.shadowBlur=4;ctx.fillStyle='rgba(235,248,255,1)';ctx.beginPath();ctx.arc(head.x,head.y,1,0,Math.PI*2);ctx.fill();}
-ctx.shadowBlur=0;ctx.restore();
-t++;requestAnimationFrame(draw);}
-draw();})();
-<\/script>
-<script>
-    function toggleVisibility() {
-        const pf = document.getElementById('passwordField');
-        const icon = document.getElementById('eyeIcon');
-        if (pf.type === "password") { pf.type = "text"; icon.classList.replace('fa-eye','fa-eye-slash'); }
-        else { pf.type = "password"; icon.classList.replace('fa-eye-slash','fa-eye'); }
-    }
-    function checkPassword() {
-        const btn = document.getElementById('submit-btn');
-        if (document.getElementById('passwordField').value === "@SoRme2009") { btn.style.display = "flex"; }
-        else { btn.style.display = "none"; }
-    }
-    function loginAction() {
-        document.getElementById('auth-section').style.display = "none";
-        document.getElementById('main-menu').style.display = "block";
-    }
-<\/script>
-</body>
-</html>
-`,
-  dash3: `<!DOCTYPE html>
-<html lang="bn">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Google Photo Albums</title>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        #aurora-canvas {
-            position: fixed; inset: 0; z-index: -1;
-            width: 100%; height: 100%; pointer-events: none;
-        }
-        body {
-            font-family: 'Segoe UI', Roboto, sans-serif;
-            background: #000000; color: #fff; min-height: 100vh;
-            display: flex; flex-direction: column; align-items: center;
-            padding: 24px 16px; position: relative;
-        }
-        h3 {
-            color: #fff; margin-bottom: 20px; font-size: 18px;
-            letter-spacing: 0.08em; text-align: center;
-        }
-        .button-list { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 360px; }
-        .color-btn {
-            color: #fff; padding: 14px 18px; font-size: 13px;
-            font-weight: 600; border-radius: 10px; display: flex;
-            align-items: center; gap: 10px; cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
-            border: 1px solid rgba(63,168,255,0.25); background: rgba(6,11,20,0.82);
-            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-            font-family: 'Segoe UI', Roboto, sans-serif;
-            width: 100%; text-align: left;
-        }
-        .color-btn .btn-icon { font-size: 16px; flex-shrink: 0; }
-        .color-btn:hover {
-            transform: translateY(-2px); box-shadow: 0 6px 12px rgba(63,168,255,0.2);
-            border-color: #3FA8FF; color: #7FCBFF;
-        }
-
-        /* Album Viewer Overlay */
-        .album-overlay {
-            display: none; position: fixed; inset: 0; z-index: 9999;
-            background: rgba(0,0,0,0.97); flex-direction: column;
-        }
-        .album-overlay.open { display: flex; }
-        .album-topbar {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 12px 16px; background: #060B14;
-            border-bottom: 1px solid rgba(63,168,255,0.18);
-            flex-shrink: 0;
-        }
-        .album-title {
-            font-size: 13px; color: #7FCBFF; letter-spacing: 0.05em;
-            font-weight: 600; flex: 1; overflow: hidden;
-            text-overflow: ellipsis; white-space: nowrap; margin-right: 12px;
-        }
-        .album-actions { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
-        .album-open-btn {
-            font-size: 11px; color: #3FA8FF; text-decoration: none;
-            border: 1px solid rgba(63,168,255,0.4); padding: 6px 12px;
-            border-radius: 4px; transition: background 0.2s, color 0.2s;
-            white-space: nowrap;
-        }
-        .album-open-btn:hover { background: #3FA8FF; color: #000; }
-        .album-close-btn {
-            background: none; border: none; color: rgba(255,255,255,0.5);
-            font-size: 26px; cursor: pointer; line-height: 1;
-            transition: color 0.2s; padding: 0 4px;
-        }
-        .album-close-btn:hover { color: #3FA8FF; }
-        .album-iframe-wrap {
-            flex: 1; position: relative; overflow: hidden;
-        }
-        .album-iframe {
-            width: 100%; height: 100%; border: none;
-            background: #fff;
-        }
-        .album-loading {
-            position: absolute; inset: 0;
-            display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            background: #000000; gap: 16px;
-        }
-        .album-loading .spinner {
-            width: 36px; height: 36px; border-radius: 50%;
-            border: 2px solid rgba(63,168,255,0.2);
-            border-top-color: #3FA8FF;
-            animation: spin 0.9s linear infinite;
-        }
-        .album-loading p { font-size: 12px; color: rgba(255,255,255,0.4); letter-spacing: 0.1em; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        /* Block notice — shown if iframe blocked */
-        .block-notice {
-            display: none; position: absolute; inset: 0;
-            flex-direction: column; align-items: center; justify-content: center;
-            background: #000000; gap: 20px; padding: 30px; text-align: center;
-        }
-        .block-notice .block-icon { font-size: 52px; }
-        .block-notice h4 { color: #fff; font-size: 17px; font-weight: 600; }
-        .block-notice p { color: rgba(255,255,255,0.45); font-size: 13px; line-height: 1.6; max-width: 300px; }
-        .block-open-btn {
-            display: inline-block; padding: 14px 28px;
-            background: linear-gradient(to right, #3FA8FF, #7FCBFF);
-            color: #000; font-weight: 700; font-size: 14px;
-            border-radius: 8px; text-decoration: none;
-            transition: opacity 0.2s; letter-spacing: 0.05em;
-        }
-        .block-open-btn:hover { opacity: 0.85; }
-    </style>
-</head>
-<body>
-<canvas id="aurora-canvas"></canvas>
-
-<!-- Back to Main Dashboard -->
-<button onclick="window.parent.postMessage('goToMainDash','*')" style="
-    align-self: flex-start; margin-bottom: 16px;
-    background: none; border: 1px solid rgba(63,168,255,0.3);
-    color: #3FA8FF; padding: 8px 18px; border-radius: 6px;
-    font-size: 12px; cursor: pointer; letter-spacing: 0.08em;
-    font-family: 'Segoe UI', Roboto, sans-serif;
-    transition: background 0.2s, color 0.2s;
-    " onmouseover="this.style.background='#3FA8FF';this.style.color='#000'"
-       onmouseout="this.style.background='none';this.style.color='#3FA8FF'">
-    ‹ Back
-</button>
-
-<h3>📷 My Photo Dashboard</h3>
-<div class="button-list">
-    <button class="color-btn" onclick="openAlbum('https://photos.google.com/share/AF1QipMh84A25f8ZKwH84h6t3XbBxdQV-YrjzeYRel3aL7VkAgc8ii1z6csy6fDrQXOzFg?pli=1&key=SjJkajJ4WldDNWt0VWx1M012THVRWU9nQWowLUtn', 'New Picture 2026')">
-        <span class="btn-icon">🆕</span> New Picture 2026
-    </button>
-    <button class="color-btn" onclick="openAlbum('https://photos.google.com/share/AF1QipPc0OEKXe8DDrXFxIZpRo96HnlNipptaB_ULkq5WDiEzKhLBt4p59Qucanw6YPlMg?key=cGxhZzZrRWtjTUw5b3hFRWxGb0N0SXFnMVo3eFhR', 'All Pictures Mother Gmail')">
-        <span class="btn-icon">👩</span> All Pictures Mother Gmail
-    </button>
-    <button class="color-btn" onclick="openAlbum('https://photos.google.com/share/AF1QipNUBtXdQeciaNRYz0Wl72hufnieSrtm1j-LNZi7Z3L9IqlIyvCLFwLL5FECFkz8nA?key=U1E3NEpkYUYtcXg0U1ZxSnBRSDcteXFuWlVDSGNR', 'All Photo — tonirsheikh@gmail.com')">
-        <span class="btn-icon">📧</span> All Photo in tonirsheikh@gmail.com
-    </button>
-    <button class="color-btn" onclick="openAlbum('https://photos.google.com/share/AF1QipM9cgX9UbjOuhKd4bPU3zNP8gpI_sfhWYxvk3pm1kDgX8GoXYptzNuLTx6aI_zCEQ?key=NmRkemw1MV9BNnBFM2plblhfWFZDU1hMN2pWUmJB', 'Remini tonirshaik2')">
-        <span class="btn-icon">✨</span> Remini tonirshaik2
-    </button>
-    <button class="color-btn" onclick="openAlbum('https://photos.google.com/share/AF1QipP9PO99CE9V0gaHfk-Oq1YjhbaGrZ5FQLwCpsdpoju3wr8P2ZLn0wK6QzllL1NKDA?key=NXMzMlJHMm1WbTI5TjZmRktza2I0Q2Vha1VPMjFn', 'photo in tonirfshaik3')">
-        <span class="btn-icon">📸</span> photo in tonirfshaik3
-    </button>
-    <button class="color-btn" onclick="openAlbum('https://photos.google.com/share/AF1QipPNcnrUEbu9bJS6-BB6-YxwnYIDJU1hH7eRUQAOsCFg9SkzHZsD1QthI1LdlH3Y-w?key=Y01mRXVjRE1ESDVWZjZ0elZsZlBpdUhSODNZUTJB', 'photo in tonirshaik4')">
-        <span class="btn-icon">📸</span> photo in tonirshaik4
-    </button>
-    <button class="color-btn" onclick="openAlbum('https://photos.google.com/share/AF1QipNc4Nxu38dwEqxfN3fnCb7AjPgp64zB6t6kxov_t85WT7oResLEIZQTpeoEEdyddQ?key=QUc4NE16LWpVZXFyN0dVUFBEdEJlZ3BsQjg1dUVR', 'photo in tonirshaik5')">
-        <span class="btn-icon">📸</span> photo in tonirshaik5
-    </button>
-    <button class="color-btn" onclick="openAlbum('https://photos.google.com/share/AF1QipPt6Kk6DOjVyrNiiNTFNebi9Ce96rVDuVAIw0bboofqcIXexs8xXuipVBXrrUkxlQ?key=UDdxZnBoY1RvdzZGd0MzdjRjU0VpVDFQSUJ6bTVR', 'Rudro all pics — tstonir@gmail.com')">
-        <span class="btn-icon">👦</span> Rudro all pictstonir@gmail.com
-    </button>
-</div>
-
-<!-- Album Viewer Overlay -->
-<div class="album-overlay" id="albumOverlay">
-    <div class="album-topbar">
-        <button onclick="closeAlbum()" style="
-            background:none; border:1px solid rgba(63,168,255,0.3);
-            color:#3FA8FF; padding:6px 14px; border-radius:4px;
-            font-size:12px; cursor:pointer; letter-spacing:0.08em;
-            font-family:'Segoe UI',Roboto,sans-serif; flex-shrink:0;
-            transition:background 0.2s,color 0.2s; margin-right:10px;
-        " onmouseover="this.style.background='#3FA8FF';this.style.color='#000'"
-           onmouseout="this.style.background='none';this.style.color='#3FA8FF'">‹ Back</button>
-        <span class="album-title" id="albumTitle">Album</span>
-        <div class="album-actions">
-            <a class="album-open-btn" id="albumOpenBtn" href="#" target="_blank">Open in Google Photos ↗</a>
-            <button class="album-close-btn" onclick="closeAlbum()">×</button>
-        </div>
-    </div>
-    <div class="album-iframe-wrap">
-        <div class="album-loading" id="albumLoading">
-            <div class="spinner"></div>
-            <p>Loading...</p>
-        </div>
-        <div class="block-notice" id="blockNotice">
-            <div class="block-icon">🔒</div>
-            <h4>Google Photos isn't loading here</h4>
-            <p>Google Photos doesn't allow embedding on other sites due to their security policy. Click the button below to view the album directly.</p>
-            <a class="block-open-btn" id="blockOpenBtn" href="#" target="_blank">📷 View in Google Photos</a>
-        </div>
-        <iframe
-            class="album-iframe"
-            id="albumIframe"
-            title="Google Photos Album"
-            sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
-            style="display:none;"
-        ></iframe>
-    </div>
-</div>
-
-<script>
-(function(){const canvas=document.getElementById('aurora-canvas');const ctx=canvas.getContext('2d');let W,H;function resize(){W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight;generateCircuitPaths();}
-let circuitPaths=[];let pulses=[];
-function generateCircuitPaths(){circuitPaths=[];const pathCount=Math.max(40,Math.floor((W*H)/38000));for(let i=0;i<pathCount;i++){const points=[];let x=Math.random()*W;let y=Math.random()*H;points.push({x,y});const segs=5+Math.floor(Math.random()*5);let horizontal=Math.random()<0.5;for(let s=0;s<segs;s++){const len=18+Math.random()*70;const dir=Math.random()<0.5?-1:1;if(horizontal)x+=len*dir;else y+=len*dir;x=Math.max(-20,Math.min(W+20,x));y=Math.max(-20,Math.min(H+20,y));points.push({x,y});horizontal=!horizontal;}
-let total=0;const segLens=[];for(let k=0;k<points.length-1;k++){const d=Math.hypot(points[k+1].x-points[k].x,points[k+1].y-points[k].y);segLens.push(d);total+=d;}
-circuitPaths.push({points,segLens,total});}
-pulses=[];circuitPaths.forEach((path,idx)=>{pulses.push(spawnPulse(idx));});}
-function spawnPulse(pathIdx){return{pathIdx,t:Math.random()*0.3,speed:0.004+Math.random()*0.006,glowLen:0.06+Math.random()*0.08};}
-function pointAtT(path,t){const targetDist=t*path.total;let acc=0;for(let i=0;i<path.segLens.length;i++){const segLen=path.segLens[i];if(acc+segLen>=targetDist||i===path.segLens.length-1){const localT=segLen===0?0:(targetDist-acc)/segLen;const p1=path.points[i],p2=path.points[i+1];return{x:p1.x+(p2.x-p1.x)*localT,y:p1.y+(p2.y-p1.y)*localT};}
-acc+=segLen;}
-return path.points[path.points.length-1];}
-function pointsBetween(path,t0,t1){const d0=t0*path.total,d1=t1*path.total;const pts=[pointAtT(path,t0)];let acc=0;for(let i=0;i<path.segLens.length;i++){acc+=path.segLens[i];if(acc>d0&&acc<d1)pts.push(path.points[i+1]);if(acc>=d1)break;}pts.push(pointAtT(path,t1));return pts;}
-function strokePolyline(ctx,pts){ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);for(let i=1;i<pts.length;i++)ctx.lineTo(pts[i].x,pts[i].y);ctx.stroke();}
-resize();window.addEventListener('resize',resize);
-let t=0;
-function draw(){ctx.clearRect(0,0,W,H);ctx.fillStyle='#000';ctx.fillRect(0,0,W,H);
-ctx.save();
-ctx.strokeStyle='rgba(100,165,225,0.22)';ctx.lineWidth=1.1;ctx.lineJoin='round';
-circuitPaths.forEach(path=>{ctx.beginPath();ctx.moveTo(path.points[0].x,path.points[0].y);for(let k=1;k<path.points.length;k++)ctx.lineTo(path.points[k].x,path.points[k].y);ctx.stroke();});
-ctx.fillStyle='rgba(120,180,235,0.35)';
-circuitPaths.forEach(path=>{for(let k=1;k<path.points.length-1;k++){const p=path.points[k];ctx.beginPath();ctx.arc(p.x,p.y,1.6,0,Math.PI*2);ctx.fill();}});
-ctx.lineCap='round';
-for(let i=pulses.length-1;i>=0;i--){const pulse=pulses[i];pulse.t+=pulse.speed;if(pulse.t>1){pulses[i]=spawnPulse(Math.floor(Math.random()*circuitPaths.length));continue;}
-const path=circuitPaths[pulse.pathIdx];if(!path)continue;
-const headT=pulse.t;const tailT=Math.max(0,pulse.t-pulse.glowLen);const head=pointAtT(path,headT);const tail=pointAtT(path,tailT);const trailPts=pointsBetween(path,tailT,headT);
-ctx.shadowColor='rgba(90,180,255,1)';ctx.shadowBlur=2.5;
-const outerGrad=ctx.createLinearGradient(tail.x,tail.y,head.x,head.y);outerGrad.addColorStop(0,'rgba(80,170,255,0)');outerGrad.addColorStop(1,'rgba(110,195,255,0.55)');ctx.strokeStyle=outerGrad;ctx.lineWidth=0.8;strokePolyline(ctx,trailPts);
-ctx.shadowBlur=1.2;const coreGrad=ctx.createLinearGradient(tail.x,tail.y,head.x,head.y);coreGrad.addColorStop(0,'rgba(160,220,255,0)');coreGrad.addColorStop(1,'rgba(190,230,255,0.95)');ctx.strokeStyle=coreGrad;ctx.lineWidth=0.4;strokePolyline(ctx,trailPts);
-ctx.shadowBlur=4;ctx.fillStyle='rgba(235,248,255,1)';ctx.beginPath();ctx.arc(head.x,head.y,1,0,Math.PI*2);ctx.fill();}
-ctx.shadowBlur=0;ctx.restore();
-t++;requestAnimationFrame(draw);}
-draw();})();
-<\/script>
-<script>
-    let currentUrl = '';
-
-    function openAlbum(url, title) {
-        currentUrl = url;
-        document.getElementById('albumTitle').textContent = title;
-        document.getElementById('albumOpenBtn').href = url;
-        document.getElementById('blockOpenBtn').href = url;
-
-        // Reset states
-        document.getElementById('albumLoading').style.display = 'flex';
-        document.getElementById('blockNotice').style.display = 'none';
-        document.getElementById('albumIframe').style.display = 'none';
-        document.getElementById('albumIframe').src = '';
-
-        document.getElementById('albumOverlay').classList.add('open');
-
-        // Try loading iframe, detect block after timeout
-        const iframe = document.getElementById('albumIframe');
-        let loaded = false;
-
-        iframe.onload = function() {
-            loaded = true;
-            document.getElementById('albumLoading').style.display = 'none';
-            try {
-                // If we can access contentDocument, it loaded fine
-                const doc = iframe.contentDocument || iframe.contentWindow.document;
-                if (!doc || doc.title === '' || doc.body === null) {
-                    showBlockNotice();
-                } else {
-                    iframe.style.display = 'block';
-                }
-            } catch(e) {
-                // Cross-origin block — but page may have loaded fine
-                iframe.style.display = 'block';
-                document.getElementById('albumLoading').style.display = 'none';
-            }
-        };
-
-        iframe.onerror = function() {
-            showBlockNotice();
-        };
-
-        // Fallback: if 5s passes with no load, show block notice
-        setTimeout(function() {
-            if (!loaded) showBlockNotice();
-        }, 5000);
-
-        iframe.src = url;
-    }
-
-    function showBlockNotice() {
-        document.getElementById('albumLoading').style.display = 'none';
-        document.getElementById('albumIframe').style.display = 'none';
-        document.getElementById('blockNotice').style.display = 'flex';
-    }
-
-    function closeAlbum() {
-        document.getElementById('albumOverlay').classList.remove('open');
-        document.getElementById('albumIframe').src = '';
-    }
-
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') closeAlbum();
-    });
-<\/script>
-</body>
-</html>
-`
-};
 </script>
 </body>
 </html>

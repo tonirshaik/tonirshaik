@@ -590,14 +590,23 @@
             color: #fff; padding: 10px 12px; border-radius: 6px;
             font-size: 13px; margin-bottom: 12px; font-family: inherit;
         }
-        .pw-field-wrap { position: relative; margin-bottom: 12px; }
-        .pw-field-wrap .admin-input { margin-bottom: 0; padding-right: 40px; }
+        .pw-field-wrap { position: relative; margin-bottom: 12px; overflow: hidden; border-radius: 6px; height: 40px; }
+        .pw-field-wrap .admin-input {
+            margin-bottom: 0; padding-right: 40px; height: 100%;
+            box-sizing: border-box; display: block;
+        }
         .pw-eye-btn {
-            position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
-            background: none; border: none; cursor: pointer; font-size: 16px;
-            color: var(--muted); padding: 6px; line-height: 1;
+            position: absolute; right: 4px; top: 0; bottom: 0; margin: auto 0;
+            width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
+            background: none; border: none; outline: none; box-shadow: none;
+            cursor: pointer; font-size: 16px;
+            color: var(--muted); padding: 0; line-height: 1;
+            -webkit-tap-highlight-color: transparent;
         }
         .pw-eye-btn:hover { color: var(--gold); }
+        .pw-eye-btn:focus,
+        .pw-eye-btn:focus-visible,
+        .pw-eye-btn:active { outline: none; box-shadow: none; border: none; }
         .admin-btn {
             width: 100%; background: linear-gradient(to right, var(--gold), var(--gold-light));
             color: #000; font-weight: 600; border: none; border-radius: 6px;
@@ -958,7 +967,10 @@
         <h4>🔒 Admin Access</h4>
         <div class="pw-field-wrap">
             <input type="password" class="admin-input" id="adminPasswordInput" placeholder="Enter password" autocomplete="off">
-            <button type="button" class="pw-eye-btn" id="pwEyeBtn" aria-label="Show password" tabindex="-1">👁</button>
+            <button type="button" class="pw-eye-btn" id="pwEyeBtn" aria-label="Show password" tabindex="-1">
+                <svg id="pwEyeIconOpen" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                <svg id="pwEyeIconClosed" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a20.3 20.3 0 0 1 4.22-5.94M9.9 4.24A9.6 9.6 0 0 1 12 4c7 0 11 8 11 8a20.4 20.4 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+            </button>
         </div>
         <button class="admin-btn" id="adminUnlockBtn">Unlock</button>
         <p class="admin-msg err" id="adminLockMsg"></p>
@@ -1068,7 +1080,7 @@
 
     const csvUrl = 'https://raw.githubusercontent.com/tonirshaik/tonirshaik/refs/heads/main/Tonir%20photo%20Link.txt';
     const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyLRiJ9ueiqnc7kYc188HTg41wJNF3W1eighA2WA7xq9nUfMTJflzefxdXsrjIHOgXiLw/exec';
-    const ADMIN_PASSWORD = 'upl@d2002';
+    const ADMIN_PASSWORD = 'uplo@d2002';
 
     // ---- Google Drive link handling ----
     // Recognizes share links (file/d/ID/view), open?id=ID, and uc?...id=ID,
@@ -1653,7 +1665,8 @@
         adminLockOverlay.classList.add('open');
         adminPasswordInput.value = '';
         adminPasswordInput.type = 'password';
-        pwEyeBtn.textContent = '👁';
+        pwEyeIconOpen.style.display = 'none';
+        pwEyeIconClosed.style.display = 'flex';
         adminLockMsg.textContent = '';
         adminUnlockBtn.style.display = 'none';
         adminPasswordInput.focus();
@@ -1668,6 +1681,8 @@
     const adminUnlockBtn    = document.getElementById('adminUnlockBtn');
     const adminLockMsg      = document.getElementById('adminLockMsg');
     const pwEyeBtn          = document.getElementById('pwEyeBtn');
+    const pwEyeIconOpen     = document.getElementById('pwEyeIconOpen');
+    const pwEyeIconClosed   = document.getElementById('pwEyeIconClosed');
 
     const adminUploadOverlay= document.getElementById('adminUploadOverlay');
     const adminUploadClose  = document.getElementById('adminUploadClose');
@@ -1731,7 +1746,8 @@
     pwEyeBtn.addEventListener('click', () => {
         const showing = adminPasswordInput.type === 'text';
         adminPasswordInput.type = showing ? 'password' : 'text';
-        pwEyeBtn.textContent = showing ? '👁' : '🙈';
+        pwEyeIconOpen.style.display = showing ? 'none' : 'flex';
+        pwEyeIconClosed.style.display = showing ? 'flex' : 'none';
         pwEyeBtn.setAttribute('aria-label', showing ? 'Show password' : 'Hide password');
         adminPasswordInput.focus();
     });

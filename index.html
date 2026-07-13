@@ -1898,9 +1898,10 @@
             const row = document.createElement('div');
             row.className = 'tag-face-check' + (checked ? ' checked' : '');
             row.innerHTML = `
-                <label style="display:flex; align-items:center; gap:10px; flex:1; cursor:pointer; margin:0;">
-                    <input type="checkbox" ${checked ? 'checked' : ''}> <span>${name}</span>
+                <label style="display:flex; align-items:center; gap:10px; flex:1; cursor:pointer; margin:0; min-width:0;">
+                    <input type="checkbox" ${checked ? 'checked' : ''}> <span class="tag-face-name">${name}</span>
                 </label>
+                <button type="button" class="tag-face-edit-btn" title="এই নামটি ঠিক করো"><i class="fa-solid fa-pen"></i></button>
                 <button type="button" class="thumb-remove" title="Remove this name" style="position:static; flex-shrink:0;">×</button>
             `;
             row.querySelector('input').addEventListener('change', (e) => {
@@ -1908,9 +1909,52 @@
                 else photo.tagIdxs.delete(idx);
                 row.classList.toggle('checked', e.target.checked);
             });
+            row.querySelector('.tag-face-edit-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                startRenameUploadTagRow(row, idx);
+            });
             row.querySelector('.thumb-remove').addEventListener('click', () => removeUploadPerson(idx));
             tagFacesList.appendChild(row);
         });
+    }
+
+    function startRenameUploadTagRow(row, idx) {
+        const oldName = uploadPeople[idx];
+        const wrap = document.createElement('div');
+        wrap.className = 'tag-face-rename-row';
+        wrap.innerHTML = `
+            <input type="text" class="tag-face-rename-input" value="${oldName.replace(/"/g, '&quot;')}">
+            <button type="button" class="tag-face-rename-save" title="Save"><i class="fa-solid fa-check"></i></button>
+            <button type="button" class="tag-face-rename-cancel" title="Cancel"><i class="fa-solid fa-xmark"></i></button>
+        `;
+        row.innerHTML = '';
+        row.appendChild(wrap);
+        const input = wrap.querySelector('.tag-face-rename-input');
+        input.focus();
+        input.select();
+
+        const commit = () => {
+            const newName = input.value.trim();
+            if (!newName || newName === oldName) { renderTagFaces(); return; }
+            const dupIdx = uploadPeople.findIndex((p, i) => i !== idx && p.toLowerCase() === newName.toLowerCase());
+            if (dupIdx !== -1) {
+                adminUploadMsg.textContent = 'এই নামটি আগে থেকেই তালিকায় আছে।';
+                adminUploadMsg.className = 'admin-msg err';
+                renderTagFaces();
+                return;
+            }
+            uploadPeople[idx] = newName;
+            renderTagFaces();
+        };
+        const cancel = () => renderTagFaces();
+
+        wrap.querySelector('.tag-face-rename-save').addEventListener('click', (e) => { e.stopPropagation(); commit(); });
+        wrap.querySelector('.tag-face-rename-cancel').addEventListener('click', (e) => { e.stopPropagation(); cancel(); });
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); commit(); }
+            else if (e.key === 'Escape') { e.preventDefault(); cancel(); }
+        });
+        input.addEventListener('click', (e) => e.stopPropagation());
     }
 
 

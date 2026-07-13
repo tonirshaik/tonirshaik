@@ -5,20 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tonir Shaik | Official Gallery</title>
 
-    <!-- ===== SEO META TAGS ===== -->
+    
     <meta name="description" content="Tonir Shaik's official photo gallery — all photos, albums, and updates in one place. Tonir Shaik | Official Gallery.">
     <meta name="keywords" content="Tonir Shaik, Tonir Shaik official, Tonir Shaik gallery, Tonir Shaik photos, tonirshaik">
     <meta name="author" content="Tonir Shaik">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://tonirshaik.github.io/tonirshaik/">
 
-    <!-- ===== FAVICON ===== -->
+    
     <link rel="icon" type="image/png" sizes="512x512" href="https://tonirshaik.github.io/tonirshaik/web-app-manifest-512x512.png">
     <link rel="apple-touch-icon" sizes="512x512" href="https://tonirshaik.github.io/tonirshaik/web-app-manifest-512x512.png">
     <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"></noscript>
 
-    <!-- ===== Open Graph (Facebook / WhatsApp preview) ===== -->
+    
     <meta property="og:type" content="website">
     <meta property="og:title" content="Tonir Shaik | Official Gallery">
     <meta property="og:description" content="Tonir Shaik's official photo gallery — all photos, albums, and updates in one place.">
@@ -26,12 +26,12 @@
     <meta property="og:locale" content="bn_BD">
     <meta property="og:site_name" content="Tonir Shaik Official Gallery">
 
-    <!-- ===== Twitter Card ===== -->
+    
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="Tonir Shaik | Official Gallery">
     <meta name="twitter:description" content="Tonir Shaik's official photo gallery — all photos, albums, and updates in one place.">
 
-    <!-- ===== Structured Data: Person Schema (clarifies the name for Google) ===== -->
+    
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -41,7 +41,7 @@
       "description": "Tonir Shaik's official photo gallery website.",
       "mainEntityOfPage": "https://tonirshaik.github.io/tonirshaik/"
     }
-    </script>
+</script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -78,12 +78,6 @@
             overflow-x: hidden;
         }
 
-        /* ===================================================
-           ===== 2026 NEON-BLUE 3D UPGRADE LAYER ============
-           =================================================== */
-
-        /* Soft electric-blue glow on every clickable element,
-           so the whole site feels lit from within. */
         button,
         .nav-links a,
         .filter-btn,
@@ -118,8 +112,7 @@
             box-shadow: 0 0 0 1px rgba(63,168,255,0.55), 0 0 22px rgba(63,168,255,0.55), 0 0 46px rgba(63,168,255,0.30);
             transform: translateY(-2px);
         }
-        /* Photos glow blue around their edges, giving a
-           floating, lit-from-behind "3D" look. */
+
         .photo-item {
             box-shadow: 0 0 0 1px rgba(63,168,255,0.12), 0 14px 34px rgba(63,168,255,0.10);
             transition: transform 0.45s cubic-bezier(0.25,0.46,0.45,0.94), box-shadow 0.45s ease;
@@ -142,14 +135,10 @@
             transform: translateY(-6px);
         }
 
-        /* Cards / panels get a faint blue rim-light too. */
         .admin-box {
             box-shadow: 0 0 0 1px rgba(63,168,255,0.15), 0 0 26px rgba(63,168,255,0.12) !important;
         }
 
-
-
-        /* ── Running neon border animation ──────────────────────── */
         @keyframes neon-border-run {
             0%   { background-position: 0% 50%; }
             50%  { background-position: 100% 50%; }
@@ -172,7 +161,6 @@
         }
         .photo-item:hover::before { opacity: 1; }
 
-        /* ── Glassmorphism nav ───────────────────────────────────── */
         nav {
             position: fixed; top: 0; left: 0; right: 0; z-index: 100;
             padding: 16px 40px;
@@ -217,7 +205,6 @@
             overflow: hidden;
         }
 
-        /* ── Premium treatment for the Upload button ───────────────── */
         .nav-premium {
             font-weight: 600;
             letter-spacing: 0.18em;
@@ -233,7 +220,6 @@
         .nav-premium:hover {
             transform: translateY(-2px) scale(1.03);
         }
-
 
         .section-header { text-align: center; padding: 40px 20px 28px; }
         .section-eyebrow {
@@ -460,9 +446,7 @@
         }
 
         .gallery-section { padding: 0 24px 80px; max-width: 1400px; margin: 0 auto; }
-        /* CSS Grid fills left-to-right, row-by-row, in DOM order —
-           unlike the old column-based masonry, which filled top-to-bottom
-           per column and visually scrambled file order across columns. */
+
         .masonry {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -475,9 +459,7 @@
         .photo-item {
             position: relative; border-radius: 4px; overflow: hidden;
             cursor: pointer;
-            /* Fixed aspect ratio keeps every row's height uniform, since
-               Grid (unlike masonry columns) doesn't auto-pack variable
-               heights — this avoids ragged rows with mixed photo shapes. */
+
             aspect-ratio: 3 / 4;
         }
         .photo-item img {
@@ -627,7 +609,6 @@
             border-radius: 6px; margin-bottom: 12px; display: none;
         }
 
-        /* ===== Multi-photo upload + tagging (Tagger Pro V3 style) ===== */
         .admin-box-wide { max-width: 440px; }
         .upload-thumbs {
             display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
@@ -842,8 +823,7 @@
             .nav-links a { font-size: 9px; letter-spacing: 0.08em; }
             footer { flex-direction: column; text-align: center; }
         }
-
-    </style>
+</style>
 </head>
 <body>
 
@@ -977,12 +957,12 @@
     </div>
 </div>
 
-<!-- Upload Panel -->
+
 <div class="admin-overlay" id="adminUploadOverlay">
     <div class="admin-box admin-box-wide" id="adminUploadBox">
         <button class="admin-close" id="adminUploadClose">×</button>
 
-        <!-- Step 1: select multiple photos -->
+        
         <div id="uploadStepPick">
             <h4>📤 Upload New Photos</h4>
             <input type="file" class="admin-input" id="adminFileInput" accept="image/*" multiple>
@@ -991,13 +971,18 @@
             <p class="admin-msg" id="adminPickMsg"></p>
         </div>
 
-        <!-- Step 2: tag each photo (Tagger Pro V3 style) -->
+        
         <div id="uploadStepTag" style="display:none;">
             <div class="tag-progress-wrap">
                 <div class="tag-progress-track"><div class="tag-progress-fill" id="tagProgressFill"></div></div>
                 <div class="tag-progress-text"><span id="tagPhotoNum">1</span>/<span id="tagPhotoTotal">1</span></div>
             </div>
             <img class="admin-preview" id="tagPreviewImg" alt="preview" style="display:block;">
+            <div style="display:flex; align-items:center; gap:10px; margin: 10px 0;">
+                <button type="button" class="admin-btn admin-btn-secondary admin-btn-sm" id="faceDetectTestBtn" style="flex-shrink:0;">🔎 মুখ খুঁজে দেখাও (টেস্ট)</button>
+                <span id="faceDetectStatus" style="font-size:12px; color: var(--muted);"></span>
+            </div>
+            <div id="faceDetectResults" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom: 10px;"></div>
             <div class="tag-faces-list" id="tagFacesList"></div>
             <div class="tag-quickadd-row">
                 <input type="text" class="admin-input" id="tagQuickAddInput" placeholder="Who's in this photo? Type a name...">
@@ -1009,7 +994,7 @@
             </div>
         </div>
 
-        <!-- Step 3: uploading all photos -->
+        
         <div id="uploadStepUploading" style="display:none;">
             <h4>📤 Uploading...</h4>
             <div class="tag-progress-wrap">
@@ -1022,9 +1007,7 @@
     </div>
 </div>
 
-<!-- Edit Tags Panel — lets you edit tags on both text-file and live-upload
-     photos. Same UI as the upload step 2 (Tagger Pro V3 style), just without
-     prev/next since only one photo is being edited here. -->
+
 <div class="admin-overlay" id="adminEditTagOverlay">
     <div class="admin-box admin-box-wide" id="adminEditTagBox">
         <button class="admin-close" id="adminEditTagClose">×</button>
@@ -1066,8 +1049,6 @@
 </div>
 
 <script>
-    // Maps the section header found in the text file (e.g. "#SINGLE")
-    // to the internal category key and the label shown in the gallery overlay.
     const CATEGORY_LABELS = { single: 'Single', dual: 'Dual', group: 'Group' };
     const PAGE_SIZE = 16;
 
@@ -1075,18 +1056,13 @@
     let currentList = [];
     let visibleCount = 0;
     let currentIdx = 0;
-    let activeFilter = 'all';   // which filter button is selected
-    let searchQuery = '';       // current lowercased search text
+    let activeFilter = 'all';
+    let searchQuery = '';
 
     const csvUrl = 'https://raw.githubusercontent.com/tonirshaik/tonirshaik/refs/heads/main/Tonir%20photo%20Link.txt';
     const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyLRiJ9ueiqnc7kYc188HTg41wJNF3W1eighA2WA7xq9nUfMTJflzefxdXsrjIHOgXiLw/exec';
     const ADMIN_PASSWORD = 'uplo@d2002';
 
-    // ---- Google Drive link handling ----
-    // Recognizes share links (file/d/ID/view), open?id=ID, and uc?...id=ID,
-    // and normalizes all of them to Google's image-serving thumbnail endpoint,
-    // which renders reliably in <img> tags (the uc?export=download endpoint
-    // can return an HTML interstitial instead of image bytes for some files).
     function getDriveFileId(url) {
         let m = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
         if (m) return m[1];
@@ -1099,8 +1075,6 @@
         return /drive\.google\.com/.test(url);
     }
 
-    // Returns the best <img>-renderable URL for a given raw link.
-    // Non-Drive links (e.g. ImgBB) are returned unchanged.
     function toRenderableUrl(url, size) {
         if (isGoogleDriveUrl(url)) {
             const id = getDriveFileId(url);
@@ -1111,8 +1085,6 @@
         return url;
     }
 
-    // Returns a direct-download URL used for the Download button,
-    // so saved files come through as the original image rather than a thumbnail.
     function toDownloadUrl(url) {
         if (isGoogleDriveUrl(url)) {
             const id = getDriveFileId(url);
@@ -1123,27 +1095,6 @@
         return url;
     }
 
-    // Parses the text file line by line, tracking which #SECTION header
-    // (#SINGLE, #DUAL, #GROUP) the reader is currently under. Every URL line
-    // is tagged with whatever section it falls beneath. A URL that appears
-    // before any header, or under an unrecognized header, falls back to
-    // 'uncategorized' so it still shows under "All" but won't match a filter.
-    //
-    // Optional per-photo names: a line can be just a URL, or
-    // "URL, name1 name2 ..." — anything after the first comma is treated as
-    // free-text names/tags (English and/or Bengali, space-separated) and
-    // folded into that photo's search index. This is the "keyword index"
-    // approach: raw Drive/ImgBB links carry no filename metadata themselves
-    // (Drive's image-serving endpoints return image bytes, not a title — and
-    // the actual Drive API needed for real filenames requires a server-side
-    // key, not something this page can call directly), so names have to be
-    // supplied here once and then search instantly against this index.
-    //
-    // Bengali-English search note: matching is done by direct substring
-    // comparison against whatever scripts are present in the name field, so
-    // matches if a Bengali form was provided. There's no automatic
-    // transliteration between the two — to support both spellings for a
-    // photo, include both in the name field for that line.
     const SECTION_SEARCH_WORDS = {
         single: ['single', 'একজন'],
         dual: ['dual', 'couple', 'দুইজন', 'কাপল'],
@@ -1179,11 +1130,11 @@
                     idx: idx,
                     cat: currentCat,
                     names: namesRaw,
-                    searchIndex: searchIndex,   // lowercased, used for matching
+                    searchIndex: searchIndex,
                     title: namesRaw || ('Photo ' + (idx + 1))
                 });
             }
-            // Any other line (blank already filtered, stray text, etc.) is ignored.
+
         });
 
         return photos;
@@ -1226,7 +1177,6 @@
         return merged;
     }
 
-    //
     const PHOTO_CACHE_KEY = 'tonir_gallery_cache_v1';
 
     function showGallery(photos) {
@@ -1239,9 +1189,6 @@
         buildStrip(allPhotos);
     }
 
-    // 1) Instant paint from last successful visit, if any — no network wait.
-    //    Deferred one microtask so it runs after the rest of this script
-    //    (imgObserver, etc., declared further down) has finished executing.
     let paintedFromCache = false;
     Promise.resolve().then(() => {
         try {
@@ -1253,7 +1200,7 @@
                     paintedFromCache = true;
                 }
             }
-        } catch (e) { /* corrupt/unavailable cache — ignore, fall through to network */ }
+        } catch (e) {  }
     });
 
     const oldPhotosPromise = fetch(csvUrl)
@@ -1263,15 +1210,11 @@
 
     const liveImagesPromise = fetchLiveUploads();
 
-    // 2) As soon as the FAST source (old photos) is ready, show it right
-    //    away instead of waiting on the slower Apps Script call too.
     oldPhotosPromise.then(oldPhotos => {
         if (!paintedFromCache) {
             showGallery(oldPhotos);
         }
 
-        // 3) When live uploads arrive (possibly later), merge them in
-        //    quietly and refresh the cache — no loading spinner shown again.
         liveImagesPromise.then(liveImages => {
             const merged = buildMergedPhotoList(oldPhotos, liveImages);
             showGallery(merged);
@@ -1283,8 +1226,6 @@
                 '<p style="color:var(--muted)">Could not load photos. Check your connection.</p>';
         }
     });
-
-
 
     const imgObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
@@ -1625,7 +1566,6 @@
         const pageUrl = 'https://tonirshaik.github.io/tonirshaik/';
         const shareText = title + ' — Tonir Shaik | Official Gallery';
 
-        // Try sharing the actual photo file (best experience on mobile)
         fetch(url)
             .then(r => r.blob())
             .then(blob => {
@@ -1640,7 +1580,7 @@
                 throw new Error('file-share-unsupported');
             })
             .catch(() => {
-                // Fallback: share the page link instead of the file
+
                 if (navigator.share) {
                     navigator.share({ title: shareText, text: shareText, url: pageUrl }).catch(() => {});
                 } else if (navigator.clipboard) {
@@ -1672,9 +1612,6 @@
         adminPasswordInput.focus();
     });
 
-    /* ===========================================================
-       Live Upload System (Google Drive + Apps Script backend)
-       =========================================================== */
     const adminLockOverlay  = document.getElementById('adminLockOverlay');
     const adminLockClose    = document.getElementById('adminLockClose');
     const adminPasswordInput= document.getElementById('adminPasswordInput');
@@ -1767,7 +1704,6 @@
             resetUploadFlow();
         }
     });
-
 
     function compressImage(file, maxDim, quality) {
         return new Promise((resolve, reject) => {
@@ -1957,7 +1893,6 @@
         input.addEventListener('click', (e) => e.stopPropagation());
     }
 
-
     function showTagStep(idx) {
         currentTagIdx = idx;
         const photo = selectedPhotos[idx];
@@ -1967,6 +1902,14 @@
         tagProgressFill.style.width = ((idx + 1) / selectedPhotos.length * 100) + '%';
         tagPrevBtn.disabled = idx === 0;
         tagNextBtn.textContent = (idx === selectedPhotos.length - 1) ? 'Upload All ✓' : 'Next →';
+
+        const faceResultsEl = document.getElementById('faceDetectResults');
+        const faceStatusEl = document.getElementById('faceDetectStatus');
+        const faceBtn = document.getElementById('faceDetectTestBtn');
+        if (faceResultsEl) faceResultsEl.innerHTML = '';
+        if (faceStatusEl) faceStatusEl.textContent = '';
+        if (faceBtn) faceBtn.disabled = false;
+
         renderTagFaces();
     }
 
@@ -2154,7 +2097,6 @@
         return out;
     }
 
-    //
     const adminEditTagOverlay   = document.getElementById('adminEditTagOverlay');
     const adminEditTagClose     = document.getElementById('adminEditTagClose');
     const editTagPreviewImg     = document.getElementById('editTagPreviewImg');
@@ -2458,7 +2400,12 @@
                 return;
             }
             uploadOnePhoto(selectedPhotos[i]).then(res => {
-                if (res && res.success) done++; else failed++;
+                if (res && res.success) {
+                    done++;
+                    if (typeof onPhotoUploadedForFaceLearning === 'function') {
+                        onPhotoUploadedForFaceLearning(selectedPhotos[i]);
+                    }
+                } else failed++;
                 uploadDoneCount.textContent = done + failed;
                 uploadProgressFill.style.width = ((done + failed) / selectedPhotos.length * 100) + '%';
                 next(i + 1);
@@ -2489,16 +2436,14 @@
                     } catch (e) {
                     }
                 });
-            }).catch(() => { /* fail silently, existing gallery stays unchanged */ });
-        } catch (e) { /* never let this break the main page */ }
+            }).catch(() => {  });
+        } catch (e) {  }
 
         if (attemptsLeft > 0) {
             setTimeout(() => refreshGalleryWithLiveUploads(attemptsLeft - 1), 4000);
         }
     }
 
-
-    /* ── 3D Mouse-tracked tilt on photo cards ───────────────────── */
     (function() {
         function applyTilt(card) {
             if (card._tiltBound) return;
@@ -2508,16 +2453,15 @@
                 const rect = card.getBoundingClientRect();
                 const cx = rect.left + rect.width  / 2;
                 const cy = rect.top  + rect.height / 2;
-                const dx = (e.clientX - cx) / (rect.width  / 2);   // -1 … 1
-                const dy = (e.clientY - cy) / (rect.height / 2);   // -1 … 1
-                const rotX = -dy * 10;  // tilt up/down max 10°
-                const rotY =  dx * 10;  // tilt left/right max 10°
+                const dx = (e.clientX - cx) / (rect.width  / 2);
+                const dy = (e.clientY - cy) / (rect.height / 2);
+                const rotX = -dy * 10;
+                const rotY =  dx * 10;
 
                 card.style.transform =
                     `perspective(800px) rotateX(${rotX}deg) rotateY(${rotY}deg) scale(1.04)`;
                 card.style.transition = 'transform 0.08s ease';
 
-                // Shine highlight that follows cursor
                 let shine = card.querySelector('.tilt-shine');
                 if (!shine) {
                     shine = document.createElement('div');
@@ -2544,7 +2488,6 @@
             });
         }
 
-        // Apply to existing cards and future ones via MutationObserver
         function bindAll() {
             document.querySelectorAll('.photo-item').forEach(applyTilt);
         }
@@ -2553,5 +2496,10 @@
         observer.observe(document.getElementById('masonry') || document.body, { childList: true, subtree: true });
     })();
 </script>
+
+
+<script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+
+<script defer src="face-recognition.js"></script>
 </body>
 </html>

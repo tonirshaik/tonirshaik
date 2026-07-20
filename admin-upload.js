@@ -5,18 +5,13 @@
    Depends on globals already defined in index.html's main script:
    csvUrl, APPS_SCRIPT_URL, allPhotos, applyFiltersAndSearch,
    buildStrip, parsePhotoFile, fetchLiveUploads, buildMergedPhotoList,
-   dlImg, shareImg.
-
-   NOTE: intentionally NOT wrapped in an IIFE. face-recognition.js
-   (loaded separately) reads/calls several of this file's top-level
-   variables and functions directly (e.g. selectedPhotos, currentTagIdx,
-   tagFacesList, addUploadPerson, showTagStep, onPhotoUploadedForFaceLearning
-   hook). Wrapping this in an IIFE hides them from face-recognition.js and
-   breaks the "✓ ঠিক আছে / ✕ না" face-match buttons.
+   dlImg, shareImg, and (optionally) onPhotoUploadedForFaceLearning
+   from face-recognition.js.
    ============================================================ */
-const ADMIN_PASSWORD = 'uplo@d2002';
+(function () {
+    const ADMIN_PASSWORD = 'uplo@d2002';
 
-document.getElementById('navGalleryLink').addEventListener('click', (e) => {
+    document.getElementById('navGalleryLink').addEventListener('click', (e) => {
         e.preventDefault();
         adminLockOverlay.classList.add('open');
         adminPasswordInput.value = '';
@@ -224,6 +219,18 @@ document.getElementById('navGalleryLink').addEventListener('click', (e) => {
         uploadPeople.push(name);
         return uploadPeople.length - 1;
     }
+
+    function tagFaceForCurrentPhoto(name, descriptor) {
+        const idx = addUploadPerson(name);
+        if (idx === null) return;
+        const photo = selectedPhotos[currentTagIdx];
+        photo.tagIdxs.add(idx);
+        renderTagFaces();
+
+        photo.pendingFaceLearning = photo.pendingFaceLearning || [];
+        photo.pendingFaceLearning.push({ name: name, descriptor: Array.from(descriptor) });
+    }
+    window.tagFaceForCurrentPhoto = tagFaceForCurrentPhoto;
 
     function removeUploadPerson(idx) {
         uploadPeople.splice(idx, 1);
@@ -859,3 +866,5 @@ document.getElementById('navGalleryLink').addEventListener('click', (e) => {
             setTimeout(() => refreshGalleryWithLiveUploads(attemptsLeft - 1), 4000);
         }
     }
+
+})();

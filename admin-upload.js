@@ -12,7 +12,7 @@
    visitors never download that ML library.
    ============================================================ */
 (function () {
-    const ADMIN_PASSWORD = 'uplo@d2002';
+    let ADMIN_PASSWORD = '';
 
     document.getElementById('navGalleryLink').addEventListener('click', (e) => {
         e.preventDefault();
@@ -113,14 +113,31 @@
     });
 
     function tryUnlock() {
-        if (adminPasswordInput.value === ADMIN_PASSWORD) {
-            adminLockOverlay.classList.remove('open');
-            resetUploadFlow();
-            adminUploadOverlay.classList.add('open');
-            document.body.classList.add('admin-mode');
-        } else {
-            adminLockMsg.textContent = 'Wrong password';
-        }
+        const entered = adminPasswordInput.value;
+        adminUnlockBtn.disabled = true;
+        adminLockMsg.textContent = 'Checking...';
+        fetch(APPS_SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify({ password: entered, action: 'verify' })
+        })
+        .then(r => r.json())
+        .then(res => {
+            adminUnlockBtn.disabled = false;
+            if (res.success) {
+                ADMIN_PASSWORD = entered;
+                window.ADMIN_PASSWORD = entered; // face-recognition.js এর জন্য
+                adminLockOverlay.classList.remove('open');
+                resetUploadFlow();
+                adminUploadOverlay.classList.add('open');
+                document.body.classList.add('admin-mode');
+            } else {
+                adminLockMsg.textContent = res.error || 'Wrong password';
+            }
+        })
+        .catch(() => {
+            adminUnlockBtn.disabled = false;
+            adminLockMsg.textContent = 'Network error, try again';
+        });
     }
     adminUnlockBtn.addEventListener('click', tryUnlock);
     adminPasswordInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') tryUnlock(); });
@@ -136,7 +153,7 @@
 
     adminPasswordInput.addEventListener('input', () => {
         adminLockMsg.textContent = '';
-        adminUnlockBtn.style.display = (adminPasswordInput.value === ADMIN_PASSWORD) ? 'block' : 'none';
+        adminUnlockBtn.style.display = adminPasswordInput.value.length > 0 ? 'block' : 'none';
     });
 
     adminUploadClose.addEventListener('click', () => {

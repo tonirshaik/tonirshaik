@@ -1,5 +1,6 @@
 (function () {
-    const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
+    const MODEL_URL = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights';
+    const MODEL_LOAD_TIMEOUT_MS = 15000;
     const MATCH_THRESHOLD = 0.5;
     const ADMIN_PASSWORD = 'uplo@d2002';
 
@@ -8,27 +9,35 @@
     let knownFaces = [];
     let knownFacesLoaded = false;
 
+    function withTimeout(promise, ms) {
+        return Promise.race([
+            promise,
+            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms))
+        ]);
+    }
+
     async function ensureModelsLoaded(statusEl) {
         if (modelsLoaded) return true;
         if (modelsLoading) return false;
         modelsLoading = true;
         if (statusEl) statusEl.textContent = 'মডেল লোড হচ্ছে... (প্রথমবার একটু সময় নেবে)';
         try {
-            await Promise.all([
+            await withTimeout(Promise.all([
                 faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
                 faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
                 faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
-            ]);
+            ]), MODEL_LOAD_TIMEOUT_MS);
             modelsLoaded = true;
             if (statusEl) statusEl.textContent = 'মডেল লোড হয়ে গেছে ✓';
             return true;
         } catch (err) {
             console.error('Face model load failed:', err);
-            if (statusEl) statusEl.textContent = '⚠️ মডেল লোড করতে সমস্যা হয়েছে — ইন্টারনেট কানেকশন চেক করো';
+            if (statusEl) statusEl.textContent = '⚠️ মডেল লোড করতে সমস্যা হয়েছে — ইন্টারনেট কানেকশন চেক করে আবার "মুখ খুঁজে দেখাও" চাপো';
             return false;
         } finally {
             modelsLoading = false;
         }
+
     }
 
     async function loadKnownFaces() {

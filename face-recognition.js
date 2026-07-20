@@ -254,8 +254,8 @@
 
     window.onPhotoUploadedForFaceLearning = onPhotoUploadedForFaceLearning;
 
-    document.addEventListener('DOMContentLoaded', function () {
+    (function bindFaceDetectButton() {
         const btn = document.getElementById('faceDetectTestBtn');
         if (btn) btn.addEventListener('click', runFaceDetectTest);
-    });
+    })();
 })();

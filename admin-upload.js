@@ -408,6 +408,8 @@
         });
     }
 
+    window.deletePhotoConfirm = deletePhotoConfirm;
+
     function deleteTextPhotoConfirm(rawUrl, btnEl) {
         if (!confirm('Are you sure you want to permanently delete this photo? (removes it from the source file)')) return;
 
@@ -446,6 +448,7 @@
             alert('Network error, please try again');
         });
     }
+    window.deleteTextPhotoConfirm = deleteTextPhotoConfirm;
 
     const PHONETIC_CONSONANTS = [
         ['kkh','ক্ষ'], ['kh','খ'], ['k','ক'],
@@ -682,6 +685,7 @@
         loadEditTagAtPos(pos);
         adminEditTagOverlay.classList.add('open');
     }
+    window.openEditTagsByIdx = openEditTagsByIdx;
 
     function closeEditTagOverlay() {
         adminEditTagOverlay.classList.remove('open');

@@ -1,7 +1,7 @@
-
 (function () {
     const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
     const MATCH_THRESHOLD = 0.5;
+    const ADMIN_PASSWORD = 'uplo@d2002';
 
     let modelsLoaded = false;
     let modelsLoading = false;
@@ -91,14 +91,7 @@
     }
 
     function confirmFaceWithName(name, descriptor) {
-        const idx = addUploadPerson(name);
-        if (idx === null) return;
-        selectedPhotos[currentTagIdx].tagIdxs.add(idx);
-        renderTagFaces();
-
-        const photo = selectedPhotos[currentTagIdx];
-        photo.pendingFaceLearning = photo.pendingFaceLearning || [];
-        photo.pendingFaceLearning.push({ name: name, descriptor: Array.from(descriptor) });
+        window.tagFaceForCurrentPhoto(name, descriptor);
     }
 
     function buildFaceCard(imgEl, detection) {
@@ -266,4 +259,3 @@
         if (btn) btn.addEventListener('click', runFaceDetectTest);
     });
 })();
-

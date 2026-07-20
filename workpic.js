@@ -7,7 +7,7 @@
    dlImg, shareImg.
    ============================================================ */
 const WORKPIC_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyaP3hpU471aMaRTHaJo5yG5MqG4EyaR8U4Yo1pyrmU-YleGRXfwOMpac8QXyNx5u1Mlw/exec';
-const WORKPIC_PASSWORD = 'work2002';
+let WORKPIC_PASSWORD = '';
 
     (function() {
         const navWorkPicLink      = document.getElementById('navWorkPicLink');
@@ -117,14 +117,30 @@ const WORKPIC_PASSWORD = 'work2002';
         });
 
         function tryWorkpicUnlock() {
-            if (workpicPasswordInput.value === WORKPIC_PASSWORD) {
-                workpicLockOverlay.classList.remove('open');
-                resetWorkpicUploadFlow();
-                workpicUploadOverlay.classList.add('open');
-                loadWorkpicGallery();
-            } else {
-                workpicLockMsg.textContent = 'Wrong password';
-            }
+            const entered = workpicPasswordInput.value;
+            workpicUnlockBtn.disabled = true;
+            workpicLockMsg.textContent = 'Checking...';
+            fetch(WORKPIC_APPS_SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify({ password: entered, action: 'verify' })
+            })
+            .then(r => r.json())
+            .then(res => {
+                workpicUnlockBtn.disabled = false;
+                if (res.success) {
+                    WORKPIC_PASSWORD = entered;
+                    workpicLockOverlay.classList.remove('open');
+                    resetWorkpicUploadFlow();
+                    workpicUploadOverlay.classList.add('open');
+                    loadWorkpicGallery();
+                } else {
+                    workpicLockMsg.textContent = res.error || 'Wrong password';
+                }
+            })
+            .catch(() => {
+                workpicUnlockBtn.disabled = false;
+                workpicLockMsg.textContent = 'Network error, try again';
+            });
         }
         workpicUnlockBtn.addEventListener('click', tryWorkpicUnlock);
         workpicPasswordInput.addEventListener('keydown', (e) => {

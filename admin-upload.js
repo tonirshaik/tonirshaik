@@ -5,8 +5,11 @@
    Depends on globals already defined in index.html's main script:
    csvUrl, APPS_SCRIPT_URL, allPhotos, applyFiltersAndSearch,
    buildStrip, parsePhotoFile, fetchLiveUploads, buildMergedPhotoList,
-   dlImg, shareImg, and (optionally) onPhotoUploadedForFaceLearning
-   from face-recognition.js.
+   dlImg, shareImg.
+   face-api.js and face-recognition.js are NOT loaded by index.html
+   anymore — this file lazy-loads them itself (see ensureFaceScriptsLoaded)
+   the moment the admin reaches the photo-tagging step, so regular
+   visitors never download that ML library.
    ============================================================ */
 (function () {
     const ADMIN_PASSWORD = 'uplo@d2002';
@@ -58,6 +61,37 @@
     let uploadPeople = [];
     let selectedPhotos = [];
     let currentTagIdx = 0;
+
+    // face-api.js (~ a few hundred KB) and face-recognition.js are only
+    // needed for the admin face-tagging step, so they're fetched on demand
+    // here instead of being loaded by every regular visitor on every page view.
+    let faceScriptsState = 'idle'; // idle | loading | ready
+    let faceApiReadyCallbacks = [];
+    function ensureFaceScriptsLoaded(onReady) {
+        if (faceScriptsState === 'ready') {
+            if (onReady) onReady();
+            return;
+        }
+        if (onReady) faceApiReadyCallbacks.push(onReady);
+        if (faceScriptsState === 'loading') return;
+        faceScriptsState = 'loading';
+
+        const faceApiScript = document.createElement('script');
+        faceApiScript.src = 'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js';
+        faceApiScript.onload = function () {
+            const faceRecScript = document.createElement('script');
+            faceRecScript.src = 'face-recognition.js';
+            faceRecScript.onload = function () {
+                faceScriptsState = 'ready';
+                faceApiReadyCallbacks.forEach(function (cb) { cb(); });
+                faceApiReadyCallbacks = [];
+            };
+            faceRecScript.onerror = function () { faceScriptsState = 'idle'; };
+            document.body.appendChild(faceRecScript);
+        };
+        faceApiScript.onerror = function () { faceScriptsState = 'idle'; };
+        document.body.appendChild(faceApiScript);
+    }
 
     function resetUploadFlow() {
         selectedPhotos = [];
@@ -331,7 +365,10 @@
         const faceBtn = document.getElementById('faceDetectTestBtn');
         if (faceResultsEl) faceResultsEl.innerHTML = '';
         if (faceStatusEl) faceStatusEl.textContent = '';
-        if (faceBtn) faceBtn.disabled = false;
+        if (faceBtn) {
+            faceBtn.disabled = true;
+            ensureFaceScriptsLoaded(function () { faceBtn.disabled = false; });
+        }
 
         renderTagFaces();
     }

@@ -2,7 +2,8 @@
     const MODEL_URL = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights';
     const MODEL_LOAD_TIMEOUT_MS = 15000;
     const MATCH_THRESHOLD = 0.5;
-    const ADMIN_PASSWORD = 'uplo@d2002';
+    // admin-upload.js এর tryUnlock() সার্ভারে ভেরিফাই সফল হওয়ার পর
+    // window.ADMIN_PASSWORD সেট করে দেয়; এখানে হার্ডকোড রাখার দরকার নেই।
 
     let modelsLoaded = false;
     let modelsLoading = false;
@@ -241,7 +242,7 @@
                 const res = await fetch(APPS_SCRIPT_URL, {
                     method: 'POST',
                     body: JSON.stringify({
-                        password: ADMIN_PASSWORD,
+                        password: window.ADMIN_PASSWORD,
                         action: 'saveFaceDescriptor',
                         name: entry.name,
                         descriptor: entry.descriptor

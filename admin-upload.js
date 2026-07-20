@@ -5,13 +5,18 @@
    Depends on globals already defined in index.html's main script:
    csvUrl, APPS_SCRIPT_URL, allPhotos, applyFiltersAndSearch,
    buildStrip, parsePhotoFile, fetchLiveUploads, buildMergedPhotoList,
-   dlImg, shareImg, and (optionally) onPhotoUploadedForFaceLearning
-   from face-recognition.js.
-   ============================================================ */
-(function () {
-    const ADMIN_PASSWORD = 'uplo@d2002';
+   dlImg, shareImg.
 
-    document.getElementById('navGalleryLink').addEventListener('click', (e) => {
+   NOTE: intentionally NOT wrapped in an IIFE. face-recognition.js
+   (loaded separately) reads/calls several of this file's top-level
+   variables and functions directly (e.g. selectedPhotos, currentTagIdx,
+   tagFacesList, addUploadPerson, showTagStep, onPhotoUploadedForFaceLearning
+   hook). Wrapping this in an IIFE hides them from face-recognition.js and
+   breaks the "✓ ঠিক আছে / ✕ না" face-match buttons.
+   ============================================================ */
+const ADMIN_PASSWORD = 'uplo@d2002';
+
+document.getElementById('navGalleryLink').addEventListener('click', (e) => {
         e.preventDefault();
         adminLockOverlay.classList.add('open');
         adminPasswordInput.value = '';
@@ -854,5 +859,3 @@
             setTimeout(() => refreshGalleryWithLiveUploads(attemptsLeft - 1), 4000);
         }
     }
-
-})();

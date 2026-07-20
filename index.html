@@ -572,6 +572,32 @@
             color: #fff; padding: 10px 12px; border-radius: 6px;
             font-size: 13px; margin-bottom: 12px; font-family: inherit;
         }
+        input[type="file"].admin-input {
+            background: var(--card-bg);
+            border: 1px dashed var(--border);
+            color: var(--muted);
+            padding: 16px 14px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: border-color 0.25s ease, background 0.25s ease;
+        }
+        input[type="file"].admin-input:hover {
+            border-color: rgba(63,168,255,0.5);
+            background: rgba(63,168,255,0.05);
+        }
+        input[type="file"].admin-input::file-selector-button,
+        input[type="file"].admin-input::-webkit-file-upload-button {
+            background: linear-gradient(to right, var(--gold), var(--gold-light));
+            color: #000; font-weight: 600; font-size: 12px;
+            border: none; border-radius: 6px; padding: 8px 16px;
+            margin-right: 14px; cursor: pointer;
+            letter-spacing: 0.02em;
+            transition: opacity 0.2s ease;
+        }
+        input[type="file"].admin-input::file-selector-button:hover,
+        input[type="file"].admin-input::-webkit-file-upload-button:hover {
+            opacity: 0.85;
+        }
         .pw-field-wrap { position: relative; margin-bottom: 12px; overflow: hidden; border-radius: 6px; height: 40px; }
         .pw-field-wrap .admin-input {
             margin-bottom: 0; padding-right: 40px; height: 100%;
@@ -610,6 +636,68 @@
         }
 
         .admin-box-wide { max-width: 440px; }
+        .workpic-gallery-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+            gap: 16px; margin-bottom: 14px; max-height: 60vh; overflow-y: auto;
+            padding-right: 4px;
+        }
+        @media (max-width: 640px) {
+            .workpic-gallery-grid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); max-height: 50vh; }
+        }
+
+        /* Work Pic full-page view (looks like an actual website page, not a popup box) */
+        .workpic-fullpage-overlay {
+            padding: 0;
+            background: #000;
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
+        }
+        .workpic-fullpage-box {
+            width: 100vw; height: 100vh;
+            max-width: none; max-height: none;
+            margin: 0; border-radius: 0; border: none;
+            background: var(--surface);
+            backdrop-filter: none; -webkit-backdrop-filter: none;
+            box-shadow: none; padding: 0;
+            display: flex; flex-direction: column; overflow: hidden;
+        }
+        .workpic-fullpage-header {
+            display: flex; align-items: center; justify-content: space-between;
+            flex-shrink: 0; padding: 16px 32px;
+            background: rgba(5,10,22,0.85);
+            backdrop-filter: blur(10px) saturate(1.3);
+            -webkit-backdrop-filter: blur(10px) saturate(1.3);
+            border-bottom: 1px solid rgba(63,168,255,0.18);
+        }
+        .workpic-fullpage-brand {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 21px; color: #fff; letter-spacing: 0.02em;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .workpic-fullpage-header-actions { display: flex; gap: 10px; }
+        .workpic-fullpage-icon-btn {
+            position: static !important;
+            width: 36px; height: 36px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(63,168,255,0.08); border: 1px solid var(--border);
+            color: #fff; font-size: 15px; cursor: pointer;
+        }
+        .workpic-fullpage-content {
+            flex: 1; overflow-y: auto;
+            padding: 28px 32px 48px;
+            max-width: 1400px; width: 100%; margin: 0 auto;
+        }
+        .workpic-fullpage-content .workpic-gallery-grid {
+            max-height: none; overflow-y: visible;
+        }
+        #workpicUploadPanel {
+            max-width: 460px;
+            margin: 0 auto;
+        }
+        @media (max-width: 640px) {
+            .workpic-fullpage-header { padding: 14px 16px; }
+            .workpic-fullpage-content { padding: 18px 16px 40px; }
+        }
         .upload-thumbs {
             display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
             margin-bottom: 14px; max-height: 220px; overflow-y: auto;
@@ -624,6 +712,30 @@
             display: flex; align-items: center; justify-content: center;
         }
         .upload-thumb .thumb-remove:hover { background: #c0392b; }
+        .workpic-gallery-item {
+            position: relative; aspect-ratio: 1; border-radius: 6px; overflow: hidden;
+            background: var(--card-bg);
+        }
+        .workpic-gallery-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .workpic-gallery-item .wp-name {
+            position: absolute; left: 0; right: 0; bottom: 0;
+            font-size: 9px; color: #fff; padding: 3px 4px;
+            background: linear-gradient(to top, rgba(0,0,0,0.85), transparent);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .workpic-gallery-empty { font-size: 12px; color: var(--muted); text-align: center; padding: 10px 0; }
+        .wp-actions {
+            position: absolute; top: 3px; right: 3px;
+            display: flex; gap: 4px; opacity: 0; transition: opacity 0.2s ease;
+        }
+        .workpic-gallery-item:hover .wp-actions { opacity: 1; }
+        .wp-action-btn {
+            width: 20px; height: 20px; border-radius: 50%; border: none;
+            background: rgba(0,0,0,0.72); color: #fff; font-size: 11px;
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
+        }
+        .wp-action-btn:hover { background: var(--gold); color: #000; }
+        .wp-action-btn.wp-delete:hover { background: #e0453a; color: #fff; }
         .tag-progress-wrap { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
         .tag-progress-track {
             flex: 1; height: 5px; border-radius: 4px;
@@ -832,6 +944,7 @@
     <ul class="nav-links">
         <li class="chase-wrap"><a href="#" id="navGalleryLink" class="nav-chase-btn nav-premium"><span class="pl">U</span><span class="pl">p</span><span class="pl">l</span><span class="pl">o</span><span class="pl">a</span><span class="pl">d</span></a>
         </li>
+        <li><a href="#" id="navWorkPicLink" class="nav-shine-btn">Work Pic</a></li>
         <li><a href="https://tonirshaik.github.io/tonirshaik_web/" target="_blank" class="nav-shine-btn">Official Site</a></li>
     </ul>
 </nav>
@@ -1027,6 +1140,75 @@
     </div>
 </div>
 
+<div class="admin-overlay" id="workpicLockOverlay">
+    <div class="admin-box">
+        <button class="admin-close" id="workpicLockClose">×</button>
+        <h4>🔒 Work Pic Access</h4>
+        <div class="pw-field-wrap">
+            <input type="password" class="admin-input" id="workpicPasswordInput" placeholder="Enter password" autocomplete="off">
+            <button type="button" class="pw-eye-btn" id="workpicPwEyeBtn" aria-label="Show password" tabindex="-1">
+                <svg id="workpicPwEyeIconOpen" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                <svg id="workpicPwEyeIconClosed" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a20.3 20.3 0 0 1 4.22-5.94M9.9 4.24A9.6 9.6 0 0 1 12 4c7 0 11 8 11 8a20.4 20.4 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+            </button>
+        </div>
+        <button class="admin-btn" id="workpicUnlockBtn">Unlock</button>
+        <p class="admin-msg err" id="workpicLockMsg"></p>
+    </div>
+</div>
+
+<div class="admin-overlay workpic-fullpage-overlay" id="workpicUploadOverlay">
+    <div class="workpic-fullpage-box" id="workpicUploadBox">
+        <header class="workpic-fullpage-header">
+            <div class="workpic-fullpage-brand">📁 Work Pic</div>
+            <div class="workpic-fullpage-header-actions">
+                <button class="workpic-fullpage-icon-btn" id="workpicSettingsBtn" title="Upload settings">⚙</button>
+                <button class="workpic-fullpage-icon-btn" id="workpicUploadClose" title="Close">×</button>
+            </div>
+        </header>
+
+        <div class="workpic-fullpage-content">
+            <div id="workpicUploadPanel" style="display:none;">
+                <h4 style="font-size:14px;">📤 Upload New</h4>
+                <input type="file" class="admin-input" id="workpicFileInput" accept="image/*" multiple>
+                <div class="upload-thumbs" id="workpicThumbs"></div>
+                <button class="admin-btn" id="workpicSendBtn" disabled>Upload →</button>
+                <div class="tag-progress-wrap" id="workpicProgressWrap" style="display:none; margin-top:14px;">
+                    <div class="tag-progress-track"><div class="tag-progress-fill" id="workpicProgressFill"></div></div>
+                    <div class="tag-progress-text"><span id="workpicDoneCount">0</span>/<span id="workpicTotalCount">0</span></div>
+                </div>
+                <p class="admin-msg" id="workpicMsg"></p>
+                <hr style="border:none; border-top:1px solid var(--border); margin:18px 0;">
+            </div>
+
+            <div id="workpicGalleryWrap">
+                <p class="admin-msg" id="workpicGalleryLoading">Loading uploaded photos...</p>
+                <div class="workpic-gallery-grid" id="workpicGallery"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="lightbox" id="workpicLightbox">
+    <button class="lb-close" id="wplbClose">×</button>
+    <button class="lb-nav lb-prev" id="wplbPrev">‹</button>
+    <button class="lb-nav lb-next" id="wplbNext">›</button>
+    <div class="lb-inner">
+        <img id="wplbImg" src="" alt="">
+        <div class="lb-meta">
+            <span class="lb-title" id="wplbTitle"></span>
+            <span class="lb-counter" id="wplbCounter"></span>
+            <button class="lb-dl" id="wplbDl">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v11"/><path d="M7.5 10.5L12 15l4.5-4.5"/><path d="M5 20h14"/></svg>
+                <span>Download</span>
+            </button>
+            <button class="lb-share" id="wplbShare">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5.5" r="2.4"/><circle cx="6" cy="12" r="2.4"/><circle cx="18" cy="18.5" r="2.4"/><path d="M8.2 10.6l7.5-4.1"/><path d="M8.2 13.4l7.5 4.1"/></svg>
+                <span>Share</span>
+            </button>
+        </div>
+    </div>
+</div>
+
 <div class="lightbox" id="lightbox">
     <button class="lb-close" id="lbClose">×</button>
     <button class="lb-nav lb-prev" id="lbPrev">‹</button>
@@ -1061,7 +1243,6 @@
 
     const csvUrl = 'https://raw.githubusercontent.com/tonirshaik/tonirshaik/refs/heads/main/Tonir%20photo%20Link.txt';
     const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyLRiJ9ueiqnc7kYc188HTg41wJNF3W1eighA2WA7xq9nUfMTJflzefxdXsrjIHOgXiLw/exec';
-    const ADMIN_PASSWORD = 'uplo@d2002';
 
     function getDriveFileId(url) {
         let m = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
@@ -1600,849 +1781,9 @@
     }, { threshold: 0.1 });
     document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
-    document.getElementById('navGalleryLink').addEventListener('click', (e) => {
-        e.preventDefault();
-        adminLockOverlay.classList.add('open');
-        adminPasswordInput.value = '';
-        adminPasswordInput.type = 'password';
-        pwEyeIconOpen.style.display = 'none';
-        pwEyeIconClosed.style.display = 'flex';
-        adminLockMsg.textContent = '';
-        adminUnlockBtn.style.display = 'none';
-        adminPasswordInput.focus();
-    });
-
-    const adminLockOverlay  = document.getElementById('adminLockOverlay');
-    const adminLockClose    = document.getElementById('adminLockClose');
-    const adminPasswordInput= document.getElementById('adminPasswordInput');
-    const adminUnlockBtn    = document.getElementById('adminUnlockBtn');
-    const adminLockMsg      = document.getElementById('adminLockMsg');
-    const pwEyeBtn          = document.getElementById('pwEyeBtn');
-    const pwEyeIconOpen     = document.getElementById('pwEyeIconOpen');
-    const pwEyeIconClosed   = document.getElementById('pwEyeIconClosed');
-
-    const adminUploadOverlay= document.getElementById('adminUploadOverlay');
-    const adminUploadClose  = document.getElementById('adminUploadClose');
-    const adminFileInput    = document.getElementById('adminFileInput');
-    const adminStartTagBtn  = document.getElementById('adminStartTagBtn');
-    const adminPickMsg      = document.getElementById('adminPickMsg');
-    const uploadThumbs      = document.getElementById('uploadThumbs');
-    const uploadStepPick    = document.getElementById('uploadStepPick');
-    const uploadStepTag     = document.getElementById('uploadStepTag');
-    const uploadStepUploading = document.getElementById('uploadStepUploading');
-    const tagPreviewImg     = document.getElementById('tagPreviewImg');
-    const tagFacesList      = document.getElementById('tagFacesList');
-    const tagQuickAddInput  = document.getElementById('tagQuickAddInput');
-    const tagQuickAddBtn    = document.getElementById('tagQuickAddBtn');
-    const tagPrevBtn        = document.getElementById('tagPrevBtn');
-    const tagNextBtn        = document.getElementById('tagNextBtn');
-    const tagProgressFill   = document.getElementById('tagProgressFill');
-    const tagPhotoNum       = document.getElementById('tagPhotoNum');
-    const tagPhotoTotal     = document.getElementById('tagPhotoTotal');
-    const uploadProgressFill= document.getElementById('uploadProgressFill');
-    const uploadDoneCount   = document.getElementById('uploadDoneCount');
-    const uploadTotalCount  = document.getElementById('uploadTotalCount');
-    const adminUploadMsg    = document.getElementById('adminUploadMsg');
-
-    let uploadPeople = [];
-    let selectedPhotos = [];
-    let currentTagIdx = 0;
-
-    function resetUploadFlow() {
-        selectedPhotos = [];
-        uploadPeople = [];
-        currentTagIdx = 0;
-        adminFileInput.value = '';
-        uploadThumbs.innerHTML = '';
-        adminStartTagBtn.disabled = true;
-        adminPickMsg.textContent = '';
-        adminPickMsg.className = 'admin-msg';
-        uploadStepPick.style.display = 'block';
-        uploadStepTag.style.display = 'none';
-        uploadStepUploading.style.display = 'none';
-    }
-
-    adminLockClose.addEventListener('click', () => adminLockOverlay.classList.remove('open'));
-    adminLockOverlay.addEventListener('click', (e) => {
-        if (e.target === e.currentTarget) adminLockOverlay.classList.remove('open');
-    });
-
-    function tryUnlock() {
-        if (adminPasswordInput.value === ADMIN_PASSWORD) {
-            adminLockOverlay.classList.remove('open');
-            resetUploadFlow();
-            adminUploadOverlay.classList.add('open');
-            document.body.classList.add('admin-mode');
-        } else {
-            adminLockMsg.textContent = 'Wrong password';
-        }
-    }
-    adminUnlockBtn.addEventListener('click', tryUnlock);
-    adminPasswordInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') tryUnlock(); });
-
-    pwEyeBtn.addEventListener('click', () => {
-        const showing = adminPasswordInput.type === 'text';
-        adminPasswordInput.type = showing ? 'password' : 'text';
-        pwEyeIconOpen.style.display = showing ? 'none' : 'flex';
-        pwEyeIconClosed.style.display = showing ? 'flex' : 'none';
-        pwEyeBtn.setAttribute('aria-label', showing ? 'Show password' : 'Hide password');
-        adminPasswordInput.focus();
-    });
-
-    adminPasswordInput.addEventListener('input', () => {
-        adminLockMsg.textContent = '';
-        adminUnlockBtn.style.display = (adminPasswordInput.value === ADMIN_PASSWORD) ? 'block' : 'none';
-    });
-
-    adminUploadClose.addEventListener('click', () => {
-        adminUploadOverlay.classList.remove('open');
-        resetUploadFlow();
-    });
-    adminUploadOverlay.addEventListener('click', (e) => {
-        if (e.target === e.currentTarget) {
-            adminUploadOverlay.classList.remove('open');
-            resetUploadFlow();
-        }
-    });
-
-    function compressImage(file, maxDim, quality) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onerror = () => reject(new Error('file-read-failed'));
-            reader.onload = () => {
-                const img = new Image();
-                img.onerror = () => reject(new Error('image-decode-failed'));
-                img.onload = () => {
-                    let { width, height } = img;
-                    if (width > maxDim || height > maxDim) {
-                        if (width > height) {
-                            height = Math.round(height * (maxDim / width));
-                            width = maxDim;
-                        } else {
-                            width = Math.round(width * (maxDim / height));
-                            height = maxDim;
-                        }
-                    }
-                    try {
-                        const canvas = document.createElement('canvas');
-                        canvas.width = width;
-                        canvas.height = height;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, width, height);
-                        resolve(canvas.toDataURL('image/jpeg', quality));
-                    } catch (e) {
-                        reject(e);
-                    }
-                };
-                img.src = reader.result;
-            };
-            reader.readAsDataURL(file);
-        });
-    }
-
-    function prepareFile(file) {
-        return compressImage(file, 1600, 0.82)
-            .then(dataUrl => ({ base64: dataUrl, mime: 'image/jpeg' }))
-            .catch(() => new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = () => resolve({ base64: reader.result, mime: file.type });
-                reader.onerror = () => reject(new Error('file-read-failed'));
-                reader.readAsDataURL(file);
-            }));
-    }
-
-    function renderUploadThumbs() {
-        uploadThumbs.innerHTML = '';
-        selectedPhotos.forEach((photo, idx) => {
-            const div = document.createElement('div');
-            div.className = 'upload-thumb';
-            div.innerHTML = `
-                <img src="${photo.base64}" alt="">
-                <button type="button" class="thumb-remove" title="Remove">×</button>
-            `;
-            div.querySelector('.thumb-remove').addEventListener('click', () => {
-                selectedPhotos.splice(idx, 1);
-                renderUploadThumbs();
-                adminStartTagBtn.disabled = selectedPhotos.length === 0;
-            });
-            uploadThumbs.appendChild(div);
-        });
-    }
-
-    adminFileInput.addEventListener('change', () => {
-        const files = Array.from(adminFileInput.files || []);
-        if (files.length === 0) return;
-
-        adminStartTagBtn.disabled = true;
-        adminPickMsg.textContent = `Preparing ${files.length} photo(s)...`;
-        adminPickMsg.className = 'admin-msg';
-
-        Promise.all(files.map(file =>
-            prepareFile(file)
-                .then(({ base64, mime }) => ({ base64, mime, name: file.name, tagIdxs: new Set() }))
-                .catch(() => null)
-        )).then(results => {
-            const ok = results.filter(Boolean);
-            selectedPhotos = selectedPhotos.concat(ok);
-            renderUploadThumbs();
-            adminFileInput.value = '';
-            adminStartTagBtn.disabled = selectedPhotos.length === 0;
-            const failed = results.length - ok.length;
-            adminPickMsg.textContent = failed > 0
-                ? `❌ ${failed} photo(s) couldn't be read, the rest are ready`
-                : (selectedPhotos.length ? `✅ ${selectedPhotos.length} photo(s) ready` : '');
-            adminPickMsg.className = failed > 0 ? 'admin-msg err' : 'admin-msg ok';
-        });
-    });
-
-    function addUploadPerson(rawName) {
-        const name = (rawName || '').trim();
-        if (!name) return null;
-        const existingIdx = uploadPeople.findIndex(p => p.toLowerCase() === name.toLowerCase());
-        if (existingIdx !== -1) return existingIdx;
-        if (uploadPeople.length >= 20) {
-            adminUploadMsg.textContent = 'You can add a maximum of 20 names';
-            adminUploadMsg.className = 'admin-msg err';
-            return null;
-        }
-        uploadPeople.push(name);
-        return uploadPeople.length - 1;
-    }
-
-    function removeUploadPerson(idx) {
-        uploadPeople.splice(idx, 1);
-        selectedPhotos.forEach(photo => {
-            const newSet = new Set();
-            photo.tagIdxs.forEach(i => {
-                if (i === idx) return;
-                newSet.add(i > idx ? i - 1 : i);
-            });
-            photo.tagIdxs = newSet;
-        });
-        renderTagFaces();
-    }
-
-    function renderTagFaces() {
-        const photo = selectedPhotos[currentTagIdx];
-        tagFacesList.innerHTML = '';
-        if (uploadPeople.length === 0) {
-            tagFacesList.innerHTML = '<div class="tag-faces-empty">No names added yet — type a name below and tap + Add</div>';
-            return;
-        }
-        uploadPeople.forEach((name, idx) => {
-            const checked = photo.tagIdxs.has(idx);
-            const row = document.createElement('div');
-            row.className = 'tag-face-check' + (checked ? ' checked' : '');
-            row.innerHTML = `
-                <label style="display:flex; align-items:center; gap:10px; flex:1; cursor:pointer; margin:0; min-width:0;">
-                    <input type="checkbox" ${checked ? 'checked' : ''}> <span class="tag-face-name">${name}</span>
-                </label>
-                <button type="button" class="tag-face-edit-btn" title="এই নামটি ঠিক করো"><i class="fa-solid fa-pen"></i></button>
-                <button type="button" class="thumb-remove" title="Remove this name" style="position:static; flex-shrink:0;">×</button>
-            `;
-            row.querySelector('input').addEventListener('change', (e) => {
-                if (e.target.checked) photo.tagIdxs.add(idx);
-                else photo.tagIdxs.delete(idx);
-                row.classList.toggle('checked', e.target.checked);
-            });
-            row.querySelector('.tag-face-edit-btn').addEventListener('click', (e) => {
-                e.stopPropagation();
-                startRenameUploadTagRow(row, idx);
-            });
-            row.querySelector('.thumb-remove').addEventListener('click', () => removeUploadPerson(idx));
-            tagFacesList.appendChild(row);
-        });
-    }
-
-    function startRenameUploadTagRow(row, idx) {
-        const oldName = uploadPeople[idx];
-        const wrap = document.createElement('div');
-        wrap.className = 'tag-face-rename-row';
-        wrap.innerHTML = `
-            <input type="text" class="tag-face-rename-input" value="${oldName.replace(/"/g, '&quot;')}">
-            <button type="button" class="tag-face-rename-save" title="Save"><i class="fa-solid fa-check"></i></button>
-            <button type="button" class="tag-face-rename-cancel" title="Cancel"><i class="fa-solid fa-xmark"></i></button>
-        `;
-        row.innerHTML = '';
-        row.appendChild(wrap);
-        const input = wrap.querySelector('.tag-face-rename-input');
-        input.focus();
-        input.select();
-
-        const commit = () => {
-            const newName = input.value.trim();
-            if (!newName || newName === oldName) { renderTagFaces(); return; }
-            const dupIdx = uploadPeople.findIndex((p, i) => i !== idx && p.toLowerCase() === newName.toLowerCase());
-            if (dupIdx !== -1) {
-                adminUploadMsg.textContent = 'এই নামটি আগে থেকেই তালিকায় আছে।';
-                adminUploadMsg.className = 'admin-msg err';
-                renderTagFaces();
-                return;
-            }
-            uploadPeople[idx] = newName;
-            renderTagFaces();
-        };
-        const cancel = () => renderTagFaces();
-
-        wrap.querySelector('.tag-face-rename-save').addEventListener('click', (e) => { e.stopPropagation(); commit(); });
-        wrap.querySelector('.tag-face-rename-cancel').addEventListener('click', (e) => { e.stopPropagation(); cancel(); });
-        input.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') { e.preventDefault(); commit(); }
-            else if (e.key === 'Escape') { e.preventDefault(); cancel(); }
-        });
-        input.addEventListener('click', (e) => e.stopPropagation());
-    }
-
-    function showTagStep(idx) {
-        currentTagIdx = idx;
-        const photo = selectedPhotos[idx];
-        tagPreviewImg.src = photo.base64;
-        tagPhotoNum.textContent = idx + 1;
-        tagPhotoTotal.textContent = selectedPhotos.length;
-        tagProgressFill.style.width = ((idx + 1) / selectedPhotos.length * 100) + '%';
-        tagPrevBtn.disabled = idx === 0;
-        tagNextBtn.textContent = (idx === selectedPhotos.length - 1) ? 'Upload All ✓' : 'Next →';
-
-        const faceResultsEl = document.getElementById('faceDetectResults');
-        const faceStatusEl = document.getElementById('faceDetectStatus');
-        const faceBtn = document.getElementById('faceDetectTestBtn');
-        if (faceResultsEl) faceResultsEl.innerHTML = '';
-        if (faceStatusEl) faceStatusEl.textContent = '';
-        if (faceBtn) faceBtn.disabled = false;
-
-        renderTagFaces();
-    }
-
-    function quickAddTagPerson() {
-        const rawName = (tagQuickAddInput.value || '').trim();
-        const idx = addUploadPerson(rawName);
-        if (idx === null) return;
-        selectedPhotos[currentTagIdx].tagIdxs.add(idx);
-
-        if (!isBanglaText(rawName)) {
-            const banglaName = banglaPhonetic(rawName);
-            if (banglaName && banglaName.toLowerCase() !== rawName.toLowerCase()) {
-                const bIdx = addUploadPerson(banglaName);
-                if (bIdx !== null) selectedPhotos[currentTagIdx].tagIdxs.add(bIdx);
-            }
-        }
-
-        tagQuickAddInput.value = '';
-        adminUploadMsg.textContent = '';
-        renderTagFaces();
-        tagQuickAddInput.focus();
-    }
-    tagQuickAddBtn.addEventListener('click', quickAddTagPerson);
-    tagQuickAddInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') quickAddTagPerson(); });
-
-    tagPrevBtn.addEventListener('click', () => {
-        if (currentTagIdx > 0) showTagStep(currentTagIdx - 1);
-    });
-
-    adminStartTagBtn.addEventListener('click', () => {
-        if (selectedPhotos.length === 0) return;
-        uploadStepPick.style.display = 'none';
-        uploadStepTag.style.display = 'block';
-        showTagStep(0);
-    });
-
-    function deletePhotoConfirm(fileId, btnEl) {
-        if (!confirm('Are you sure you want to permanently delete this photo?')) return;
-
-        const item = btnEl.closest('.photo-item, .strip-item');
-        if (item) item.style.opacity = '0.4';
-        btnEl.disabled = true;
-
-        fetch(APPS_SCRIPT_URL, {
-            method: 'POST',
-            body: JSON.stringify({
-                password: ADMIN_PASSWORD,
-                action: 'delete',
-                fileId: fileId
-            })
-        })
-        .then(r => r.json())
-        .then(res => {
-            if (res.success) {
-                allPhotos = allPhotos.filter(p => p.fileId !== fileId);
-                currentList = currentList.filter(p => p.fileId !== fileId);
-                if (item) item.remove();
-                const countEl = document.getElementById('photoCount');
-                if (countEl) {
-                    const n = parseInt(countEl.textContent, 10);
-                    if (!isNaN(n) && n > 0) countEl.textContent = n - 1;
-                }
-            } else {
-                if (item) item.style.opacity = '1';
-                btnEl.disabled = false;
-                alert('Delete failed: ' + (res.error || 'Unknown error'));
-            }
-        })
-        .catch(() => {
-            if (item) item.style.opacity = '1';
-            btnEl.disabled = false;
-            alert('Network error, please try again');
-        });
-    }
-
-    function deleteTextPhotoConfirm(rawUrl, btnEl) {
-        if (!confirm('Are you sure you want to permanently delete this photo? (removes it from the source file)')) return;
-
-        const item = btnEl.closest('.photo-item, .strip-item');
-        if (item) item.style.opacity = '0.4';
-        btnEl.disabled = true;
-
-        fetch(APPS_SCRIPT_URL, {
-            method: 'POST',
-            body: JSON.stringify({
-                password: ADMIN_PASSWORD,
-                action: 'deleteText',
-                url: rawUrl
-            })
-        })
-        .then(r => r.json())
-        .then(res => {
-            if (res.success) {
-                allPhotos = allPhotos.filter(p => p.rawUrl !== rawUrl);
-                currentList = currentList.filter(p => p.rawUrl !== rawUrl);
-                if (item) item.remove();
-                const countEl = document.getElementById('photoCount');
-                if (countEl) {
-                    const n = parseInt(countEl.textContent, 10);
-                    if (!isNaN(n) && n > 0) countEl.textContent = n - 1;
-                }
-            } else {
-                if (item) item.style.opacity = '1';
-                btnEl.disabled = false;
-                alert('Delete failed: ' + (res.error || 'Unknown error'));
-            }
-        })
-        .catch(() => {
-            if (item) item.style.opacity = '1';
-            btnEl.disabled = false;
-            alert('Network error, please try again');
-        });
-    }
-
-    const PHONETIC_CONSONANTS = [
-        ['kkh','ক্ষ'], ['kh','খ'], ['k','ক'],
-        ['gh','ঘ'], ['g','গ'], ['ng','ঙ'],
-        ['chh','ছ'], ['ch','চ'],
-        ['jh','ঝ'], ['j','জ'], ['z','জ'],
-        ['th','থ'], ['t','ত'],
-        ['dh','ধ'], ['d','দ'],
-        ['n','ন'],
-        ['ph','ফ'], ['f','ফ'], ['p','প'],
-        ['bh','ভ'], ['v','ভ'], ['b','ব'],
-        ['m','ম'],
-        ['sh','শ'], ['s','স'],
-        ['h','হ'],
-        ['r','র'],
-        ['l','ল'],
-        ['y','য়'],
-        ['w','ও']
-    ];
-    const PHONETIC_VOWELS = [
-        ['oi','ঐ','ৈ'], ['ou','ঔ','ৌ'],
-        ['ee','ঈ','ী'], ['ii','ঈ','ী'],
-        ['oo','ঊ','ূ'], ['uu','ঊ','ূ'],
-        ['aa','আ','া'], ['a','আ','া'],
-        ['i','ই','ি'],
-        ['u','উ','ু'],
-        ['e','এ','ে'],
-        ['o','ও','']
-    ];
-
-    function isBanglaText(s) {
-        return /[\u0980-\u09FF]/.test(s);
-    }
-
-    function banglaPhonetic(input) {
-        const s = (input || '').toLowerCase();
-        if (!s) return '';
-        let out = '';
-        let i = 0;
-        let lastWasConsonant = false;
-        while (i < s.length) {
-            const ch = s[i];
-            if (!/[a-z]/.test(ch)) { out += ch; i++; lastWasConsonant = false; continue; }
-
-            let matched = false;
-            for (const [pat, standalone, matra] of PHONETIC_VOWELS) {
-                if (s.startsWith(pat, i)) {
-                    out += lastWasConsonant ? matra : standalone;
-                    i += pat.length;
-                    lastWasConsonant = false;
-                    matched = true;
-                    break;
-                }
-            }
-            if (matched) continue;
-
-            for (const [pat, letter] of PHONETIC_CONSONANTS) {
-                if (s.startsWith(pat, i)) {
-                    out += letter;
-                    i += pat.length;
-                    lastWasConsonant = true;
-                    matched = true;
-                    break;
-                }
-            }
-            if (matched) continue;
-
-            out += ch;
-            i++;
-            lastWasConsonant = false;
-        }
-        return out;
-    }
-
-    const adminEditTagOverlay   = document.getElementById('adminEditTagOverlay');
-    const adminEditTagClose     = document.getElementById('adminEditTagClose');
-    const editTagPreviewImg     = document.getElementById('editTagPreviewImg');
-    const editTagFacesList      = document.getElementById('editTagFacesList');
-    const editTagQuickAddInput  = document.getElementById('editTagQuickAddInput');
-    const editTagQuickAddBtn    = document.getElementById('editTagQuickAddBtn');
-    const editTagPrevBtn        = document.getElementById('editTagPrevBtn');
-    const editTagNextBtn        = document.getElementById('editTagNextBtn');
-    const editTagSaveBtn        = document.getElementById('editTagSaveBtn');
-    const editTagMsg            = document.getElementById('editTagMsg');
-    const editTagProgressText   = document.getElementById('editTagProgressText');
-
-    let editTagPhoto = null;
-    let editTagSelected = new Set();
-    let editTagList = [];
-    let editTagListPos = -1;
-
-    function parseExistingNames(photo) {
-        const raw = (photo.names || '').trim();
-        if (!raw) return [];
-        return photo.fileId
-            ? raw.split(',').map(s => s.trim()).filter(Boolean)
-            : raw.split(/\s+/).filter(Boolean);
-    }
-
-    function serializeNames(namesArr, photo) {
-        return photo.fileId ? namesArr.join(', ') : namesArr.join(' ');
-    }
-
-    function renderEditTagFaces() {
-        editTagFacesList.innerHTML = '';
-        if (uploadPeople.length === 0) {
-            editTagFacesList.innerHTML = '<div class="tag-faces-empty">No names added yet — type a name below and tap + Add</div>';
-            return;
-        }
-        uploadPeople.forEach((name) => {
-            const checked = editTagSelected.has(name.toLowerCase());
-            const row = document.createElement('div');
-            row.className = 'tag-face-check' + (checked ? ' checked' : '');
-            row.innerHTML = `
-                <label style="display:flex; align-items:center; gap:10px; flex:1; cursor:pointer; margin:0; min-width:0;">
-                    <input type="checkbox" ${checked ? 'checked' : ''}> <span class="tag-face-name">${name}</span>
-                </label>
-                <button type="button" class="tag-face-edit-btn" title="Edit name"><i class="fa-solid fa-pen"></i></button>
-                <button type="button" class="tag-face-delete-btn" title="Delete this tag entirely"><i class="fa-solid fa-trash"></i></button>
-            `;
-            row.querySelector('input').addEventListener('change', (e) => {
-                if (e.target.checked) editTagSelected.add(name.toLowerCase());
-                else editTagSelected.delete(name.toLowerCase());
-                row.classList.toggle('checked', e.target.checked);
-            });
-            row.querySelector('.tag-face-edit-btn').addEventListener('click', (e) => {
-                e.stopPropagation();
-                startRenameRow(row, name);
-            });
-            row.querySelector('.tag-face-delete-btn').addEventListener('click', (e) => {
-                e.stopPropagation();
-                deleteTagEntry(name);
-            });
-            editTagFacesList.appendChild(row);
-        });
-    }
-
-    function deleteTagEntry(name) {
-        const idx = uploadPeople.findIndex(p => p.toLowerCase() === name.toLowerCase());
-        if (idx !== -1) uploadPeople.splice(idx, 1);
-        editTagSelected.delete(name.toLowerCase());
-        renderEditTagFaces();
-    }
-
-    function startRenameRow(row, oldName) {
-        const wrap = document.createElement('div');
-        wrap.className = 'tag-face-rename-row';
-        wrap.innerHTML = `
-            <input type="text" class="tag-face-rename-input" value="${oldName.replace(/"/g, '&quot;')}">
-            <button type="button" class="tag-face-rename-save" title="Save"><i class="fa-solid fa-check"></i></button>
-            <button type="button" class="tag-face-rename-cancel" title="Cancel"><i class="fa-solid fa-xmark"></i></button>
-        `;
-        row.innerHTML = '';
-        row.appendChild(wrap);
-        const input = wrap.querySelector('.tag-face-rename-input');
-        input.focus();
-        input.select();
-
-        const commit = () => {
-            const newName = input.value.trim();
-            if (!newName || newName === oldName) { renderEditTagFaces(); return; }
-            const dupIdx = uploadPeople.findIndex(p => p.toLowerCase() === newName.toLowerCase() && p.toLowerCase() !== oldName.toLowerCase());
-            if (dupIdx !== -1) {
-                editTagMsg.textContent = 'এই নামটি আগে থেকেই তালিকায় আছে।';
-                editTagMsg.className = 'admin-msg err';
-                renderEditTagFaces();
-                return;
-            }
-            const idx = uploadPeople.findIndex(p => p.toLowerCase() === oldName.toLowerCase());
-            if (idx !== -1) uploadPeople[idx] = newName;
-            if (editTagSelected.has(oldName.toLowerCase())) {
-                editTagSelected.delete(oldName.toLowerCase());
-                editTagSelected.add(newName.toLowerCase());
-            }
-            renderEditTagFaces();
-        };
-        const cancel = () => renderEditTagFaces();
-
-        wrap.querySelector('.tag-face-rename-save').addEventListener('click', (e) => { e.stopPropagation(); commit(); });
-        wrap.querySelector('.tag-face-rename-cancel').addEventListener('click', (e) => { e.stopPropagation(); cancel(); });
-        input.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') { e.preventDefault(); commit(); }
-            else if (e.key === 'Escape') { e.preventDefault(); cancel(); }
-        });
-        input.addEventListener('click', (e) => e.stopPropagation());
-    }
-
-    function ensureInPeopleList(name) {
-        const idx = uploadPeople.findIndex(p => p.toLowerCase() === name.toLowerCase());
-        if (idx !== -1) return uploadPeople[idx];
-        uploadPeople.push(name);
-        return name;
-    }
-
-    function addNameWithPhonetic(rawName) {
-        const name = (rawName || '').trim();
-        if (!name) return;
-        const finalName = ensureInPeopleList(name);
-        editTagSelected.add(finalName.toLowerCase());
-
-        if (!isBanglaText(name)) {
-            const banglaName = banglaPhonetic(name);
-            if (banglaName && banglaName.toLowerCase() !== name.toLowerCase()) {
-                const finalBangla = ensureInPeopleList(banglaName);
-                editTagSelected.add(finalBangla.toLowerCase());
-            }
-        }
-    }
-
-    function loadEditTagAtPos(pos) {
-        const photo = editTagList[pos];
-        if (!photo) return;
-        editTagListPos = pos;
-        editTagPhoto = photo;
-        editTagMsg.textContent = '';
-        editTagMsg.className = 'admin-msg';
-        editTagPreviewImg.src = photo.url;
-        editTagQuickAddInput.value = '';
-
-        const existing = parseExistingNames(photo);
-        existing.forEach(n => ensureInPeopleList(n));
-        editTagSelected = new Set(existing.map(n => n.toLowerCase()));
-
-        renderEditTagFaces();
-        if (editTagProgressText) editTagProgressText.textContent = (pos + 1) + ' / ' + editTagList.length;
-        editTagPrevBtn.disabled = pos === 0;
-        editTagNextBtn.disabled = pos === editTagList.length - 1;
-    }
-
-    function openEditTagsByIdx(idx) {
-        editTagList = allPhotos.slice().sort((a, b) => a.idx - b.idx);
-        const pos = editTagList.findIndex(p => p.idx === idx);
-        if (pos === -1) return;
-        loadEditTagAtPos(pos);
-        adminEditTagOverlay.classList.add('open');
-    }
-
-    function closeEditTagOverlay() {
-        adminEditTagOverlay.classList.remove('open');
-        editTagPhoto = null;
-        editTagList = [];
-        editTagListPos = -1;
-        editTagQuickAddInput.value = '';
-    }
-    adminEditTagClose.addEventListener('click', closeEditTagOverlay);
-    adminEditTagOverlay.addEventListener('click', (e) => {
-        if (e.target === e.currentTarget) closeEditTagOverlay();
-    });
-
-    function quickAddEditTagPerson() {
-        const name = (editTagQuickAddInput.value || '').trim();
-        if (!name) return;
-        if (uploadPeople.length >= 20 && !uploadPeople.some(p => p.toLowerCase() === name.toLowerCase())) {
-            editTagMsg.textContent = 'You can add a maximum of 20 names';
-            editTagMsg.className = 'admin-msg err';
-            return;
-        }
-        addNameWithPhonetic(name);
-        editTagQuickAddInput.value = '';
-        editTagMsg.textContent = '';
-        renderEditTagFaces();
-        editTagQuickAddInput.focus();
-    }
-    editTagQuickAddBtn.addEventListener('click', quickAddEditTagPerson);
-    editTagQuickAddInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') quickAddEditTagPerson(); });
-
-    function saveCurrentEditTagPhoto() {
-        if (!editTagPhoto) return Promise.resolve(false);
-        const finalNames = uploadPeople.filter(n => editTagSelected.has(n.toLowerCase()));
-        const newNamesStr = serializeNames(finalNames, editTagPhoto);
-        const photo = editTagPhoto;
-
-        editTagSaveBtn.disabled = true;
-        editTagPrevBtn.disabled = true;
-        editTagNextBtn.disabled = true;
-        editTagMsg.textContent = 'Saving...';
-        editTagMsg.className = 'admin-msg';
-
-        const payload = photo.fileId
-            ? { password: ADMIN_PASSWORD, action: 'updateCaption', fileId: photo.fileId, caption: newNamesStr }
-            : { password: ADMIN_PASSWORD, action: 'updateText', url: photo.rawUrl, names: newNamesStr };
-
-        return fetch(APPS_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) })
-            .then(r => r.json())
-            .then(res => {
-                editTagSaveBtn.disabled = false;
-                if (res.success) {
-                    photo.names = newNamesStr;
-                    photo.title = newNamesStr || photo.title;
-                    const sectionWords = SECTION_SEARCH_WORDS[photo.cat] || [];
-                    photo.searchIndex = [newNamesStr, ...sectionWords].join(' ').toLowerCase();
-                    editTagMsg.textContent = '✅ Saved';
-                    editTagMsg.className = 'admin-msg ok';
-                    return true;
-                } else {
-                    editTagMsg.textContent = 'Save failed: ' + (res.error || 'Unknown error');
-                    editTagMsg.className = 'admin-msg err';
-                    return false;
-                }
-            })
-            .catch(() => {
-                editTagSaveBtn.disabled = false;
-                editTagMsg.textContent = 'Network error, please try again';
-                editTagMsg.className = 'admin-msg err';
-                return false;
-            });
-    }
-
-    editTagSaveBtn.addEventListener('click', () => {
-        saveCurrentEditTagPhoto().then(ok => {
-            if (ok) setTimeout(closeEditTagOverlay, 500);
-            else { editTagPrevBtn.disabled = editTagListPos === 0; editTagNextBtn.disabled = editTagListPos === editTagList.length - 1; }
-        });
-    });
-
-    editTagPrevBtn.addEventListener('click', () => {
-        if (editTagListPos <= 0) return;
-        saveCurrentEditTagPhoto().then(ok => {
-            if (ok) loadEditTagAtPos(editTagListPos - 1);
-            else { editTagPrevBtn.disabled = false; editTagNextBtn.disabled = editTagListPos === editTagList.length - 1; }
-        });
-    });
-
-    editTagNextBtn.addEventListener('click', () => {
-        if (editTagListPos >= editTagList.length - 1) return;
-        saveCurrentEditTagPhoto().then(ok => {
-            if (ok) loadEditTagAtPos(editTagListPos + 1);
-            else { editTagNextBtn.disabled = false; editTagPrevBtn.disabled = editTagListPos === 0; }
-        });
-    });
-
-    function uploadOnePhoto(photo) {
-        const caption = Array.from(photo.tagIdxs).map(i => uploadPeople[i]).join(', ');
-        return fetch(APPS_SCRIPT_URL, {
-            method: 'POST',
-            body: JSON.stringify({
-                password: ADMIN_PASSWORD,
-                image: photo.base64,
-                mimeType: photo.mime,
-                filename: photo.name,
-                caption: caption
-            })
-        })
-        .then(r => r.json())
-        .catch(() => ({ success: false, error: 'Network error' }));
-    }
-
-    let isUploading = false;
-    function uploadAllPhotos() {
-        if (isUploading) return;
-        isUploading = true;
-
-        uploadStepTag.style.display = 'none';
-        uploadStepUploading.style.display = 'block';
-        uploadTotalCount.textContent = selectedPhotos.length;
-        uploadDoneCount.textContent = 0;
-        uploadProgressFill.style.width = '0%';
-        adminUploadMsg.textContent = '';
-        adminUploadMsg.className = 'admin-msg';
-
-        let done = 0, failed = 0;
-
-        function next(i) {
-            if (i >= selectedPhotos.length) {
-                adminUploadMsg.textContent = failed === 0
-                    ? `✅ All ${done} photo(s) uploaded successfully! It may take a few seconds to appear in the gallery...`
-                    : `✅ ${done} succeeded, ❌ ${failed} failed`;
-                adminUploadMsg.className = failed === 0 ? 'admin-msg ok' : 'admin-msg err';
-                isUploading = false;
-                refreshGalleryWithLiveUploads(4);
-                setTimeout(() => {
-                    adminUploadOverlay.classList.remove('open');
-                    resetUploadFlow();
-                }, 2500);
-                return;
-            }
-            uploadOnePhoto(selectedPhotos[i]).then(res => {
-                if (res && res.success) {
-                    done++;
-                    if (typeof onPhotoUploadedForFaceLearning === 'function') {
-                        onPhotoUploadedForFaceLearning(selectedPhotos[i]);
-                    }
-                } else failed++;
-                uploadDoneCount.textContent = done + failed;
-                uploadProgressFill.style.width = ((done + failed) / selectedPhotos.length * 100) + '%';
-                next(i + 1);
-            });
-        }
-        next(0);
-    }
-
-    tagNextBtn.addEventListener('click', () => {
-        if (currentTagIdx < selectedPhotos.length - 1) {
-            showTagStep(currentTagIdx + 1);
-        } else {
-            uploadAllPhotos();
-        }
-    });
-
-    function refreshGalleryWithLiveUploads(attemptsLeft) {
-        attemptsLeft = (typeof attemptsLeft === 'number') ? attemptsLeft : 0;
-        try {
-            fetch(csvUrl).then(r => r.text()).catch(() => '').then(textData => {
-                const oldPhotos = textData ? parsePhotoFile(textData) : [];
-                fetchLiveUploads().then(liveImages => {
-                    try {
-                        allPhotos = buildMergedPhotoList(oldPhotos, liveImages);
-                        document.getElementById('photoCount').textContent = allPhotos.length;
-                        applyFiltersAndSearch();
-                        buildStrip(allPhotos);
-                    } catch (e) {
-                    }
-                });
-            }).catch(() => {  });
-        } catch (e) {  }
-
-        if (attemptsLeft > 0) {
-            setTimeout(() => refreshGalleryWithLiveUploads(attemptsLeft - 1), 4000);
-        }
-    }
+    </script>
+    <script src="admin-upload.js"></script>
+    <script>
 
     (function() {
         function applyTilt(card) {
@@ -2495,7 +1836,10 @@
         const observer = new MutationObserver(bindAll);
         observer.observe(document.getElementById('masonry') || document.body, { childList: true, subtree: true });
     })();
-</script>
+
+    
+    </script>
+    <script src="workpic.js"></script>
 
 
 <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>

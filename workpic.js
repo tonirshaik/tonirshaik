@@ -1,13 +1,15 @@
 /* ============================================================
    workpic.js
-   Work Pic feature: password-locked full-page photo dashboard
-   (upload, gallery, delete, lightbox) backed by Google Drive
-   via Apps Script. Loaded by index.html via <script src="workpic.js">.
+   Work Pic feature: password-locked full-page file dashboard
+   (upload any file type, folders, gallery, move/copy/rename/delete,
+   lightbox) backed by Google Drive via Apps Script.
+   Loaded by index.html via <script src="workpic.js">.
    Depends on globals already defined in index.html's main script:
    dlImg, shareImg.
    ============================================================ */
 const WORKPIC_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyaP3hpU471aMaRTHaJo5yG5MqG4EyaR8U4Yo1pyrmU-YleGRXfwOMpac8QXyNx5u1Mlw/exec';
 let WORKPIC_PASSWORD = '';
+const WORKPIC_CACHE_PREFIX = 'workpicGalleryCache_v2_';
 
     (function() {
         const navWorkPicLink      = document.getElementById('navWorkPicLink');
@@ -47,7 +49,18 @@ let WORKPIC_PASSWORD = '';
         const wplbShare   = document.getElementById('wplbShare');
 
         let workpicImages = [];
+        let workpicFolders = [];
         let workpicLbIdx = 0;
+        let workpicCurrentFolderId = null; // null = "not yet loaded"; resolves to real root id after first load
+        let workpicRootFolderId = null;
+        let workpicDragItem = null; // { id, type, name } of the tile currently being dragged
+
+        // Folder-picker modal state (used by "Move to..." / "Copy to...")
+        let workpicPickerMode = null;   // 'move' | 'copy'
+        let workpicPickerItem = null;   // { id, type, name }
+        let workpicPickerFolderId = null;
+        let workpicBreadcrumbBar, workpicPickerOverlay, workpicPickerTitleEl,
+            workpicPickerBreadcrumbEl, workpicPickerListEl, workpicPickerConfirmBtn, workpicPickerCloseBtn;
 
         function openWorkpicLightbox(idx) {
             if (!workpicImages.length) return;
@@ -93,6 +106,8 @@ let WORKPIC_PASSWORD = '';
 
         if (!navWorkPicLink) return;
 
+        injectWorkpicExtras();
+
         navWorkPicLink.addEventListener('click', (e) => {
             e.preventDefault();
             workpicLockOverlay.classList.add('open');
@@ -132,7 +147,9 @@ let WORKPIC_PASSWORD = '';
                     workpicLockOverlay.classList.remove('open');
                     resetWorkpicUploadFlow();
                     workpicUploadOverlay.classList.add('open');
-                    loadWorkpicGallery();
+                    // always start back at the root folder on a fresh unlock
+                    workpicCurrentFolderId = workpicRootFolderId || null;
+                    loadWorkpicGallery(workpicCurrentFolderId);
                 } else {
                     workpicLockMsg.textContent = res.error || 'Wrong password';
                 }
@@ -191,108 +208,518 @@ let WORKPIC_PASSWORD = '';
             });
         }
 
-        function deleteWorkpicPhoto(fileId, name, itemEl) {
-            const ok = window.confirm('এই ছবিটা ডিলেট করতে চান? (' + (name || '') + ')');
-            if (!ok) return;
+        // ------------------------------------------------------------
+        // Extra UI: breadcrumb bar, context menu, folder-picker modal.
+        // Built entirely in JS so index.html doesn't need to change.
+        // ------------------------------------------------------------
+        function injectWorkpicExtras() {
+            const style = document.createElement('style');
+            style.textContent = `
+                .wp-crumb-bar { display:flex; flex-wrap:wrap; align-items:center; gap:4px; margin-bottom:10px; font-size:14px; }
+                .wp-crumb { cursor:pointer; color:#4a90d9; padding:2px 4px; border-radius:4px; }
+                .wp-crumb:hover { background:rgba(74,144,217,0.12); }
+                .wp-crumb-current { color:inherit; cursor:default; font-weight:600; }
+                .wp-crumb-current:hover { background:none; }
+                .wp-crumb-sep { opacity:0.5; }
+                .wp-folder-icon { font-size:44px; line-height:1; display:flex; align-items:center; justify-content:center; height:100%; user-select:none; }
+                .wp-folder-item { cursor:pointer; }
+                .wp-drag-over { outline:2px dashed #4a90d9; outline-offset:-2px; background:rgba(74,144,217,0.08); }
+                .wp-context-menu { position:fixed; z-index:9999; background:#1e1e1e; color:#fff; border-radius:8px; box-shadow:0 4px 20px rgba(0,0,0,0.35); padding:4px; min-width:190px; overflow:hidden; }
+                .wp-context-menu-item { display:block; width:100%; text-align:left; background:none; border:none; color:inherit; padding:8px 12px; font-size:14px; cursor:pointer; border-radius:6px; }
+                .wp-context-menu-item:hover { background:rgba(255,255,255,0.12); }
+                .wp-context-menu-item.wp-danger { color:#ff6b6b; }
+                .wp-modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.55); display:none; align-items:center; justify-content:center; z-index:9998; }
+                .wp-modal-overlay.open { display:flex; }
+                .wp-modal-panel { background:#1e1e1e; color:#fff; border-radius:10px; width:min(420px, 90vw); max-height:80vh; display:flex; flex-direction:column; padding:16px; }
+                .wp-picker-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; font-weight:600; gap:10px; }
+                .wp-picker-header button { background:none; border:none; color:inherit; font-size:18px; cursor:pointer; flex-shrink:0; }
+                .wp-picker-list { flex:1; overflow-y:auto; min-height:120px; margin:8px 0; }
+                .wp-picker-row { padding:8px 10px; border-radius:6px; cursor:pointer; }
+                .wp-picker-row:hover { background:rgba(255,255,255,0.1); }
+                .wp-picker-confirm { width:100%; padding:10px; border:none; border-radius:6px; background:#4a90d9; color:#fff; font-weight:600; cursor:pointer; margin-top:6px; }
+            `;
+            document.head.appendChild(style);
 
-            itemEl.style.opacity = '0.4';
-            itemEl.style.pointerEvents = 'none';
+            workpicBreadcrumbBar = document.createElement('div');
+            workpicBreadcrumbBar.id = 'workpicBreadcrumbBar';
+            workpicBreadcrumbBar.className = 'wp-crumb-bar';
+            workpicGalleryWrap.insertBefore(workpicBreadcrumbBar, workpicGalleryWrap.firstChild);
 
+            workpicPickerOverlay = document.createElement('div');
+            workpicPickerOverlay.id = 'workpicPickerOverlay';
+            workpicPickerOverlay.className = 'wp-modal-overlay';
+            workpicPickerOverlay.innerHTML = `
+                <div class="wp-modal-panel">
+                    <div class="wp-picker-header">
+                        <span id="workpicPickerTitle"></span>
+                        <button type="button" id="workpicPickerClose">✕</button>
+                    </div>
+                    <div id="workpicPickerBreadcrumb" class="wp-crumb-bar"></div>
+                    <div id="workpicPickerList" class="wp-picker-list"></div>
+                    <button type="button" id="workpicPickerConfirm" class="wp-picker-confirm"></button>
+                </div>
+            `;
+            document.body.appendChild(workpicPickerOverlay);
+
+            workpicPickerTitleEl      = document.getElementById('workpicPickerTitle');
+            workpicPickerBreadcrumbEl = document.getElementById('workpicPickerBreadcrumb');
+            workpicPickerListEl       = document.getElementById('workpicPickerList');
+            workpicPickerConfirmBtn   = document.getElementById('workpicPickerConfirm');
+            workpicPickerCloseBtn     = document.getElementById('workpicPickerClose');
+
+            workpicPickerCloseBtn.addEventListener('click', closeWorkpicFolderPicker);
+            workpicPickerOverlay.addEventListener('click', (e) => {
+                if (e.target === workpicPickerOverlay) closeWorkpicFolderPicker();
+            });
+            workpicPickerConfirmBtn.addEventListener('click', () => {
+                if (!workpicPickerItem || !workpicPickerFolderId) return;
+                if (workpicPickerItem.type === 'folder' && workpicPickerItem.id === workpicPickerFolderId) {
+                    alert('একটা ফোল্ডারকে নিজের ভেতরে সরানো/কপি করা যাবে না');
+                    return;
+                }
+                if (workpicPickerMode === 'move') {
+                    performWorkpicMove(workpicPickerItem.id, workpicPickerItem.type, workpicPickerFolderId);
+                } else {
+                    performWorkpicCopy(workpicPickerItem.id, workpicPickerItem.type, workpicPickerFolderId);
+                }
+                closeWorkpicFolderPicker();
+            });
+
+            // right-click on empty gallery space -> "New folder"
+            workpicGallery.addEventListener('contextmenu', (e) => {
+                if (e.target !== workpicGallery) return; // tile clicks handle their own menu + stopPropagation
+                e.preventDefault();
+                showWorkpicMenu(e.clientX, e.clientY, [
+                    { label: '📁 নতুন ফোল্ডার', onClick: () => createWorkpicFolder(workpicCurrentFolderId) }
+                ]);
+            });
+
+            document.addEventListener('click', hideWorkpicContextMenu);
+            document.addEventListener('keydown', (e) => { if (e.key === 'Escape') hideWorkpicContextMenu(); });
+
+            // allow uploading any file type, multiple at once
+            workpicFileInput.removeAttribute('accept');
+            workpicFileInput.multiple = true;
+        }
+
+        // ------------------------------------------------------------
+        // Context menu
+        // ------------------------------------------------------------
+        function showWorkpicMenu(x, y, menuItems) {
+            hideWorkpicContextMenu();
+            const menu = document.createElement('div');
+            menu.id = 'workpicContextMenu';
+            menu.className = 'wp-context-menu';
+            menuItems.forEach(mi => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'wp-context-menu-item' + (mi.danger ? ' wp-danger' : '');
+                btn.textContent = mi.label;
+                btn.addEventListener('click', () => {
+                    hideWorkpicContextMenu();
+                    mi.onClick();
+                });
+                menu.appendChild(btn);
+            });
+            document.body.appendChild(menu);
+
+            const rect = menu.getBoundingClientRect();
+            const left = Math.min(x, window.innerWidth - rect.width - 8);
+            const top  = Math.min(y, window.innerHeight - rect.height - 8);
+            menu.style.left = Math.max(8, left) + 'px';
+            menu.style.top  = Math.max(8, top) + 'px';
+        }
+
+        function hideWorkpicContextMenu() {
+            const existing = document.getElementById('workpicContextMenu');
+            if (existing) existing.remove();
+        }
+
+        function showWorkpicItemMenu(x, y, item) {
+            const items = [];
+            if (item.type === 'folder') {
+                items.push({ label: '📂 খুলুন', onClick: () => navigateWorkpicFolder(item.id) });
+            }
+            items.push({ label: '➡️ সরান (Move to...)', onClick: () => openWorkpicFolderPicker('move', item) });
+            items.push({ label: '📋 কপি করুন (Copy to...)', onClick: () => openWorkpicFolderPicker('copy', item) });
+            items.push({ label: '✎ নাম বদলান', onClick: () => renameWorkpicItem(item) });
+            items.push({ label: '✕ ডিলেট করুন', danger: true, onClick: () => deleteWorkpicItem(item.id, item.name, item.type) });
+            showWorkpicMenu(x, y, items);
+        }
+
+        // ------------------------------------------------------------
+        // Folder create / rename / delete / move / copy
+        // ------------------------------------------------------------
+        function createWorkpicFolder(parentId) {
+            const name = window.prompt('ফোল্ডারের নাম দিন:');
+            if (!name || !name.trim()) return;
             fetch(WORKPIC_APPS_SCRIPT_URL, {
                 method: 'POST',
-                body: JSON.stringify({
-                    password: WORKPIC_PASSWORD,
-                    action: 'delete',
-                    fileId: fileId
-                })
+                body: JSON.stringify({ password: WORKPIC_PASSWORD, action: 'createFolder', name: name.trim(), parentId })
             })
             .then(r => r.json())
             .then(res => {
                 if (res && res.success) {
-                    itemEl.remove();
-                    workpicImages = workpicImages.filter(im => im.id !== fileId);
-                    try { sessionStorage.setItem(WORKPIC_CACHE_KEY, JSON.stringify(workpicImages)); } catch (e) { /* ignore */ }
-                    if (workpicImages.length === 0) {
-                        workpicGallery.innerHTML = '<p class="workpic-gallery-empty">এখনো কোনো ছবি আপলোড হয়নি</p>';
-                    }
+                    invalidateWorkpicCache();
+                    loadWorkpicGallery(workpicCurrentFolderId);
                 } else {
-                    itemEl.style.opacity = '1';
-                    itemEl.style.pointerEvents = 'auto';
+                    alert('ফোল্ডার তৈরি করা যায়নি: ' + ((res && res.error) || 'Unknown error'));
+                }
+            })
+            .catch(() => alert('নেটওয়ার্ক সমস্যা, আবার চেষ্টা করুন'));
+        }
+
+        function renameWorkpicItem(item) {
+            const newName = window.prompt('নতুন নাম দিন:', item.name || '');
+            if (!newName || !newName.trim() || newName.trim() === item.name) return;
+            fetch(WORKPIC_APPS_SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify({ password: WORKPIC_PASSWORD, action: 'rename', itemId: item.id, itemType: item.type, newName: newName.trim() })
+            })
+            .then(r => r.json())
+            .then(res => {
+                if (res && res.success) {
+                    invalidateWorkpicCache();
+                    loadWorkpicGallery(workpicCurrentFolderId);
+                } else {
+                    alert('নাম বদলানো যায়নি: ' + ((res && res.error) || 'Unknown error'));
+                }
+            })
+            .catch(() => alert('নেটওয়ার্ক সমস্যা, আবার চেষ্টা করুন'));
+        }
+
+        function deleteWorkpicItem(id, name, type, itemEl) {
+            const label = type === 'folder' ? 'ফোল্ডার' : 'ফাইল';
+            const ok = window.confirm('এই ' + label + 'টা ডিলেট করতে চান? (' + (name || '') + ')');
+            if (!ok) return;
+
+            if (itemEl) {
+                itemEl.style.opacity = '0.4';
+                itemEl.style.pointerEvents = 'none';
+            }
+
+            fetch(WORKPIC_APPS_SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify({ password: WORKPIC_PASSWORD, action: 'delete', fileId: id, itemType: type })
+            })
+            .then(r => r.json())
+            .then(res => {
+                if (res && res.success) {
+                    invalidateWorkpicCache();
+                    loadWorkpicGallery(workpicCurrentFolderId);
+                } else {
+                    if (itemEl) { itemEl.style.opacity = '1'; itemEl.style.pointerEvents = 'auto'; }
                     alert('ডিলেট করা যায়নি: ' + ((res && res.error) || 'Unknown error'));
                 }
             })
             .catch(() => {
-                itemEl.style.opacity = '1';
-                itemEl.style.pointerEvents = 'auto';
+                if (itemEl) { itemEl.style.opacity = '1'; itemEl.style.pointerEvents = 'auto'; }
                 alert('নেটওয়ার্ক সমস্যা, আবার চেষ্টা করুন');
             });
         }
 
-        const WORKPIC_CACHE_KEY = 'workpicGalleryCache_v1';
-
-        function workpicThumbUrl(img) {
-            // Small, fast-loading Drive thumbnail instead of the full-size image for the grid
-            return 'https://drive.google.com/thumbnail?id=' + img.id + '&sz=w400';
+        function performWorkpicMove(itemId, itemType, targetFolderId) {
+            fetch(WORKPIC_APPS_SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify({ password: WORKPIC_PASSWORD, action: 'move', itemId, itemType, targetFolderId })
+            })
+            .then(r => r.json())
+            .then(res => {
+                if (res && res.success) {
+                    invalidateWorkpicCache();
+                    loadWorkpicGallery(workpicCurrentFolderId);
+                } else {
+                    alert('সরানো যায়নি: ' + ((res && res.error) || 'Unknown error'));
+                }
+            })
+            .catch(() => alert('নেটওয়ার্ক সমস্যা, আবার চেষ্টা করুন'));
         }
 
-        function renderWorkpicGallery(images) {
+        function performWorkpicCopy(itemId, itemType, targetFolderId) {
+            fetch(WORKPIC_APPS_SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify({ password: WORKPIC_PASSWORD, action: 'copy', itemId, itemType, targetFolderId })
+            })
+            .then(r => r.json())
+            .then(res => {
+                if (res && res.success) {
+                    invalidateWorkpicCache();
+                    loadWorkpicGallery(workpicCurrentFolderId);
+                } else {
+                    alert('কপি করা যায়নি: ' + ((res && res.error) || 'Unknown error'));
+                }
+            })
+            .catch(() => alert('নেটওয়ার্ক সমস্যা, আবার চেষ্টা করুন'));
+        }
+
+        function invalidateWorkpicCache() {
+            try {
+                Object.keys(sessionStorage)
+                    .filter(k => k.startsWith(WORKPIC_CACHE_PREFIX))
+                    .forEach(k => sessionStorage.removeItem(k));
+            } catch (e) { /* ignore */ }
+        }
+
+        // ------------------------------------------------------------
+        // Folder-picker modal (for "Move to..." / "Copy to...")
+        // ------------------------------------------------------------
+        function openWorkpicFolderPicker(mode, item) {
+            workpicPickerMode = mode;
+            workpicPickerItem = item;
+            workpicPickerTitleEl.textContent = (mode === 'move' ? 'সরান: ' : 'কপি করুন: ') + (item.name || '');
+            workpicPickerConfirmBtn.textContent = mode === 'move' ? 'এখানে সরান' : 'এখানে কপি করুন';
+            workpicPickerOverlay.classList.add('open');
+            loadWorkpicPickerFolder(workpicRootFolderId || null);
+        }
+
+        function closeWorkpicFolderPicker() {
+            workpicPickerOverlay.classList.remove('open');
+            workpicPickerItem = null;
+        }
+
+        function loadWorkpicPickerFolder(folderId) {
+            workpicPickerListEl.innerHTML = '<p class="admin-msg">Loading...</p>';
+            const qs = folderId ? ('?folderId=' + encodeURIComponent(folderId)) : '';
+            fetch(WORKPIC_APPS_SCRIPT_URL + qs)
+                .then(r => r.json())
+                .then(res => {
+                    if (!res || res.success !== true) {
+                        workpicPickerListEl.innerHTML = '<p class="admin-msg err">লোড করা যায়নি</p>';
+                        return;
+                    }
+                    workpicPickerFolderId = res.folderId;
+                    renderWorkpicPickerBreadcrumb(res.breadcrumbs || []);
+                    renderWorkpicPickerList(res.folders || []);
+                })
+                .catch(() => { workpicPickerListEl.innerHTML = '<p class="admin-msg err">নেটওয়ার্ক সমস্যা</p>'; });
+        }
+
+        function renderWorkpicPickerBreadcrumb(crumbs) {
+            workpicPickerBreadcrumbEl.innerHTML = '';
+            crumbs.forEach((c, i) => {
+                const isLast = i === crumbs.length - 1;
+                const span = document.createElement('span');
+                span.className = 'wp-crumb' + (isLast ? ' wp-crumb-current' : '');
+                span.textContent = c.name;
+                if (!isLast) span.addEventListener('click', () => loadWorkpicPickerFolder(c.id));
+                workpicPickerBreadcrumbEl.appendChild(span);
+                if (!isLast) {
+                    const sep = document.createElement('span');
+                    sep.className = 'wp-crumb-sep';
+                    sep.textContent = '›';
+                    workpicPickerBreadcrumbEl.appendChild(sep);
+                }
+            });
+        }
+
+        function renderWorkpicPickerList(folders) {
+            workpicPickerListEl.innerHTML = '';
+            if (folders.length === 0) {
+                workpicPickerListEl.innerHTML = '<p class="admin-msg">কোনো সাবফোল্ডার নেই</p>';
+                return;
+            }
+            folders.forEach(f => {
+                const row = document.createElement('div');
+                row.className = 'wp-picker-row';
+                row.textContent = '📁 ' + f.name;
+                row.addEventListener('click', () => loadWorkpicPickerFolder(f.id));
+                workpicPickerListEl.appendChild(row);
+            });
+        }
+
+        // ------------------------------------------------------------
+        // File-type icon fallback (used when a thumbnail fails to load,
+        // e.g. non-image files like pdf/doc/zip)
+        // ------------------------------------------------------------
+        function workpicFileIcon(mimeType, name) {
+            const ext = (name || '').split('.').pop().toLowerCase();
+            if (mimeType && mimeType.startsWith('video/')) return '🎬';
+            if (mimeType && mimeType.startsWith('audio/')) return '🎵';
+            if (mimeType === 'application/pdf' || ext === 'pdf') return '📕';
+            if (['doc', 'docx'].includes(ext)) return '📄';
+            if (['xls', 'xlsx', 'csv'].includes(ext)) return '📊';
+            if (['ppt', 'pptx'].includes(ext)) return '📽️';
+            if (['zip', 'rar', '7z', 'tar', 'gz'].includes(ext)) return '🗜️';
+            if (['txt', 'md'].includes(ext)) return '📝';
+            return '📦';
+        }
+
+        // ------------------------------------------------------------
+        // Breadcrumb + gallery rendering
+        // ------------------------------------------------------------
+        function navigateWorkpicFolder(folderId) {
+            loadWorkpicGallery(folderId);
+        }
+
+        function renderWorkpicBreadcrumbs(crumbs) {
+            if (!workpicBreadcrumbBar) return;
+            workpicBreadcrumbBar.innerHTML = '';
+            crumbs.forEach((c, i) => {
+                const isLast = i === crumbs.length - 1;
+                const span = document.createElement('span');
+                span.className = 'wp-crumb' + (isLast ? ' wp-crumb-current' : '');
+                span.textContent = c.name;
+                if (!isLast) {
+                    span.addEventListener('click', () => navigateWorkpicFolder(c.id));
+                    span.addEventListener('dragover', (e) => { e.preventDefault(); span.classList.add('wp-drag-over'); });
+                    span.addEventListener('dragleave', () => span.classList.remove('wp-drag-over'));
+                    span.addEventListener('drop', (e) => {
+                        e.preventDefault();
+                        span.classList.remove('wp-drag-over');
+                        if (!workpicDragItem) return;
+                        performWorkpicMove(workpicDragItem.id, workpicDragItem.type, c.id);
+                        workpicDragItem = null;
+                    });
+                }
+                workpicBreadcrumbBar.appendChild(span);
+                if (!isLast) {
+                    const sep = document.createElement('span');
+                    sep.className = 'wp-crumb-sep';
+                    sep.textContent = '›';
+                    workpicBreadcrumbBar.appendChild(sep);
+                }
+            });
+        }
+
+        function attachWorkpicDragHandlers(el, itemInfo) {
+            el.addEventListener('dragstart', (e) => {
+                workpicDragItem = itemInfo;
+                e.dataTransfer.effectAllowed = 'move';
+                try { e.dataTransfer.setData('text/plain', itemInfo.id); } catch (err) { /* ignore */ }
+            });
+            el.addEventListener('dragend', () => { workpicDragItem = null; });
+
+            if (itemInfo.type === 'folder') {
+                el.addEventListener('dragover', (e) => {
+                    if (!workpicDragItem || workpicDragItem.id === itemInfo.id) return;
+                    e.preventDefault();
+                    el.classList.add('wp-drag-over');
+                });
+                el.addEventListener('dragleave', () => el.classList.remove('wp-drag-over'));
+                el.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    el.classList.remove('wp-drag-over');
+                    if (!workpicDragItem || workpicDragItem.id === itemInfo.id) return;
+                    performWorkpicMove(workpicDragItem.id, workpicDragItem.type, itemInfo.id);
+                    workpicDragItem = null;
+                });
+            }
+        }
+
+        function renderWorkpicGallery(folders, files) {
             workpicGallery.innerHTML = '';
 
-            if (images.length === 0) {
-                workpicGallery.innerHTML = '<p class="workpic-gallery-empty">এখনো কোনো ছবি আপলোড হয়নি</p>';
+            if (folders.length === 0 && files.length === 0) {
+                workpicGallery.innerHTML = '<p class="workpic-gallery-empty">এই ফোল্ডারে এখনো কিছু নেই। খালি জায়গায় রাইট-ক্লিক করে নতুন ফোল্ডার বানাতে পারেন।</p>';
                 return;
             }
 
-            images.forEach((img, i) => {
+            folders.forEach(folder => {
+                const item = document.createElement('div');
+                item.className = 'workpic-gallery-item wp-folder-item';
+                item.draggable = true;
+                item.innerHTML = `
+                    <div class="wp-folder-icon">📁</div>
+                    <span class="wp-name">${folder.name}</span>
+                `;
+                item.addEventListener('click', () => navigateWorkpicFolder(folder.id));
+                item.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    showWorkpicItemMenu(e.clientX, e.clientY, { id: folder.id, type: 'folder', name: folder.name });
+                });
+                attachWorkpicDragHandlers(item, { id: folder.id, type: 'folder', name: folder.name });
+                workpicGallery.appendChild(item);
+            });
+
+            files.forEach((img) => {
                 const downloadUrl = 'https://drive.google.com/uc?export=download&id=' + img.id;
+                const isImage = (img.mimeType || '').startsWith('image/');
+
                 const item = document.createElement('div');
                 item.className = 'workpic-gallery-item';
-                item.innerHTML = `
-                    <a href="${img.viewUrl || img.url}" rel="noopener">
-                        <img src="${workpicThumbUrl(img)}" alt="${img.name || ''}" loading="lazy" decoding="async">
-                    </a>
-                    <span class="wp-name">${img.name || ''}</span>
-                    <div class="wp-actions">
-                        <button type="button" class="wp-action-btn wp-dl" title="Download">⬇</button>
-                        <button type="button" class="wp-action-btn wp-share" title="Share">↗</button>
-                        <button type="button" class="wp-action-btn wp-delete" title="Delete">✕</button>
-                    </div>
+                item.draggable = true;
+
+                const link = document.createElement('a');
+                link.href = img.viewUrl || img.url;
+                link.rel = 'noopener';
+
+                const thumb = document.createElement('img');
+                thumb.src = img.url;
+                thumb.alt = img.name || '';
+                thumb.loading = 'lazy';
+                thumb.decoding = 'async';
+                thumb.addEventListener('error', () => {
+                    const icon = document.createElement('div');
+                    icon.className = 'wp-folder-icon';
+                    icon.textContent = workpicFileIcon(img.mimeType, img.name);
+                    thumb.replaceWith(icon);
+                }, { once: true });
+                link.appendChild(thumb);
+
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (isImage) {
+                        openWorkpicLightbox(workpicImages.indexOf(img));
+                    } else {
+                        window.open(img.viewUrl || img.url, '_blank', 'noopener');
+                    }
+                });
+
+                const nameEl = document.createElement('span');
+                nameEl.className = 'wp-name';
+                nameEl.textContent = img.name || '';
+
+                const actions = document.createElement('div');
+                actions.className = 'wp-actions';
+                actions.innerHTML = `
+                    <button type="button" class="wp-action-btn wp-dl" title="Download">⬇</button>
+                    <button type="button" class="wp-action-btn wp-share" title="Share">↗</button>
+                    <button type="button" class="wp-action-btn wp-delete" title="Delete">✕</button>
                 `;
-                item.querySelector('a').addEventListener('click', (e) => {
-                    e.preventDefault();
-                    openWorkpicLightbox(i);
+                actions.querySelector('.wp-dl').addEventListener('click', (e) => {
+                    e.preventDefault(); e.stopPropagation();
+                    dlImg(downloadUrl, img.name || 'work-file');
                 });
-                item.querySelector('.wp-dl').addEventListener('click', (e) => {
+                actions.querySelector('.wp-share').addEventListener('click', (e) => {
+                    e.preventDefault(); e.stopPropagation();
+                    shareImg(downloadUrl, img.name || 'work-file', img.name || 'Work Pic');
+                });
+                actions.querySelector('.wp-delete').addEventListener('click', (e) => {
+                    e.preventDefault(); e.stopPropagation();
+                    deleteWorkpicItem(img.id, img.name, 'file', item);
+                });
+
+                item.appendChild(link);
+                item.appendChild(nameEl);
+                item.appendChild(actions);
+
+                item.addEventListener('contextmenu', (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    dlImg(downloadUrl, img.name || 'work-pic.jpg');
+                    showWorkpicItemMenu(e.clientX, e.clientY, { id: img.id, type: 'file', name: img.name });
                 });
-                item.querySelector('.wp-share').addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    shareImg(downloadUrl, img.name || 'work-pic.jpg', img.name || 'Work Pic');
-                });
-                item.querySelector('.wp-delete').addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    deleteWorkpicPhoto(img.id, img.name, item);
-                });
+
+                attachWorkpicDragHandlers(item, { id: img.id, type: 'file', name: img.name });
                 workpicGallery.appendChild(item);
             });
         }
 
-        function loadWorkpicGallery() {
+        function loadWorkpicGallery(folderId) {
+            const cacheKey = WORKPIC_CACHE_PREFIX + (folderId || 'root');
             let usedCache = false;
 
             // Show cached results instantly (super fast open), then refresh quietly in the background
             try {
-                const cached = sessionStorage.getItem(WORKPIC_CACHE_KEY);
+                const cached = sessionStorage.getItem(cacheKey);
                 if (cached) {
                     const parsed = JSON.parse(cached);
-                    if (Array.isArray(parsed)) {
-                        workpicImages = parsed;
+                    if (parsed && Array.isArray(parsed.files) && Array.isArray(parsed.folders)) {
+                        workpicImages = parsed.files;
+                        workpicFolders = parsed.folders;
                         workpicGalleryLoading.style.display = 'none';
-                        renderWorkpicGallery(parsed);
+                        renderWorkpicBreadcrumbs(parsed.breadcrumbs || []);
+                        renderWorkpicGallery(parsed.folders, parsed.files);
                         usedCache = true;
                     }
                 }
@@ -300,12 +727,13 @@ let WORKPIC_PASSWORD = '';
 
             if (!usedCache) {
                 workpicGalleryLoading.style.display = 'block';
-                workpicGalleryLoading.textContent = 'Loading uploaded photos...';
+                workpicGalleryLoading.textContent = 'Loading...';
                 workpicGalleryLoading.className = 'admin-msg';
                 workpicGallery.innerHTML = '';
             }
 
-            fetch(WORKPIC_APPS_SCRIPT_URL)
+            const qs = folderId ? ('?folderId=' + encodeURIComponent(folderId)) : '';
+            fetch(WORKPIC_APPS_SCRIPT_URL + qs)
                 .then(r => r.json())
                 .then(res => {
                     workpicGalleryLoading.style.display = 'none';
@@ -319,12 +747,22 @@ let WORKPIC_PASSWORD = '';
                         return;
                     }
 
-                    const images = Array.isArray(res.images) ? res.images : [];
-                    workpicImages = images;
+                    workpicCurrentFolderId = res.folderId;
+                    if (!workpicRootFolderId) workpicRootFolderId = res.folderId;
 
-                    try { sessionStorage.setItem(WORKPIC_CACHE_KEY, JSON.stringify(images)); } catch (e) { /* ignore */ }
+                    const files = Array.isArray(res.images) ? res.images : [];
+                    const folders = Array.isArray(res.folders) ? res.folders : [];
+                    workpicImages = files;
+                    workpicFolders = folders;
 
-                    renderWorkpicGallery(images);
+                    try {
+                        sessionStorage.setItem(WORKPIC_CACHE_PREFIX + res.folderId, JSON.stringify({
+                            files, folders, breadcrumbs: res.breadcrumbs || []
+                        }));
+                    } catch (e) { /* ignore */ }
+
+                    renderWorkpicBreadcrumbs(res.breadcrumbs || []);
+                    renderWorkpicGallery(folders, files);
                 })
                 .catch(() => {
                     if (!usedCache) {
@@ -340,10 +778,10 @@ let WORKPIC_PASSWORD = '';
             workpicSelectedFiles.forEach((file, idx) => {
                 const div = document.createElement('div');
                 div.className = 'upload-thumb';
-                div.innerHTML = `
-                    <img src="${URL.createObjectURL(file)}" alt="">
-                    <button type="button" class="thumb-remove" title="Remove">×</button>
-                `;
+                const isImage = file.type && file.type.startsWith('image/');
+                div.innerHTML = isImage
+                    ? `<img src="${URL.createObjectURL(file)}" alt=""><button type="button" class="thumb-remove" title="Remove">×</button>`
+                    : `<div class="wp-folder-icon">${workpicFileIcon(file.type, file.name)}</div><button type="button" class="thumb-remove" title="Remove">×</button>`;
                 div.querySelector('.thumb-remove').addEventListener('click', () => {
                     workpicSelectedFiles.splice(idx, 1);
                     renderWorkpicThumbs();
@@ -368,7 +806,8 @@ let WORKPIC_PASSWORD = '';
                         password: WORKPIC_PASSWORD,
                         image: base64,
                         mimeType: file.type,
-                        filename: file.name
+                        filename: file.name,
+                        parentId: workpicCurrentFolderId
                     })
                 })
                 .then(r => r.json())
@@ -394,7 +833,10 @@ let WORKPIC_PASSWORD = '';
                         : `✅ ${done} succeeded, ❌ ${failed} failed`;
                     workpicMsg.className = failed === 0 ? 'admin-msg ok' : 'admin-msg err';
                     workpicSendBtn.disabled = false;
-                    if (done > 0) loadWorkpicGallery();
+                    if (done > 0) {
+                        invalidateWorkpicCache();
+                        loadWorkpicGallery(workpicCurrentFolderId);
+                    }
                     if (failed === 0) {
                         setTimeout(() => {
                             workpicFileInput.value = '';

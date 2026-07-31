@@ -167,50 +167,20 @@
         }
     });
 
-    function compressImage(file, maxDim, quality) {
+    // NOTE: We used to run every photo through compressImage() (canvas resize
+    // to 1600px + 82% JPEG quality) before upload. That meant the ORIGINAL
+    // file was thrown away the moment it was selected — Drive only ever
+    // stored the compressed version, so there was no way to serve a true
+    // original later, including from the Download button. prepareFile now
+    // just reads the file's raw bytes as-is, so whatever the admin uploads
+    // (a 3MB photo, etc.) is exactly what ends up on Drive and in downloads.
+    function prepareFile(file) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
+            reader.onload = () => resolve({ base64: reader.result, mime: file.type || 'image/jpeg' });
             reader.onerror = () => reject(new Error('file-read-failed'));
-            reader.onload = () => {
-                const img = new Image();
-                img.onerror = () => reject(new Error('image-decode-failed'));
-                img.onload = () => {
-                    let { width, height } = img;
-                    if (width > maxDim || height > maxDim) {
-                        if (width > height) {
-                            height = Math.round(height * (maxDim / width));
-                            width = maxDim;
-                        } else {
-                            width = Math.round(width * (maxDim / height));
-                            height = maxDim;
-                        }
-                    }
-                    try {
-                        const canvas = document.createElement('canvas');
-                        canvas.width = width;
-                        canvas.height = height;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, width, height);
-                        resolve(canvas.toDataURL('image/jpeg', quality));
-                    } catch (e) {
-                        reject(e);
-                    }
-                };
-                img.src = reader.result;
-            };
             reader.readAsDataURL(file);
         });
-    }
-
-    function prepareFile(file) {
-        return compressImage(file, 1600, 0.82)
-            .then(dataUrl => ({ base64: dataUrl, mime: 'image/jpeg' }))
-            .catch(() => new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = () => resolve({ base64: reader.result, mime: file.type });
-                reader.onerror = () => reject(new Error('file-read-failed'));
-                reader.readAsDataURL(file);
-            }));
     }
 
     function renderUploadThumbs() {

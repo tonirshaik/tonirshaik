@@ -1337,9 +1337,11 @@
     function liveImageToPhoto(img, idx) {
         const caption = String(img.caption == null ? '' : img.caption).trim();
         return {
-            url: img.url,
+            // Grid/lightbox display: small, fast-loading thumbnail.
+            url: toRenderableUrl(img.url, 1000),
             rawUrl: img.url,
-            downloadUrl: img.url,
+            // Download button: full-quality original file, not the thumbnail.
+            downloadUrl: toDownloadUrl(img.url),
             idx: idx,
             cat: 'uncategorized',
             names: caption,

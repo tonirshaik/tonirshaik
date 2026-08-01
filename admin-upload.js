@@ -903,6 +903,7 @@
     const openAccountsBtn      = document.getElementById('openAccountsBtn');
     const adminAccountsOverlay = document.getElementById('adminAccountsOverlay');
     const adminAccountsClose   = document.getElementById('adminAccountsClose');
+    const toggleAccountsListBtn = document.getElementById('toggleAccountsListBtn');
     const accountsListEl       = document.getElementById('accountsList');
     const accountsMsgEl        = document.getElementById('accountsMsg');
     const newAccLabelInput     = document.getElementById('newAccLabel');
@@ -913,6 +914,10 @@
     function bytesToGB(n) {
         return (Number(n || 0) / (1024 * 1024 * 1024)).toFixed(2);
     }
+
+    // অ্যাকাউন্ট Remove করার আগে এই কোড চাওয়া হবে — accidental ক্লিকে
+    // যাতে অ্যাকাউন্ট ডিলিট হয়ে না যায়।
+    const REMOVE_ACCOUNT_CODE = '889900';
 
     // ব্যবহার কম হলে KB/MB-তে দেখাবে, বড় হলে GB-তে — যাতে "0.00 GB" এর
     // বদলে আসল সংখ্যা (যেমন "36 KB") চোখে পড়ে।
@@ -951,7 +956,12 @@
         accountsListEl.querySelectorAll('[data-remove-acc]').forEach(btn => {
             btn.addEventListener('click', () => {
                 const accountId = btn.getAttribute('data-remove-acc');
-                if (!confirm('এই স্টোরেজ অ্যাকাউন্টটা তালিকা থেকে বাদ দেবে? (এতে থাকা ছবিগুলো মুছবে না, শুধু নতুন আপলোড আর এখানে সেগুলো আর দেখাবে না)')) return;
+                const code = prompt('এই স্টোরেজ অ্যাকাউন্টটা বাদ দিতে কনফার্মেশন কোড দাও:');
+                if (code === null) return; // ইউজার cancel করেছে
+                if (code !== REMOVE_ACCOUNT_CODE) {
+                    alert('ভুল কোড — অ্যাকাউন্টটা ডিলিট হয়নি।');
+                    return;
+                }
                 btn.disabled = true;
                 fetch(APPS_SCRIPT_URL, {
                     method: 'POST',
@@ -959,10 +969,17 @@
                 })
                 .then(r => r.json())
                 .then(res => {
-                    if (res.success) renderAccountsList(res.accounts);
-                    else alert('Remove failed: ' + (res.error || 'Unknown error'));
+                    if (res.success) {
+                        renderAccountsList(res.accounts);
+                    } else {
+                        alert('Remove failed: ' + (res.error || 'Unknown error'));
+                        btn.disabled = false;
+                    }
                 })
-                .catch(() => alert('Network error'));
+                .catch(() => {
+                    alert('Network error');
+                    btn.disabled = false;
+                });
             });
         });
     }
@@ -982,12 +999,31 @@
         .catch(() => { accountsListEl.innerHTML = '<p class="admin-msg err">Network error</p>'; });
     }
 
+    // মিটার আইকনে ক্লিক করলেই স্টোরেজ ব্যবহারের লিস্ট দেখা/লুকানো যাবে —
+    // এমনি প্যানেল খুললে এটা লুকানোই থাকবে।
+    let accountsListVisible = false;
+    function setAccountsListVisible(visible) {
+        accountsListVisible = visible;
+        if (accountsListEl) accountsListEl.style.display = visible ? 'block' : 'none';
+    }
+
+    if (toggleAccountsListBtn) {
+        toggleAccountsListBtn.addEventListener('click', () => {
+            if (accountsListVisible) {
+                setAccountsListVisible(false);
+            } else {
+                setAccountsListVisible(true);
+                loadAccountsList();
+            }
+        });
+    }
+
     if (openAccountsBtn && adminAccountsOverlay) {
         openAccountsBtn.addEventListener('click', () => {
             adminUploadOverlay.classList.remove('open');
             adminAccountsOverlay.classList.add('open');
             if (accountsMsgEl) accountsMsgEl.textContent = '';
-            loadAccountsList();
+            setAccountsListVisible(false);
         });
     }
     if (adminAccountsClose && adminAccountsOverlay) {

@@ -820,6 +820,29 @@
         .tag-face-rename-cancel { color: var(--muted); }
         .tag-face-rename-save:hover { color: var(--gold); }
         .tag-face-rename-cancel:hover { color: #fff; }
+
+        /* ছবির ক্যাটাগরি (Single/Dual/Group) বাছাই — আপলোড + এডিট-ট্যাগ দুই ধাপেই ব্যবহার হয় */
+        .tag-cat-row {
+            display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+            margin: 10px 0; padding-bottom: 10px;
+            border-bottom: 1px dashed rgba(255,255,255,0.12);
+        }
+        .tag-cat-label { font-size: 12px; color: var(--muted); margin-right: 2px; flex-shrink: 0; }
+        .tag-cat-btn {
+            font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+            padding: 6px 14px; border-radius: 6px;
+            border: 1px solid rgba(63,168,255,0.35);
+            background: rgba(10,18,32,0.55);
+            color: rgba(255,255,255,0.6);
+            cursor: pointer;
+            transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+        }
+        .tag-cat-btn:hover { border-color: rgba(127,203,255,0.7); color: #fff; }
+        .tag-cat-btn.active {
+            background: rgba(63,168,255,0.18);
+            border-color: var(--gold);
+            color: var(--gold-light);
+        }
         .tag-quickadd-row { display: flex; gap: 8px; margin-bottom: 14px; }
         .tag-quickadd-row .admin-input { margin-bottom: 0; flex: 1; }
         .tag-nav-row { display: flex; gap: 10px; }
@@ -1144,6 +1167,12 @@
                 <div class="tag-progress-text"><span id="tagPhotoNum">1</span>/<span id="tagPhotoTotal">1</span></div>
             </div>
             <img class="admin-preview" id="tagPreviewImg" alt="preview" style="display:block;">
+            <div class="tag-cat-row" id="tagCategoryRow">
+                <span class="tag-cat-label">Category:</span>
+                <button type="button" class="tag-cat-btn" data-cat="single">Single</button>
+                <button type="button" class="tag-cat-btn" data-cat="dual">Dual</button>
+                <button type="button" class="tag-cat-btn" data-cat="group">Group</button>
+            </div>
             <div style="display:flex; align-items:center; gap:10px; margin: 10px 0;">
                 <button type="button" class="admin-btn admin-btn-secondary admin-btn-sm" id="faceDetectTestBtn" style="flex-shrink:0;">🔎 মুখ খুঁজে দেখাও (টেস্ট)</button>
                 <span id="faceDetectStatus" style="font-size:12px; color: var(--muted);"></span>
@@ -1220,6 +1249,12 @@
         <button class="admin-close" id="adminEditTagClose">×</button>
         <h4>✎ Edit Tags <span id="editTagProgressText" style="font-size:12px; color:var(--muted); font-weight:normal;"></span></h4>
         <img class="admin-preview" id="editTagPreviewImg" alt="preview" style="display:block;">
+        <div class="tag-cat-row" id="editTagCategoryRow">
+            <span class="tag-cat-label">Category:</span>
+            <button type="button" class="tag-cat-btn" data-cat="single">Single</button>
+            <button type="button" class="tag-cat-btn" data-cat="dual">Dual</button>
+            <button type="button" class="tag-cat-btn" data-cat="group">Group</button>
+        </div>
         <div class="tag-faces-list" id="editTagFacesList"></div>
         <div class="tag-quickadd-row">
             <input type="text" class="admin-input" id="editTagQuickAddInput" placeholder="Who's in this photo? Type a name...">
@@ -1376,6 +1411,23 @@
         group: ['group', 'দলগত', 'গ্রুপ']
     };
 
+    // 🆕 Live upload-এ (Drive / ImgBB+GitHub) কোনো native "category" ফিল্ড
+    // নেই — ব্যাকএন্ড শুধু caption/names টেক্সট নেয় আর ফেরত দেয়। তাই
+    // Single/Dual/Group সিলেকশনটা admin-upload.js এই caption স্ট্রিং-এর
+    // শেষে একটা লুকানো মার্কার হিসেবে বসিয়ে পাঠায় (CATEGORY_MARKER),
+    // আর এখানে সেটা পার্স করে আসল নাম আর ক্যাটাগরি আলাদা করা হয়।
+    // দুই ফাইলেই এই একই কনস্ট্যান্ট থাকতে হবে।
+    const CATEGORY_MARKER = '::cat::';
+    function decodeCaptionCategory(rawCaption) {
+        const raw = String(rawCaption == null ? '' : rawCaption);
+        const idx = raw.indexOf(CATEGORY_MARKER);
+        if (idx === -1) return { names: raw.trim(), cat: 'uncategorized' };
+        const names = raw.slice(0, idx).trim();
+        let cat = raw.slice(idx + CATEGORY_MARKER.length).trim().toLowerCase();
+        if (cat !== 'single' && cat !== 'dual' && cat !== 'group') cat = 'uncategorized';
+        return { names: names, cat: cat };
+    }
+
     function parsePhotoFile(text) {
         const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
         const photos = [];
@@ -1416,7 +1468,10 @@
     }
 
     function liveImageToPhoto(img, idx) {
-        const caption = String(img.caption == null ? '' : img.caption).trim();
+        const decoded = decodeCaptionCategory(img.caption);
+        const caption = decoded.names;
+        const cat = decoded.cat;
+        const sectionWords = SECTION_SEARCH_WORDS[cat] || [];
         return {
             // Grid/lightbox display: small, fast-loading thumbnail.
             url: toRenderableUrl(img.url, 1000),
@@ -1424,12 +1479,13 @@
             // Download button: full-quality original file, not the thumbnail.
             downloadUrl: toDownloadUrl(img.url),
             idx: idx,
-            cat: 'uncategorized',
+            cat: cat,
             names: caption,
-            searchIndex: caption.toLowerCase(),
+            searchIndex: [caption, ...sectionWords].join(' ').toLowerCase(),
             title: caption || ('New Photo ' + (idx + 1)),
             fileId: img.id || null,
-            acc: img.acc || 'self'
+            acc: img.acc || 'self',
+            isLive: true
         };
     }
 

@@ -1120,15 +1120,21 @@
         
         <div id="uploadStepPick">
             <h4>📤 Upload New Photos</h4>
+
+            
+            <div class="admin-dest-row" style="display:flex; gap:18px; align-items:center; margin-bottom:10px; font-size:14px;">
+                <label style="display:flex; align-items:center; gap:6px; cursor:pointer; margin:0;">
+                    <input type="radio" name="uploadDest" value="drive" id="destDriveRadio" checked> Google Drive
+                </label>
+                <label style="display:flex; align-items:center; gap:6px; cursor:pointer; margin:0;">
+                    <input type="radio" name="uploadDest" value="imgbb" id="destImgbbRadio"> ImgBB + GitHub
+                </label>
+            </div>
+
             <input type="file" class="admin-input" id="adminFileInput" accept="image/*" multiple>
             <div class="upload-thumbs" id="uploadThumbs"></div>
             <button class="admin-btn" id="adminStartTagBtn" disabled>Start Tagging →</button>
             <p class="admin-msg" id="adminPickMsg"></p>
-
-            
-            <button type="button" class="admin-btn admin-btn-secondary admin-btn-sm" id="openImgbbUploadBtn" style="width:100%; margin-top:6px;">
-                🔗 ImgBB + GitHub দিয়ে দ্রুত Upload
-            </button>
         </div>
 
         
@@ -1164,23 +1170,6 @@
             <p class="admin-msg" id="adminUploadMsg"></p>
 
         </div>
-    </div>
-</div>
-
-<div class="admin-overlay" id="imgbbUploadOverlay">
-    <div class="admin-box admin-box-wide" id="imgbbUploadBox">
-        <button class="admin-close" id="imgbbUploadClose">×</button>
-        <h4>🔗 ImgBB + GitHub Quick Upload</h4>
-        <p class="admin-msg" style="margin-bottom:10px;">ছবি প্রথমে ImgBB-তে আপলোড হয়ে direct link পাবে, তারপর সেই লিংক GitHub-এর টেক্সট ফাইলে নতুন লাইন হিসেবে যোগ হয়ে যাবে। পুরানো Google Drive আপলোড সিস্টেম আলাদাই থাকছে।</p>
-        <input type="file" class="admin-input" id="imgbbFileInput" accept="image/*" multiple>
-        <div class="upload-thumbs" id="imgbbThumbs"></div>
-        <input type="text" class="admin-input" id="imgbbNamesInput" placeholder="Tag/name (optional, comma দিয়ে একাধিক)">
-        <button class="admin-btn" id="imgbbStartUploadBtn" disabled>Upload →</button>
-        <div class="tag-progress-wrap" style="margin-top:10px;">
-            <div class="tag-progress-track"><div class="tag-progress-fill" id="imgbbProgressFill"></div></div>
-            <div class="tag-progress-text"><span id="imgbbDoneCount">0</span>/<span id="imgbbTotalCount">0</span></div>
-        </div>
-        <p class="admin-msg" id="imgbbUploadMsg"></p>
     </div>
 </div>
 

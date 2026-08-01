@@ -1165,11 +1165,21 @@
 <div class="admin-overlay" id="adminAccountsOverlay">
     <div class="admin-box admin-box-wide">
         <button class="admin-close" id="adminAccountsClose">×</button>
+        <button type="button" class="admin-icon-btn" id="toggleAccountsListBtn" title="স্টোরেজ ব্যবহার দেখাও/লুকাও">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3.5 19a10 10 0 0 1 17 0"></path>
+                <path d="M12 3v2"></path>
+                <path d="M3.5 12h2"></path>
+                <path d="M18.5 12h2"></path>
+                <path d="M12 14 L16 10"></path>
+                <circle cx="12" cy="14" r="1.4" fill="currentColor" stroke="none"></circle>
+            </svg>
+        </button>
         <h4>🗄 Storage Accounts</h4>
         <p style="font-size:12px; color:var(--muted); margin-bottom:10px;">
-            একটা অ্যাকাউন্টে ~১৪ জিবি ভরে গেলে অটোমেটিক পরের অ্যাকাউন্টে আপলোড শুরু হয়ে যাবে।
+            একটা অ্যাকাউন্টে ~১৪ জিবি ভরে গেলে অটোমেটিক পরের অ্যাকাউন্টে আপলোড শুরু হয়ে যাবে। উপরের 🎚️ আইকনে ক্লিক করে কোন অ্যাকাউন্টে কতটুকু জায়গা খালি আছে দেখতে পারবে।
         </p>
-        <div id="accountsList"></div>
+        <div id="accountsList" style="display:none;"></div>
         <hr style="border-color: rgba(255,255,255,0.1); margin: 14px 0;">
         <h4 style="font-size:13px;">+ নতুন অ্যাকাউন্ট যোগ করো</h4>
         <input type="text" class="admin-input" id="newAccLabel" placeholder="Label (e.g. Gmail #2)">

@@ -854,6 +854,11 @@
             uploadOnePhoto(selectedPhotos[i]).then(res => {
                 if (res && res.success) {
                     done++;
+                    // ছবিটা আসলে কোন অ্যাকাউন্টে সেভ হলো (self বা কোনো
+                    // satellite-এর id) সেটা photo object-এ বসিয়ে দিচ্ছি,
+                    // যাতে face-recognition.js এই ছবির face descriptor-ও
+                    // একই অ্যাকাউন্টে সেভ করতে পারে (Main-এ না গিয়ে)।
+                    selectedPhotos[i].uploadedAccountId = res.accountId || 'self';
                     if (typeof onPhotoUploadedForFaceLearning === 'function') {
                         onPhotoUploadedForFaceLearning(selectedPhotos[i]);
                     }

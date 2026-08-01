@@ -1116,6 +1116,198 @@
         });
     }
 
+    // =====================================================================
+    // 🔗 ImgBB + GitHub Quick-Link Upload (নতুন)
+    // -----------------------------------------------------------------
+    // পুরানো Google Drive upload ফ্লো (uploadOnePhoto / uploadAllPhotos,
+    // উপরে) সম্পূর্ণ অপরিবর্তিত আছে। এটা তার পাশাপাশি একটা আলাদা,
+    // দ্রুত রুট: ছবি → ImgBB (সরাসরি ব্রাউজার থেকে) → পাওয়া direct
+    // link → Apps Script backend-এর নতুন "addTextLink" action দিয়ে
+    // GitHub-এর "Tonir photo Link.txt" ফাইলে নতুন লাইন হিসেবে append।
+    // GitHub Personal Access Token কখনো ব্রাউজারে আসে না — সেটা
+    // backend-এই (Script Properties → GITHUB_TOKEN) থেকে যায়, ঠিক
+    // যেভাবে handleDeleteFromTextFile / handleUpdateTextFileNames
+    // এখন কাজ করে।
+    //
+    // ⚠️ ImgBB API key এখানে ক্লায়েন্ট-সাইডে বসাতে হচ্ছে (ImgBB নিজেই
+    // এভাবে ব্যবহার করতে বলে) — এটা GitHub টোকেনের মতো স্পর্শকাতর না,
+    // কিন্তু public থাকবে এটা মাথায় রেখো।
+    // =====================================================================
+    const IMGBB_API_KEY = 'YOUR_IMGBB_API_KEY_HERE'; // 👉 https://api.imgbb.com/ থেকে নিজের key বসাও
+
+    const openImgbbUploadBtn  = document.getElementById('openImgbbUploadBtn');
+    const imgbbUploadOverlay  = document.getElementById('imgbbUploadOverlay');
+    const imgbbUploadClose    = document.getElementById('imgbbUploadClose');
+    const imgbbFileInput      = document.getElementById('imgbbFileInput');
+    const imgbbThumbs         = document.getElementById('imgbbThumbs');
+    const imgbbNamesInput     = document.getElementById('imgbbNamesInput');
+    const imgbbStartUploadBtn = document.getElementById('imgbbStartUploadBtn');
+    const imgbbUploadMsg      = document.getElementById('imgbbUploadMsg');
+    const imgbbProgressFill   = document.getElementById('imgbbProgressFill');
+    const imgbbDoneCount      = document.getElementById('imgbbDoneCount');
+    const imgbbTotalCount     = document.getElementById('imgbbTotalCount');
+
+    let imgbbSelectedPhotos = [];
+    let isImgbbUploading = false;
+
+    function resetImgbbFlow() {
+        imgbbSelectedPhotos = [];
+        if (imgbbFileInput) imgbbFileInput.value = '';
+        if (imgbbThumbs) imgbbThumbs.innerHTML = '';
+        if (imgbbNamesInput) imgbbNamesInput.value = '';
+        if (imgbbStartUploadBtn) imgbbStartUploadBtn.disabled = true;
+        if (imgbbUploadMsg) { imgbbUploadMsg.textContent = ''; imgbbUploadMsg.className = 'admin-msg'; }
+        if (imgbbProgressFill) imgbbProgressFill.style.width = '0%';
+        if (imgbbDoneCount) imgbbDoneCount.textContent = '0';
+        if (imgbbTotalCount) imgbbTotalCount.textContent = '0';
+    }
+
+    if (openImgbbUploadBtn && imgbbUploadOverlay) {
+        openImgbbUploadBtn.addEventListener('click', () => {
+            adminUploadOverlay.classList.remove('open');
+            resetImgbbFlow();
+            imgbbUploadOverlay.classList.add('open');
+        });
+    }
+    if (imgbbUploadClose && imgbbUploadOverlay) {
+        imgbbUploadClose.addEventListener('click', () => imgbbUploadOverlay.classList.remove('open'));
+    }
+    if (imgbbUploadOverlay) {
+        imgbbUploadOverlay.addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) imgbbUploadOverlay.classList.remove('open');
+        });
+    }
+
+    function renderImgbbThumbs() {
+        imgbbThumbs.innerHTML = '';
+        imgbbSelectedPhotos.forEach((photo, idx) => {
+            const div = document.createElement('div');
+            div.className = 'upload-thumb';
+            div.innerHTML = `
+                <img src="${photo.base64}" alt="">
+                <button type="button" class="thumb-remove" title="Remove">×</button>
+            `;
+            div.querySelector('.thumb-remove').addEventListener('click', () => {
+                imgbbSelectedPhotos.splice(idx, 1);
+                renderImgbbThumbs();
+                imgbbStartUploadBtn.disabled = imgbbSelectedPhotos.length === 0;
+            });
+            imgbbThumbs.appendChild(div);
+        });
+    }
+
+    if (imgbbFileInput) {
+        imgbbFileInput.addEventListener('change', () => {
+            const files = Array.from(imgbbFileInput.files || []);
+            if (files.length === 0) return;
+
+            imgbbStartUploadBtn.disabled = true;
+            imgbbUploadMsg.textContent = `Preparing ${files.length} photo(s)...`;
+            imgbbUploadMsg.className = 'admin-msg';
+
+            // prepareFile() উপরেই সংজ্ঞায়িত — পুরানো Drive-flow-এর সাথে একই ফাংশন, নতুন করে লিখিনি
+            Promise.all(files.map(file =>
+                prepareFile(file)
+                    .then(({ base64, mime }) => ({ base64, mime, name: file.name }))
+                    .catch(() => null)
+            )).then(results => {
+                const ok = results.filter(Boolean);
+                imgbbSelectedPhotos = imgbbSelectedPhotos.concat(ok);
+                renderImgbbThumbs();
+                imgbbFileInput.value = '';
+                imgbbStartUploadBtn.disabled = imgbbSelectedPhotos.length === 0;
+                const failed = results.length - ok.length;
+                imgbbUploadMsg.textContent = failed > 0
+                    ? `❌ ${failed}টা ছবি পড়া যায়নি, বাকিগুলো রেডি`
+                    : (imgbbSelectedPhotos.length ? `✅ ${imgbbSelectedPhotos.length}টা ছবি রেডি` : '');
+                imgbbUploadMsg.className = failed > 0 ? 'admin-msg err' : 'admin-msg ok';
+            });
+        });
+    }
+
+    function uploadToImgbb_(base64) {
+        const raw = base64.split(',').pop(); // "data:image/...;base64," প্রিফিক্স বাদ
+        const form = new FormData();
+        form.append('key', IMGBB_API_KEY);
+        form.append('image', raw);
+
+        return fetch('https://api.imgbb.com/1/upload', { method: 'POST', body: form })
+            .then(r => r.json())
+            .then(json => {
+                if (json && json.success && json.data && json.data.url) {
+                    return { success: true, url: json.data.url };
+                }
+                return { success: false, error: (json && json.error && json.error.message) || 'ImgBB upload failed' };
+            })
+            .catch(() => ({ success: false, error: 'ImgBB network error' }));
+    }
+
+    function addLinkToGithub_(url, names) {
+        return fetch(APPS_SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                password: ADMIN_PASSWORD,
+                action: 'addTextLink',
+                url: url,
+                names: names || ''
+            })
+        })
+        .then(r => r.json())
+        .catch(() => ({ success: false, error: 'Network error' }));
+    }
+
+    function uploadAllImgbbPhotos() {
+        if (isImgbbUploading || imgbbSelectedPhotos.length === 0) return;
+        isImgbbUploading = true;
+        imgbbStartUploadBtn.disabled = true;
+
+        const names = (imgbbNamesInput.value || '').trim();
+        imgbbTotalCount.textContent = imgbbSelectedPhotos.length;
+        imgbbDoneCount.textContent = '0';
+        imgbbProgressFill.style.width = '0%';
+        imgbbUploadMsg.textContent = 'Uploading...';
+        imgbbUploadMsg.className = 'admin-msg';
+
+        let done = 0, failed = 0;
+
+        function tick() {
+            imgbbDoneCount.textContent = done + failed;
+            imgbbProgressFill.style.width = ((done + failed) / imgbbSelectedPhotos.length * 100) + '%';
+        }
+
+        function next(i) {
+            if (i >= imgbbSelectedPhotos.length) {
+                imgbbUploadMsg.textContent = failed === 0
+                    ? `✅ ${done}টা ছবি ImgBB + GitHub-এ আপলোড হয়ে গেছে!`
+                    : `✅ ${done}টা হয়েছে, ❌ ${failed}টা ব্যর্থ`;
+                imgbbUploadMsg.className = failed === 0 ? 'admin-msg ok' : 'admin-msg err';
+                isImgbbUploading = false;
+                imgbbStartUploadBtn.disabled = false;
+                if (failed === 0) {
+                    setTimeout(() => {
+                        imgbbUploadOverlay.classList.remove('open');
+                        resetImgbbFlow();
+                    }, 2500);
+                }
+                return;
+            }
+
+            uploadToImgbb_(imgbbSelectedPhotos[i].base64).then(imgRes => {
+                if (!imgRes.success) { failed++; tick(); next(i + 1); return; }
+                addLinkToGithub_(imgRes.url, names).then(ghRes => {
+                    if (ghRes && ghRes.success) done++; else failed++;
+                    tick();
+                    next(i + 1);
+                });
+            });
+        }
+        next(0);
+    }
+
+    if (imgbbStartUploadBtn) {
+        imgbbStartUploadBtn.addEventListener('click', uploadAllImgbbPhotos);
+    }
+
     if (addAccountBtn) {
         addAccountBtn.addEventListener('click', () => {
             const label = (newAccLabelInput.value || '').trim();

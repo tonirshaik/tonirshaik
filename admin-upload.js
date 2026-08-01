@@ -393,7 +393,7 @@
         showTagStep(0);
     });
 
-    function deletePhotoConfirm(fileId, btnEl) {
+    function deletePhotoConfirm(fileId, btnEl, accountId) {
         if (!confirm('Are you sure you want to permanently delete this photo?')) return;
 
         const item = btnEl.closest('.photo-item, .strip-item');
@@ -405,7 +405,8 @@
             body: JSON.stringify({
                 password: ADMIN_PASSWORD,
                 action: 'delete',
-                fileId: fileId
+                fileId: fileId,
+                accountId: accountId || 'self'
             })
         })
         .then(r => r.json())
@@ -753,7 +754,7 @@
         editTagMsg.className = 'admin-msg';
 
         const payload = photo.fileId
-            ? { password: ADMIN_PASSWORD, action: 'updateCaption', fileId: photo.fileId, caption: newNamesStr }
+            ? { password: ADMIN_PASSWORD, action: 'updateCaption', fileId: photo.fileId, caption: newNamesStr, accountId: photo.acc || 'self' }
             : { password: ADMIN_PASSWORD, action: 'updateText', url: photo.rawUrl, names: newNamesStr };
 
         return fetch(APPS_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) })
@@ -893,6 +894,146 @@
         if (attemptsLeft > 0) {
             setTimeout(() => refreshGalleryWithLiveUploads(attemptsLeft - 1), 4000);
         }
+    }
+
+    /* ============================================================
+       Storage Accounts panel — একাধিক Gmail/Drive অ্যাকাউন্ট যোগ করে
+       ১৪ জিবি ভরে গেলে অটো-রোটেশন সেটআপ।
+       ============================================================ */
+    const openAccountsBtn      = document.getElementById('openAccountsBtn');
+    const adminAccountsOverlay = document.getElementById('adminAccountsOverlay');
+    const adminAccountsClose   = document.getElementById('adminAccountsClose');
+    const accountsListEl       = document.getElementById('accountsList');
+    const accountsMsgEl        = document.getElementById('accountsMsg');
+    const newAccLabelInput     = document.getElementById('newAccLabel');
+    const newAccUrlInput       = document.getElementById('newAccUrl');
+    const newAccPasswordInput  = document.getElementById('newAccPassword');
+    const addAccountBtn        = document.getElementById('addAccountBtn');
+
+    function bytesToGB(n) {
+        return (Number(n || 0) / (1024 * 1024 * 1024)).toFixed(2);
+    }
+
+    function renderAccountsList(accounts) {
+        if (!accountsListEl) return;
+        if (!accounts || accounts.length === 0) {
+            accountsListEl.innerHTML = '<p class="admin-msg">কোনো অ্যাকাউন্ট পাওয়া যায়নি।</p>';
+            return;
+        }
+        accountsListEl.innerHTML = accounts.map(acc => {
+            const pct = Math.min(100, (Number(acc.usedBytes || 0) / Number(acc.capacityBytes || 1)) * 100);
+            const barColor = acc.full ? '#e07a6b' : 'var(--gold-light)';
+            return `
+                <div class="account-row" style="margin-bottom:14px; padding:10px; border:1px solid rgba(255,255,255,0.1); border-radius:8px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                        <strong style="font-size:13px;">${acc.label}${acc.isSelf ? ' (Main)' : ''}</strong>
+                        ${acc.isSelf ? '' : `<button type="button" class="admin-btn admin-btn-secondary admin-btn-sm" style="padding:4px 10px; font-size:11px;" data-remove-acc="${acc.id}">Remove</button>`}
+                    </div>
+                    <div style="background:rgba(255,255,255,0.08); border-radius:4px; height:8px; overflow:hidden;">
+                        <div style="width:${pct}%; height:100%; background:${barColor};"></div>
+                    </div>
+                    <div style="font-size:11px; color:var(--muted); margin-top:4px;">
+                        ${bytesToGB(acc.usedBytes)} GB / ${bytesToGB(acc.capacityBytes)} GB ${acc.full ? '— পূর্ণ' : ''}
+                    </div>
+                </div>`;
+        }).join('');
+
+        accountsListEl.querySelectorAll('[data-remove-acc]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const accountId = btn.getAttribute('data-remove-acc');
+                if (!confirm('এই স্টোরেজ অ্যাকাউন্টটা তালিকা থেকে বাদ দেবে? (এতে থাকা ছবিগুলো মুছবে না, শুধু নতুন আপলোড আর এখানে সেগুলো আর দেখাবে না)')) return;
+                btn.disabled = true;
+                fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ password: ADMIN_PASSWORD, action: 'removeAccount', accountId: accountId })
+                })
+                .then(r => r.json())
+                .then(res => {
+                    if (res.success) renderAccountsList(res.accounts);
+                    else alert('Remove failed: ' + (res.error || 'Unknown error'));
+                })
+                .catch(() => alert('Network error'));
+            });
+        });
+    }
+
+    function loadAccountsList() {
+        if (!accountsListEl) return;
+        accountsListEl.innerHTML = '<p class="admin-msg">Loading...</p>';
+        fetch(APPS_SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify({ password: ADMIN_PASSWORD, action: 'listAccounts' })
+        })
+        .then(r => r.json())
+        .then(res => {
+            if (res.success) renderAccountsList(res.accounts);
+            else accountsListEl.innerHTML = '<p class="admin-msg err">' + (res.error || 'Failed to load') + '</p>';
+        })
+        .catch(() => { accountsListEl.innerHTML = '<p class="admin-msg err">Network error</p>'; });
+    }
+
+    if (openAccountsBtn && adminAccountsOverlay) {
+        openAccountsBtn.addEventListener('click', () => {
+            adminUploadOverlay.classList.remove('open');
+            adminAccountsOverlay.classList.add('open');
+            if (accountsMsgEl) accountsMsgEl.textContent = '';
+            loadAccountsList();
+        });
+    }
+    if (adminAccountsClose && adminAccountsOverlay) {
+        adminAccountsClose.addEventListener('click', () => adminAccountsOverlay.classList.remove('open'));
+        adminAccountsOverlay.addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) adminAccountsOverlay.classList.remove('open');
+        });
+    }
+
+    if (addAccountBtn) {
+        addAccountBtn.addEventListener('click', () => {
+            const label = (newAccLabelInput.value || '').trim();
+            const webAppUrl = (newAccUrlInput.value || '').trim();
+            const accountPassword = newAccPasswordInput.value || '';
+
+            if (!label || !webAppUrl || !accountPassword) {
+                accountsMsgEl.textContent = 'Label, Web App URL, আর Password — তিনটাই দিতে হবে';
+                accountsMsgEl.className = 'admin-msg err';
+                return;
+            }
+
+            addAccountBtn.disabled = true;
+            accountsMsgEl.textContent = 'Adding...';
+            accountsMsgEl.className = 'admin-msg';
+
+            fetch(APPS_SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify({
+                    password: ADMIN_PASSWORD,
+                    action: 'addAccount',
+                    label: label,
+                    webAppUrl: webAppUrl,
+                    accountPassword: accountPassword
+                })
+            })
+            .then(r => r.json())
+            .then(res => {
+                addAccountBtn.disabled = false;
+                if (res.success) {
+                    accountsMsgEl.textContent = '✅ Account added';
+                    accountsMsgEl.className = 'admin-msg ok';
+                    newAccLabelInput.value = '';
+                    newAccUrlInput.value = '';
+                    newAccPasswordInput.value = '';
+                    renderAccountsList(res.accounts);
+                } else {
+                    accountsMsgEl.textContent = 'Failed: ' + (res.error || 'Unknown error');
+                    accountsMsgEl.className = 'admin-msg err';
+                }
+            })
+            .catch(() => {
+                addAccountBtn.disabled = false;
+                accountsMsgEl.textContent = 'Network error, try again';
+                accountsMsgEl.className = 'admin-msg err';
+            });
+        });
     }
 
 })();

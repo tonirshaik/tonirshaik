@@ -956,31 +956,86 @@
         accountsListEl.querySelectorAll('[data-remove-acc]').forEach(btn => {
             btn.addEventListener('click', () => {
                 const accountId = btn.getAttribute('data-remove-acc');
-                const code = prompt('এই স্টোরেজ অ্যাকাউন্টটা বাদ দিতে কনফার্মেশন কোড দাও:');
-                if (code === null) return; // ইউজার cancel করেছে
-                if (code !== REMOVE_ACCOUNT_CODE) {
-                    alert('ভুল কোড — অ্যাকাউন্টটা ডিলিট হয়নি।');
-                    return;
-                }
-                btn.disabled = true;
-                fetch(APPS_SCRIPT_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ password: ADMIN_PASSWORD, action: 'removeAccount', accountId: accountId })
-                })
-                .then(r => r.json())
-                .then(res => {
-                    if (res.success) {
-                        renderAccountsList(res.accounts);
-                    } else {
-                        alert('Remove failed: ' + (res.error || 'Unknown error'));
-                        btn.disabled = false;
-                    }
-                })
-                .catch(() => {
-                    alert('Network error');
-                    btn.disabled = false;
-                });
+                openRemoveAccConfirm(accountId, btn);
             });
+        });
+    }
+
+    // --- In-page "remove account" confirmation box (replaces the native
+    // browser prompt()/alert() with a styled overlay matching the rest of
+    // the admin UI, so it no longer shows the "tonirshaik.github.io says"
+    // browser chrome). ---
+    const removeAccConfirmOverlay = document.getElementById('removeAccConfirmOverlay');
+    const removeAccConfirmClose   = document.getElementById('removeAccConfirmClose');
+    const removeAccCodeInput      = document.getElementById('removeAccCodeInput');
+    const removeAccConfirmMsg     = document.getElementById('removeAccConfirmMsg');
+    const removeAccCancelBtn      = document.getElementById('removeAccCancelBtn');
+    const removeAccOkBtn          = document.getElementById('removeAccOkBtn');
+
+    let pendingRemoveAccountId = null;
+    let pendingRemoveAccountBtn = null;
+
+    function openRemoveAccConfirm(accountId, triggerBtn) {
+        pendingRemoveAccountId = accountId;
+        pendingRemoveAccountBtn = triggerBtn;
+        removeAccCodeInput.value = '';
+        removeAccConfirmMsg.textContent = '';
+        removeAccConfirmOverlay.classList.add('open');
+        removeAccCodeInput.focus();
+    }
+
+    function closeRemoveAccConfirm() {
+        removeAccConfirmOverlay.classList.remove('open');
+        pendingRemoveAccountId = null;
+        pendingRemoveAccountBtn = null;
+    }
+
+    function submitRemoveAccConfirm() {
+        const code = removeAccCodeInput.value;
+        if (code !== REMOVE_ACCOUNT_CODE) {
+            removeAccConfirmMsg.textContent = 'ভুল কোড — অ্যাকাউন্টটা ডিলিট হয়নি।';
+            return;
+        }
+        const accountId = pendingRemoveAccountId;
+        const triggerBtn = pendingRemoveAccountBtn;
+        removeAccOkBtn.disabled = true;
+        removeAccConfirmMsg.textContent = '';
+        if (triggerBtn) triggerBtn.disabled = true;
+
+        fetch(APPS_SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify({ password: ADMIN_PASSWORD, action: 'removeAccount', accountId: accountId })
+        })
+        .then(r => r.json())
+        .then(res => {
+            removeAccOkBtn.disabled = false;
+            if (res.success) {
+                closeRemoveAccConfirm();
+                renderAccountsList(res.accounts);
+            } else {
+                removeAccConfirmMsg.textContent = 'Remove failed: ' + (res.error || 'Unknown error');
+                if (triggerBtn) triggerBtn.disabled = false;
+            }
+        })
+        .catch(() => {
+            removeAccOkBtn.disabled = false;
+            removeAccConfirmMsg.textContent = 'Network error';
+            if (triggerBtn) triggerBtn.disabled = false;
+        });
+    }
+
+    if (removeAccConfirmClose) removeAccConfirmClose.addEventListener('click', closeRemoveAccConfirm);
+    if (removeAccCancelBtn) removeAccCancelBtn.addEventListener('click', closeRemoveAccConfirm);
+    if (removeAccConfirmOverlay) {
+        removeAccConfirmOverlay.addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) closeRemoveAccConfirm();
+        });
+    }
+    if (removeAccOkBtn) removeAccOkBtn.addEventListener('click', submitRemoveAccConfirm);
+    if (removeAccCodeInput) {
+        removeAccCodeInput.addEventListener('input', () => { removeAccConfirmMsg.textContent = ''; });
+        removeAccCodeInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') submitRemoveAccConfirm();
         });
     }
 

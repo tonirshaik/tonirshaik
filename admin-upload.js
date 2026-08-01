@@ -940,7 +940,30 @@
             accountsListEl.innerHTML = '<p class="admin-msg">কোনো অ্যাকাউন্ট পাওয়া যায়নি।</p>';
             return;
         }
-        accountsListEl.innerHTML = accounts.map(acc => {
+
+        // সব অ্যাকাউন্ট মিলিয়ে মোট ব্যবহার + মোট ধারণক্ষমতা — যেমন দুইটা
+        // ১৫ জিবি অ্যাকাউন্ট থাকলে এখানে "৩০.০০ GB" মোট ক্যাপাসিটি হিসেবে
+        // দেখাবে। এটা শুধুই ডিসপ্লে/সামারি — আসল রাউটিং লজিক (১৪ জিবি
+        // ছুঁলে পরের অ্যাকাউন্টে সুইচ) প্রতিটা অ্যাকাউন্টের নিজের হিসাবেই
+        // আগের মতো চলবে, এটা বদলাচ্ছে না।
+        const totalUsed = accounts.reduce((sum, acc) => sum + Number(acc.usedBytes || 0), 0);
+        const totalCapacity = accounts.reduce((sum, acc) => sum + Number(acc.capacityBytes || 0), 0);
+        const totalPct = totalCapacity > 0 ? Math.min(100, (totalUsed / totalCapacity) * 100) : 0;
+
+        const summaryHtml = `
+            <div class="account-row" style="margin-bottom:16px; padding:12px; border:1px solid rgba(63,168,255,0.35); border-radius:8px; background:rgba(63,168,255,0.06);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                    <strong style="font-size:13px;">🗄 সব মিলিয়ে (${accounts.length}টা অ্যাকাউন্ট)</strong>
+                </div>
+                <div style="background:rgba(255,255,255,0.08); border-radius:4px; height:8px; overflow:hidden;">
+                    <div style="width:${totalPct}%; height:100%; background:var(--gold-light);"></div>
+                </div>
+                <div style="font-size:11px; color:var(--muted); margin-top:4px;">
+                    ${formatUsedBytes(totalUsed)} / ${bytesToGB(totalCapacity)} GB
+                </div>
+            </div>`;
+
+        accountsListEl.innerHTML = summaryHtml + accounts.map(acc => {
             const pct = Math.min(100, (Number(acc.usedBytes || 0) / Number(acc.capacityBytes || 1)) * 100);
             const barColor = acc.full ? '#e07a6b' : 'var(--gold-light)';
             return `

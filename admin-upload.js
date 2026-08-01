@@ -1133,7 +1133,7 @@
     // এভাবে ব্যবহার করতে বলে) — এটা GitHub টোকেনের মতো স্পর্শকাতর না,
     // কিন্তু public থাকবে এটা মাথায় রেখো।
     // =====================================================================
-    const IMGBB_API_KEY = 'YOUR_IMGBB_API_KEY_HERE'; // 👉 https://api.imgbb.com/ থেকে নিজের key বসাও
+    const IMGBB_API_KEY = 'bcb4dbe1b4e6af2e98b259afc291e550'; // 👉 https://api.imgbb.com/ থেকে নিজের key বসাও
 
     const openImgbbUploadBtn  = document.getElementById('openImgbbUploadBtn');
     const imgbbUploadOverlay  = document.getElementById('imgbbUploadOverlay');

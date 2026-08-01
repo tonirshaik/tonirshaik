@@ -914,6 +914,16 @@
         return (Number(n || 0) / (1024 * 1024 * 1024)).toFixed(2);
     }
 
+    // ব্যবহার কম হলে KB/MB-তে দেখাবে, বড় হলে GB-তে — যাতে "0.00 GB" এর
+    // বদলে আসল সংখ্যা (যেমন "36 KB") চোখে পড়ে।
+    function formatUsedBytes(n) {
+        n = Number(n || 0);
+        const KB = 1024, MB = KB * 1024, GB = MB * 1024;
+        if (n < MB) return (n / KB).toFixed(n < KB ? 0 : 1) + ' KB';
+        if (n < GB) return (n / MB).toFixed(2) + ' MB';
+        return (n / GB).toFixed(2) + ' GB';
+    }
+
     function renderAccountsList(accounts) {
         if (!accountsListEl) return;
         if (!accounts || accounts.length === 0) {
@@ -933,7 +943,7 @@
                         <div style="width:${pct}%; height:100%; background:${barColor};"></div>
                     </div>
                     <div style="font-size:11px; color:var(--muted); margin-top:4px;">
-                        ${bytesToGB(acc.usedBytes)} GB / ${bytesToGB(acc.capacityBytes)} GB ${acc.full ? '— পূর্ণ' : ''}
+                        ${formatUsedBytes(acc.usedBytes)} / ${bytesToGB(acc.capacityBytes)} GB ${acc.full ? '— পূর্ণ' : ''}
                     </div>
                 </div>`;
         }).join('');

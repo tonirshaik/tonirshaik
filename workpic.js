@@ -7,9 +7,39 @@
    Depends on globals already defined in index.html's main script:
    dlImg, shareImg.
    ============================================================ */
-const WORKPIC_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyaP3hpU471aMaRTHaJo5yG5MqG4EyaR8U4Yo1pyrmU-YleGRXfwOMpac8QXyNx5u1Mlw/exec';
+// ROUTER_URL = your PRIMARY account's deployment (the one where you set
+// BACKENDS_JSON in Script Properties). This URL itself never changes even
+// after Work Pic switches which account it's actually storing files in.
+const WORKPIC_ROUTER_URL = 'https://script.google.com/macros/s/AKfycbyaP3hpU471aMaRTHaJo5yG5MqG4EyaR8U4Yo1pyrmU-YleGRXfwOMpac8QXyNx5u1Mlw/exec';
+// Actual account currently being used for storage — resolved automatically
+// from the router before each session; falls back to the router account
+// itself if resolution fails (e.g. offline).
+let WORKPIC_APPS_SCRIPT_URL = WORKPIC_ROUTER_URL;
 let WORKPIC_PASSWORD = '';
 const WORKPIC_CACHE_PREFIX = 'workpicGalleryCache_v2_';
+
+// Every backend's /exec URL, in the same order as BACKENDS_JSON on the
+// router. Filled in after the first gallery load (router sends it back).
+// account index null = the merged "all accounts" root view.
+let workpicAccountUrls = [WORKPIC_ROUTER_URL];
+let workpicCurrentAccount = null;
+
+function workpicUrlForAccount(idx) {
+    if (idx === null || idx === undefined) return WORKPIC_ROUTER_URL;
+    return workpicAccountUrls[idx] || WORKPIC_ROUTER_URL;
+}
+
+// Asks the router which account currently has room. Cheap/no-password call.
+function resolveWorkpicBackend() {
+    return fetch(WORKPIC_ROUTER_URL + '?action=resolveBackend')
+        .then(r => r.json())
+        .then(res => {
+            if (res && res.success && res.backendUrl) {
+                WORKPIC_APPS_SCRIPT_URL = res.backendUrl;
+            }
+        })
+        .catch(() => { /* keep whatever URL we already had */ });
+}
 
     (function() {
         const navWorkPicLink      = document.getElementById('navWorkPicLink');
@@ -57,8 +87,9 @@ const WORKPIC_CACHE_PREFIX = 'workpicGalleryCache_v2_';
 
         // Folder-picker modal state (used by "Move to..." / "Copy to...")
         let workpicPickerMode = null;   // 'move' | 'copy'
-        let workpicPickerItem = null;   // { id, type, name }
+        let workpicPickerItem = null;   // { id, type, name, account }
         let workpicPickerFolderId = null;
+        let workpicPickerAccount = null;
         let workpicBreadcrumbBar, workpicPickerOverlay, workpicPickerTitleEl,
             workpicPickerBreadcrumbEl, workpicPickerListEl, workpicPickerConfirmBtn, workpicPickerCloseBtn;
 
@@ -135,10 +166,10 @@ const WORKPIC_CACHE_PREFIX = 'workpicGalleryCache_v2_';
             const entered = workpicPasswordInput.value;
             workpicUnlockBtn.disabled = true;
             workpicLockMsg.textContent = 'Checking...';
-            fetch(WORKPIC_APPS_SCRIPT_URL, {
+            resolveWorkpicBackend().then(() => fetch(WORKPIC_APPS_SCRIPT_URL, {
                 method: 'POST',
                 body: JSON.stringify({ password: entered, action: 'verify' })
-            })
+            }))
             .then(r => r.json())
             .then(res => {
                 workpicUnlockBtn.disabled = false;
@@ -147,9 +178,11 @@ const WORKPIC_CACHE_PREFIX = 'workpicGalleryCache_v2_';
                     workpicLockOverlay.classList.remove('open');
                     resetWorkpicUploadFlow();
                     workpicUploadOverlay.classList.add('open');
-                    // always start back at the root folder on a fresh unlock
-                    workpicCurrentFolderId = workpicRootFolderId || null;
-                    loadWorkpicGallery(workpicCurrentFolderId);
+                    // always start back at the merged "all accounts" root on a fresh unlock
+                    workpicCurrentAccount = null;
+                    workpicCurrentFolderId = null;
+                    workpicRootFolderId = null;
+                    loadWorkpicGallery(null, null);
                 } else {
                     workpicLockMsg.textContent = res.error || 'Wrong password';
                 }
@@ -278,9 +311,9 @@ const WORKPIC_CACHE_PREFIX = 'workpicGalleryCache_v2_';
                     return;
                 }
                 if (workpicPickerMode === 'move') {
-                    performWorkpicMove(workpicPickerItem.id, workpicPickerItem.type, workpicPickerFolderId);
+                    performWorkpicMove(workpicPickerItem.id, workpicPickerItem.type, workpicPickerFolderId, workpicPickerItem.account, workpicPickerAccount);
                 } else {
-                    performWorkpicCopy(workpicPickerItem.id, workpicPickerItem.type, workpicPickerFolderId);
+                    performWorkpicCopy(workpicPickerItem.id, workpicPickerItem.type, workpicPickerFolderId, workpicPickerItem.account, workpicPickerAccount);
                 }
                 closeWorkpicFolderPicker();
             });
@@ -290,7 +323,7 @@ const WORKPIC_CACHE_PREFIX = 'workpicGalleryCache_v2_';
                 if (e.target !== workpicGallery) return; // tile clicks handle their own menu + stopPropagation
                 e.preventDefault();
                 showWorkpicMenu(e.clientX, e.clientY, [
-                    { label: '📁 নতুন ফোল্ডার', onClick: () => createWorkpicFolder(workpicCurrentFolderId) }
+                    { label: '📁 নতুন ফোল্ডার', onClick: () => createWorkpicFolder(workpicCurrentFolderId, workpicCurrentAccount) }
                 ]);
             });
 
@@ -338,22 +371,23 @@ const WORKPIC_CACHE_PREFIX = 'workpicGalleryCache_v2_';
         function showWorkpicItemMenu(x, y, item) {
             const items = [];
             if (item.type === 'folder') {
-                items.push({ label: '📂 খুলুন', onClick: () => navigateWorkpicFolder(item.id) });
+                items.push({ label: '📂 খুলুন', onClick: () => navigateWorkpicFolder(item.id, item.account) });
             }
             items.push({ label: '➡️ সরান (Move to...)', onClick: () => openWorkpicFolderPicker('move', item) });
             items.push({ label: '📋 কপি করুন (Copy to...)', onClick: () => openWorkpicFolderPicker('copy', item) });
             items.push({ label: '✎ নাম বদলান', onClick: () => renameWorkpicItem(item) });
-            items.push({ label: '✕ ডিলেট করুন', danger: true, onClick: () => deleteWorkpicItem(item.id, item.name, item.type) });
+            items.push({ label: '✕ ডিলেট করুন', danger: true, onClick: () => deleteWorkpicItem(item.id, item.name, item.type, null, item.account) });
             showWorkpicMenu(x, y, items);
         }
 
         // ------------------------------------------------------------
         // Folder create / rename / delete / move / copy
         // ------------------------------------------------------------
-        function createWorkpicFolder(parentId) {
+        function createWorkpicFolder(parentId, account) {
             const name = window.prompt('ফোল্ডারের নাম দিন:');
             if (!name || !name.trim()) return;
-            fetch(WORKPIC_APPS_SCRIPT_URL, {
+            const url = (account === null || account === undefined) ? WORKPIC_APPS_SCRIPT_URL : workpicUrlForAccount(account);
+            fetch(url, {
                 method: 'POST',
                 body: JSON.stringify({ password: WORKPIC_PASSWORD, action: 'createFolder', name: name.trim(), parentId })
             })
@@ -361,7 +395,7 @@ const WORKPIC_CACHE_PREFIX = 'workpicGalleryCache_v2_';
             .then(res => {
                 if (res && res.success) {
                     invalidateWorkpicCache();
-                    loadWorkpicGallery(workpicCurrentFolderId);
+                    loadWorkpicGallery(workpicCurrentFolderId, workpicCurrentAccount);
                 } else {
                     alert('ফোল্ডার তৈরি করা যায়নি: ' + ((res && res.error) || 'Unknown error'));
                 }
@@ -372,7 +406,7 @@ const WORKPIC_CACHE_PREFIX = 'workpicGalleryCache_v2_';
         function renameWorkpicItem(item) {
             const newName = window.prompt('নতুন নাম দিন:', item.name || '');
             if (!newName || !newName.trim() || newName.trim() === item.name) return;
-            fetch(WORKPIC_APPS_SCRIPT_URL, {
+            fetch(workpicUrlForAccount(item.account), {
                 method: 'POST',
                 body: JSON.stringify({ password: WORKPIC_PASSWORD, action: 'rename', itemId: item.id, itemType: item.type, newName: newName.trim() })
             })
@@ -380,7 +414,7 @@ const WORKPIC_CACHE_PREFIX = 'workpicGalleryCache_v2_';
             .then(res => {
                 if (res && res.success) {
                     invalidateWorkpicCache();
-                    loadWorkpicGallery(workpicCurrentFolderId);
+                    loadWorkpicGallery(workpicCurrentFolderId, workpicCurrentAccount);
                 } else {
                     alert('নাম বদলানো যায়নি: ' + ((res && res.error) || 'Unknown error'));
                 }
@@ -388,7 +422,7 @@ const WORKPIC_CACHE_PREFIX = 'workpicGalleryCache_v2_';
             .catch(() => alert('নেটওয়ার্ক সমস্যা, আবার চেষ্টা করুন'));
         }
 
-        function deleteWorkpicItem(id, name, type, itemEl) {
+        function deleteWorkpicItem(id, name, type, itemEl, account) {
             const label = type === 'folder' ? 'ফোল্ডার' : 'ফাইল';
             const ok = window.confirm('এই ' + label + 'টা ডিলেট করতে চান? (' + (name || '') + ')');
             if (!ok) return;
@@ -398,7 +432,7 @@ const WORKPIC_CACHE_PREFIX = 'workpicGalleryCache_v2_';
                 itemEl.style.pointerEvents = 'none';
             }
 
-            fetch(WORKPIC_APPS_SCRIPT_URL, {
+            fetch(workpicUrlForAccount(account), {
                 method: 'POST',
                 body: JSON.stringify({ password: WORKPIC_PASSWORD, action: 'delete', fileId: id, itemType: type })
             })
@@ -406,7 +440,7 @@ const WORKPIC_CACHE_PREFIX = 'workpicGalleryCache_v2_';
             .then(res => {
                 if (res && res.success) {
                     invalidateWorkpicCache();
-                    loadWorkpicGallery(workpicCurrentFolderId);
+                    loadWorkpicGallery(workpicCurrentFolderId, workpicCurrentAccount);
                 } else {
                     if (itemEl) { itemEl.style.opacity = '1'; itemEl.style.pointerEvents = 'auto'; }
                     alert('ডিলেট করা যায়নি: ' + ((res && res.error) || 'Unknown error'));
@@ -418,8 +452,19 @@ const WORKPIC_CACHE_PREFIX = 'workpicGalleryCache_v2_';
             });
         }
 
-        function performWorkpicMove(itemId, itemType, targetFolderId) {
-            fetch(WORKPIC_APPS_SCRIPT_URL, {
+        // Move/copy only ever happen within a single Google account — a Drive
+        // file can't live in two different accounts' Drives at once, so both
+        // ends of the operation must belong to the same account.
+        function performWorkpicMove(itemId, itemType, targetFolderId, sourceAccount, targetAccount) {
+            if (targetAccount === undefined || targetAccount === null) {
+                alert('এখানে সরানো যাবে না — একটা নির্দিষ্ট অ্যাকাউন্টের ফোল্ডার বেছে নিন');
+                return;
+            }
+            if (sourceAccount !== targetAccount) {
+                alert('ভিন্ন Google অ্যাকাউন্টের মধ্যে সরাসরি সরানো যায় না');
+                return;
+            }
+            fetch(workpicUrlForAccount(sourceAccount), {
                 method: 'POST',
                 body: JSON.stringify({ password: WORKPIC_PASSWORD, action: 'move', itemId, itemType, targetFolderId })
             })
@@ -427,7 +472,7 @@ const WORKPIC_CACHE_PREFIX = 'workpicGalleryCache_v2_';
             .then(res => {
                 if (res && res.success) {
                     invalidateWorkpicCache();
-                    loadWorkpicGallery(workpicCurrentFolderId);
+                    loadWorkpicGallery(workpicCurrentFolderId, workpicCurrentAccount);
                 } else {
                     alert('সরানো যায়নি: ' + ((res && res.error) || 'Unknown error'));
                 }
@@ -435,8 +480,16 @@ const WORKPIC_CACHE_PREFIX = 'workpicGalleryCache_v2_';
             .catch(() => alert('নেটওয়ার্ক সমস্যা, আবার চেষ্টা করুন'));
         }
 
-        function performWorkpicCopy(itemId, itemType, targetFolderId) {
-            fetch(WORKPIC_APPS_SCRIPT_URL, {
+        function performWorkpicCopy(itemId, itemType, targetFolderId, sourceAccount, targetAccount) {
+            if (targetAccount === undefined || targetAccount === null) {
+                alert('এখানে কপি করা যাবে না — একটা নির্দিষ্ট অ্যাকাউন্টের ফোল্ডার বেছে নিন');
+                return;
+            }
+            if (sourceAccount !== targetAccount) {
+                alert('ভিন্ন Google অ্যাকাউন্টের মধ্যে সরাসরি কপি করা যায় না');
+                return;
+            }
+            fetch(workpicUrlForAccount(sourceAccount), {
                 method: 'POST',
                 body: JSON.stringify({ password: WORKPIC_PASSWORD, action: 'copy', itemId, itemType, targetFolderId })
             })
@@ -444,7 +497,7 @@ const WORKPIC_CACHE_PREFIX = 'workpicGalleryCache_v2_';
             .then(res => {
                 if (res && res.success) {
                     invalidateWorkpicCache();
-                    loadWorkpicGallery(workpicCurrentFolderId);
+                    loadWorkpicGallery(workpicCurrentFolderId, workpicCurrentAccount);
                 } else {
                     alert('কপি করা যায়নি: ' + ((res && res.error) || 'Unknown error'));
                 }
@@ -466,10 +519,11 @@ const WORKPIC_CACHE_PREFIX = 'workpicGalleryCache_v2_';
         function openWorkpicFolderPicker(mode, item) {
             workpicPickerMode = mode;
             workpicPickerItem = item;
+            workpicPickerAccount = item.account;
             workpicPickerTitleEl.textContent = (mode === 'move' ? 'সরান: ' : 'কপি করুন: ') + (item.name || '');
             workpicPickerConfirmBtn.textContent = mode === 'move' ? 'এখানে সরান' : 'এখানে কপি করুন';
             workpicPickerOverlay.classList.add('open');
-            loadWorkpicPickerFolder(workpicRootFolderId || null);
+            loadWorkpicPickerFolder(null);
         }
 
         function closeWorkpicFolderPicker() {
@@ -480,7 +534,7 @@ const WORKPIC_CACHE_PREFIX = 'workpicGalleryCache_v2_';
         function loadWorkpicPickerFolder(folderId) {
             workpicPickerListEl.innerHTML = '<p class="admin-msg">Loading...</p>';
             const qs = folderId ? ('?folderId=' + encodeURIComponent(folderId)) : '';
-            fetch(WORKPIC_APPS_SCRIPT_URL + qs)
+            fetch(workpicUrlForAccount(workpicPickerAccount) + qs)
                 .then(r => r.json())
                 .then(res => {
                     if (!res || res.success !== true) {
@@ -547,8 +601,9 @@ const WORKPIC_CACHE_PREFIX = 'workpicGalleryCache_v2_';
         // ------------------------------------------------------------
         // Breadcrumb + gallery rendering
         // ------------------------------------------------------------
-        function navigateWorkpicFolder(folderId) {
-            loadWorkpicGallery(folderId);
+        function navigateWorkpicFolder(folderId, account) {
+            if (folderId === 'root') { loadWorkpicGallery(null, null); return; }
+            loadWorkpicGallery(folderId, account !== undefined ? account : workpicCurrentAccount);
         }
 
         function renderWorkpicBreadcrumbs(crumbs) {
@@ -560,16 +615,18 @@ const WORKPIC_CACHE_PREFIX = 'workpicGalleryCache_v2_';
                 span.className = 'wp-crumb' + (isLast ? ' wp-crumb-current' : '');
                 span.textContent = c.name;
                 if (!isLast) {
-                    span.addEventListener('click', () => navigateWorkpicFolder(c.id));
-                    span.addEventListener('dragover', (e) => { e.preventDefault(); span.classList.add('wp-drag-over'); });
-                    span.addEventListener('dragleave', () => span.classList.remove('wp-drag-over'));
-                    span.addEventListener('drop', (e) => {
-                        e.preventDefault();
-                        span.classList.remove('wp-drag-over');
-                        if (!workpicDragItem) return;
-                        performWorkpicMove(workpicDragItem.id, workpicDragItem.type, c.id);
-                        workpicDragItem = null;
-                    });
+                    span.addEventListener('click', () => navigateWorkpicFolder(c.id, c.account));
+                    if (c.account !== undefined) {
+                        span.addEventListener('dragover', (e) => { e.preventDefault(); span.classList.add('wp-drag-over'); });
+                        span.addEventListener('dragleave', () => span.classList.remove('wp-drag-over'));
+                        span.addEventListener('drop', (e) => {
+                            e.preventDefault();
+                            span.classList.remove('wp-drag-over');
+                            if (!workpicDragItem) return;
+                            performWorkpicMove(workpicDragItem.id, workpicDragItem.type, c.id, workpicDragItem.account, c.account);
+                            workpicDragItem = null;
+                        });
+                    }
                 }
                 workpicBreadcrumbBar.appendChild(span);
                 if (!isLast) {
@@ -600,7 +657,7 @@ const WORKPIC_CACHE_PREFIX = 'workpicGalleryCache_v2_';
                     e.preventDefault();
                     el.classList.remove('wp-drag-over');
                     if (!workpicDragItem || workpicDragItem.id === itemInfo.id) return;
-                    performWorkpicMove(workpicDragItem.id, workpicDragItem.type, itemInfo.id);
+                    performWorkpicMove(workpicDragItem.id, workpicDragItem.type, itemInfo.id, workpicDragItem.account, itemInfo.account);
                     workpicDragItem = null;
                 });
             }
@@ -622,13 +679,13 @@ const WORKPIC_CACHE_PREFIX = 'workpicGalleryCache_v2_';
                     <div class="wp-folder-icon">📁</div>
                     <span class="wp-name">${folder.name}</span>
                 `;
-                item.addEventListener('click', () => navigateWorkpicFolder(folder.id));
+                item.addEventListener('click', () => navigateWorkpicFolder(folder.id, folder.account));
                 item.addEventListener('contextmenu', (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    showWorkpicItemMenu(e.clientX, e.clientY, { id: folder.id, type: 'folder', name: folder.name });
+                    showWorkpicItemMenu(e.clientX, e.clientY, { id: folder.id, type: 'folder', name: folder.name, account: folder.account });
                 });
-                attachWorkpicDragHandlers(item, { id: folder.id, type: 'folder', name: folder.name });
+                attachWorkpicDragHandlers(item, { id: folder.id, type: 'folder', name: folder.name, account: folder.account });
                 workpicGallery.appendChild(item);
             });
 
@@ -687,7 +744,7 @@ const WORKPIC_CACHE_PREFIX = 'workpicGalleryCache_v2_';
                 });
                 actions.querySelector('.wp-delete').addEventListener('click', (e) => {
                     e.preventDefault(); e.stopPropagation();
-                    deleteWorkpicItem(img.id, img.name, 'file', item);
+                    deleteWorkpicItem(img.id, img.name, 'file', item, img.account);
                 });
 
                 item.appendChild(link);
@@ -697,16 +754,17 @@ const WORKPIC_CACHE_PREFIX = 'workpicGalleryCache_v2_';
                 item.addEventListener('contextmenu', (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    showWorkpicItemMenu(e.clientX, e.clientY, { id: img.id, type: 'file', name: img.name });
+                    showWorkpicItemMenu(e.clientX, e.clientY, { id: img.id, type: 'file', name: img.name, account: img.account });
                 });
 
-                attachWorkpicDragHandlers(item, { id: img.id, type: 'file', name: img.name });
+                attachWorkpicDragHandlers(item, { id: img.id, type: 'file', name: img.name, account: img.account });
                 workpicGallery.appendChild(item);
             });
         }
 
-        function loadWorkpicGallery(folderId) {
-            const cacheKey = WORKPIC_CACHE_PREFIX + (folderId || 'root');
+        function loadWorkpicGallery(folderId, account) {
+            if (account === undefined) account = workpicCurrentAccount;
+            const cacheKey = WORKPIC_CACHE_PREFIX + (account === null ? 'root' : account) + '_' + (folderId || 'root');
             let usedCache = false;
 
             // Show cached results instantly (super fast open), then refresh quietly in the background
@@ -732,8 +790,14 @@ const WORKPIC_CACHE_PREFIX = 'workpicGalleryCache_v2_';
                 workpicGallery.innerHTML = '';
             }
 
-            const qs = folderId ? ('?folderId=' + encodeURIComponent(folderId)) : '';
-            fetch(WORKPIC_APPS_SCRIPT_URL + qs)
+            // Root ("account" is null) = merged view across every account.
+            // Once you're inside a specific account's folder, "account"
+            // stays fixed to that account for everything under it.
+            let qs = '?action=listMerged';
+            if (account !== null && account !== undefined) qs += '&account=' + encodeURIComponent(account);
+            if (folderId) qs += '&folderId=' + encodeURIComponent(folderId);
+
+            fetch(WORKPIC_ROUTER_URL + qs)
                 .then(r => r.json())
                 .then(res => {
                     workpicGalleryLoading.style.display = 'none';
@@ -747,8 +811,10 @@ const WORKPIC_CACHE_PREFIX = 'workpicGalleryCache_v2_';
                         return;
                     }
 
+                    if (Array.isArray(res.accountUrls)) workpicAccountUrls = res.accountUrls;
+                    workpicCurrentAccount = (account === undefined) ? null : account;
                     workpicCurrentFolderId = res.folderId;
-                    if (!workpicRootFolderId) workpicRootFolderId = res.folderId;
+                    if (!workpicRootFolderId && account !== null) workpicRootFolderId = res.folderId;
 
                     const files = Array.isArray(res.images) ? res.images : [];
                     const folders = Array.isArray(res.folders) ? res.folders : [];
@@ -756,7 +822,7 @@ const WORKPIC_CACHE_PREFIX = 'workpicGalleryCache_v2_';
                     workpicFolders = folders;
 
                     try {
-                        sessionStorage.setItem(WORKPIC_CACHE_PREFIX + res.folderId, JSON.stringify({
+                        sessionStorage.setItem(cacheKey, JSON.stringify({
                             files, folders, breadcrumbs: res.breadcrumbs || []
                         }));
                     } catch (e) { /* ignore */ }
@@ -799,15 +865,17 @@ const WORKPIC_CACHE_PREFIX = 'workpicGalleryCache_v2_';
         });
 
         function uploadOneWorkpicFile(file) {
+            const inMergedRoot = (workpicCurrentAccount === null || workpicCurrentAccount === undefined);
+            const uploadUrl = inMergedRoot ? WORKPIC_APPS_SCRIPT_URL : workpicUrlForAccount(workpicCurrentAccount);
             return fileToBase64(file).then(base64 => {
-                return fetch(WORKPIC_APPS_SCRIPT_URL, {
+                return fetch(uploadUrl, {
                     method: 'POST',
                     body: JSON.stringify({
                         password: WORKPIC_PASSWORD,
                         image: base64,
                         mimeType: file.type,
                         filename: file.name,
-                        parentId: workpicCurrentFolderId
+                        parentId: inMergedRoot ? null : workpicCurrentFolderId
                     })
                 })
                 .then(r => r.json())
@@ -825,6 +893,13 @@ const WORKPIC_CACHE_PREFIX = 'workpicGalleryCache_v2_';
             workpicDoneCount.textContent = 0;
             workpicProgressFill.style.width = '0%';
 
+            // Re-resolve here too — the active account may have filled up
+            // since the session was unlocked, and uploads should always
+            // land in whichever account currently has room.
+            resolveWorkpicBackend().then(startWorkpicUploadBatch);
+        });
+
+        function startWorkpicUploadBatch() {
             let done = 0, failed = 0;
             function next(i) {
                 if (i >= workpicSelectedFiles.length) {
@@ -835,7 +910,7 @@ const WORKPIC_CACHE_PREFIX = 'workpicGalleryCache_v2_';
                     workpicSendBtn.disabled = false;
                     if (done > 0) {
                         invalidateWorkpicCache();
-                        loadWorkpicGallery(workpicCurrentFolderId);
+                        loadWorkpicGallery(workpicCurrentFolderId, workpicCurrentAccount);
                     }
                     if (failed === 0) {
                         setTimeout(() => {
@@ -860,5 +935,5 @@ const WORKPIC_CACHE_PREFIX = 'workpicGalleryCache_v2_';
                 });
             }
             next(0);
-        });
+        }
     })();

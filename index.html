@@ -580,6 +580,26 @@
             background: none; border: none; color: var(--muted);
             font-size: 20px; cursor: pointer;
         }
+        .admin-icon-btn {
+            position: absolute; top: 10px; left: 14px;
+            width: 30px; height: 30px; z-index: 2;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(63,168,255,0.12);
+            border: 1px solid rgba(63,168,255,0.35);
+            border-radius: 50%;
+            font-size: 15px; line-height: 1; cursor: pointer;
+            color: var(--gold-light);
+            transition: background 0.2s ease, transform 0.15s ease;
+        }
+        .admin-icon-btn:hover { background: rgba(63,168,255,0.22); transform: scale(1.06); }
+        .admin-icon-badge {
+            position: absolute; bottom: -3px; right: -3px;
+            width: 14px; height: 14px; border-radius: 50%;
+            background: linear-gradient(to right, var(--gold), var(--gold-light));
+            color: #000; font-size: 10px; font-weight: 700;
+            display: flex; align-items: center; justify-content: center;
+            line-height: 1; box-shadow: 0 0 0 2px rgba(8,16,32,0.9);
+        }
         .admin-input {
             width: 100%; background: var(--ink); border: 1px solid var(--border);
             color: #fff; padding: 10px 12px; border-radius: 6px;
@@ -1087,6 +1107,15 @@
 <div class="admin-overlay" id="adminUploadOverlay">
     <div class="admin-box admin-box-wide" id="adminUploadBox">
         <button class="admin-close" id="adminUploadClose">×</button>
+        <button type="button" class="admin-icon-btn" id="openAccountsBtn" title="Storage Accounts">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="22" y1="12" x2="2" y2="12"></line>
+                <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path>
+                <line x1="6" y1="16" x2="6.01" y2="16"></line>
+                <line x1="10" y1="16" x2="10.01" y2="16"></line>
+            </svg>
+            <span class="admin-icon-badge">+</span>
+        </button>
 
         
         <div id="uploadStepPick">
@@ -1094,7 +1123,6 @@
             <input type="file" class="admin-input" id="adminFileInput" accept="image/*" multiple>
             <div class="upload-thumbs" id="uploadThumbs"></div>
             <button class="admin-btn" id="adminStartTagBtn" disabled>Start Tagging →</button>
-            <button type="button" class="admin-btn admin-btn-secondary admin-btn-sm" id="openAccountsBtn" style="width:100%; margin-top:8px;">🗄 Storage Accounts</button>
             <p class="admin-msg" id="adminPickMsg"></p>
         </div>
 

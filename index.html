@@ -1442,15 +1442,24 @@
 
     function buildMergedPhotoList(oldPhotos, liveImages) {
         const newPhotos = [];
+        const liveUrlSet = new Set();
         (liveImages || []).forEach(img => {
             try {
                 if (img && img.url) {
                     newPhotos.push(liveImageToPhoto(img, newPhotos.length));
+                    liveUrlSet.add(String(img.url).trim());
                 }
             } catch (e) {
             }
         });
-        const merged = [...newPhotos, ...oldPhotos];
+        // 🆕 ImgBB+GitHub route দিয়ে upload হওয়া ছবি এখন real date সহ
+        // liveImages (doGet)-এই চলে আসে, কিন্তু legacy compatibility-র
+        // জন্য একই লিংক এখনও GitHub টেক্সট ফাইলে (oldPhotos-এর সোর্স)
+        // থেকে যায় — তাই ডুপ্লিকেট দেখা এড়াতে সেগুলো oldPhotos থেকে
+        // বাদ দেওয়া হচ্ছে। এতে Drive vs ImgBB নির্বিশেষে সবকিছু
+        // liveImages-এর (real-date sorted) অংশেই একবার দেখাবে।
+        const dedupedOld = oldPhotos.filter(p => !liveUrlSet.has(String(p.rawUrl || p.url).trim()));
+        const merged = [...newPhotos, ...dedupedOld];
         merged.forEach((p, i) => { p.idx = i; });
         return merged;
     }

@@ -237,6 +237,10 @@
 
     async function onPhotoUploadedForFaceLearning(photo) {
         if (!photo.pendingFaceLearning || photo.pendingFaceLearning.length === 0) return;
+        // ছবিটা যেই অ্যাকাউন্টে (Main বা কোনো satellite) আসলে সেভ হয়েছে,
+        // face descriptor-ও সেই একই অ্যাকাউন্টে সেভ হবে — admin-upload.js
+        // upload সফল হওয়ার পর photo.uploadedAccountId বসিয়ে দেয়।
+        const accountId = photo.uploadedAccountId || 'self';
         for (const entry of photo.pendingFaceLearning) {
             try {
                 const res = await fetch(APPS_SCRIPT_URL, {
@@ -245,7 +249,8 @@
                         password: window.ADMIN_PASSWORD,
                         action: 'saveFaceDescriptor',
                         name: entry.name,
-                        descriptor: entry.descriptor
+                        descriptor: entry.descriptor,
+                        accountId: accountId
                     })
                 });
                 const data = await res.json();

@@ -45,6 +45,7 @@
     const uploadStepTag     = document.getElementById('uploadStepTag');
     const uploadStepUploading = document.getElementById('uploadStepUploading');
     const tagPreviewImg     = document.getElementById('tagPreviewImg');
+    const tagCategoryRow    = document.getElementById('tagCategoryRow');
     const tagFacesList      = document.getElementById('tagFacesList');
     const tagQuickAddInput  = document.getElementById('tagQuickAddInput');
     const tagQuickAddBtn    = document.getElementById('tagQuickAddBtn');
@@ -61,6 +62,26 @@
     let uploadPeople = [];
     let selectedPhotos = [];
     let currentTagIdx = 0;
+
+    // 🆕 Single/Dual/Group ক্যাটাগরি — ব্যাকএন্ডে এর জন্য আলাদা কোনো ফিল্ড
+    // নেই (Apps Script শুধু caption/names টেক্সট নেয়), তাই caption-এর
+    // শেষে একটা লুকানো মার্কার হিসেবে জুড়ে পাঠানো হয়। index.html-এর
+    // decodeCaptionCategory() এটা ফেরত পার্স করে। মান বদলালে দুই
+    // ফাইলেই বদলাতে হবে (CATEGORY_MARKER একই থাকতে হবে)।
+    const CATEGORY_MARKER = '::cat::';
+    function encodeCaptionWithCategory(namesStr, cat) {
+        if (!cat) return namesStr || '';
+        return (namesStr || '') + CATEGORY_MARKER + cat;
+    }
+    function suggestCategoryFromCount(count) {
+        if (count >= 3) return 'group';
+        if (count === 2) return 'dual';
+        return 'single';
+    }
+    function setPhotoCategory(photo, cat, manual) {
+        photo.category = cat;
+        if (manual) photo.categoryManual = true;
+    }
 
     // face-api.js (~ a few hundred KB) and face-recognition.js are only
     // needed for the admin face-tagging step, so they're fetched on demand
@@ -221,7 +242,7 @@
 
         Promise.all(files.map(file =>
             prepareFile(file)
-                .then(({ base64, mime }) => ({ base64, mime, name: file.name, tagIdxs: new Set() }))
+                .then(({ base64, mime }) => ({ base64, mime, name: file.name, tagIdxs: new Set(), category: 'single', categoryManual: false }))
                 .catch(() => null)
         )).then(results => {
             const ok = results.filter(Boolean);
@@ -256,7 +277,9 @@
         if (idx === null) return;
         const photo = selectedPhotos[currentTagIdx];
         photo.tagIdxs.add(idx);
+        if (!photo.categoryManual) setPhotoCategory(photo, suggestCategoryFromCount(photo.tagIdxs.size), false);
         renderTagFaces();
+        renderTagCategoryButtons();
 
         photo.pendingFaceLearning = photo.pendingFaceLearning || [];
         photo.pendingFaceLearning.push({ name: name, descriptor: Array.from(descriptor) });
@@ -298,6 +321,8 @@
                 if (e.target.checked) photo.tagIdxs.add(idx);
                 else photo.tagIdxs.delete(idx);
                 row.classList.toggle('checked', e.target.checked);
+                if (!photo.categoryManual) setPhotoCategory(photo, suggestCategoryFromCount(photo.tagIdxs.size), false);
+                renderTagCategoryButtons();
             });
             row.querySelector('.tag-face-edit-btn').addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -347,6 +372,30 @@
         input.addEventListener('click', (e) => e.stopPropagation());
     }
 
+    // ছবিটাতে কয়জন মানুষ আছে সেই অনুযায়ী Single/Dual/Group বাটন
+    // হাইলাইট করে — ফেস-ট্যাগের সংখ্যা থেকে অটো-সাজেস্ট হয় (উপরে
+    // suggestCategoryFromCount), কিন্তু admin চাইলে যেকোনো সময় নিজে
+    // ক্লিক করে বদলে দিতে পারে (তখন categoryManual = true হয়ে যায়,
+    // আর অটো-সাজেশন আর ওভাররাইট করবে না)।
+    if (tagCategoryRow) {
+        tagCategoryRow.querySelectorAll('.tag-cat-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const photo = selectedPhotos[currentTagIdx];
+                if (!photo) return;
+                setPhotoCategory(photo, btn.dataset.cat, true);
+                renderTagCategoryButtons();
+            });
+        });
+    }
+    function renderTagCategoryButtons() {
+        if (!tagCategoryRow) return;
+        const photo = selectedPhotos[currentTagIdx];
+        const current = photo ? photo.category : null;
+        tagCategoryRow.querySelectorAll('.tag-cat-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.cat === current);
+        });
+    }
+
     function showTagStep(idx) {
         currentTagIdx = idx;
         const photo = selectedPhotos[idx];
@@ -356,6 +405,7 @@
         tagProgressFill.style.width = ((idx + 1) / selectedPhotos.length * 100) + '%';
         tagPrevBtn.disabled = idx === 0;
         tagNextBtn.textContent = (idx === selectedPhotos.length - 1) ? 'Upload All ✓' : 'Next →';
+        renderTagCategoryButtons();
 
         const faceResultsEl = document.getElementById('faceDetectResults');
         const faceStatusEl = document.getElementById('faceDetectStatus');
@@ -374,19 +424,23 @@
         const rawName = (tagQuickAddInput.value || '').trim();
         const idx = addUploadPerson(rawName);
         if (idx === null) return;
-        selectedPhotos[currentTagIdx].tagIdxs.add(idx);
+        const photo = selectedPhotos[currentTagIdx];
+        photo.tagIdxs.add(idx);
 
         if (!isBanglaText(rawName)) {
             const banglaName = banglaPhonetic(rawName);
             if (banglaName && banglaName.toLowerCase() !== rawName.toLowerCase()) {
                 const bIdx = addUploadPerson(banglaName);
-                if (bIdx !== null) selectedPhotos[currentTagIdx].tagIdxs.add(bIdx);
+                if (bIdx !== null) photo.tagIdxs.add(bIdx);
             }
         }
+
+        if (!photo.categoryManual) setPhotoCategory(photo, suggestCategoryFromCount(photo.tagIdxs.size), false);
 
         tagQuickAddInput.value = '';
         adminUploadMsg.textContent = '';
         renderTagFaces();
+        renderTagCategoryButtons();
         tagQuickAddInput.focus();
     }
     tagQuickAddBtn.addEventListener('click', quickAddTagPerson);
@@ -561,6 +615,7 @@
     const adminEditTagOverlay   = document.getElementById('adminEditTagOverlay');
     const adminEditTagClose     = document.getElementById('adminEditTagClose');
     const editTagPreviewImg     = document.getElementById('editTagPreviewImg');
+    const editTagCategoryRow    = document.getElementById('editTagCategoryRow');
     const editTagFacesList      = document.getElementById('editTagFacesList');
     const editTagQuickAddInput  = document.getElementById('editTagQuickAddInput');
     const editTagQuickAddBtn    = document.getElementById('editTagQuickAddBtn');
@@ -574,6 +629,22 @@
     let editTagSelected = new Set();
     let editTagList = [];
     let editTagListPos = -1;
+    let editTagCategory = 'single';
+
+    if (editTagCategoryRow) {
+        editTagCategoryRow.querySelectorAll('.tag-cat-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                editTagCategory = btn.dataset.cat;
+                renderEditTagCategoryButtons();
+            });
+        });
+    }
+    function renderEditTagCategoryButtons() {
+        if (!editTagCategoryRow) return;
+        editTagCategoryRow.querySelectorAll('.tag-cat-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.cat === editTagCategory);
+        });
+    }
 
     function parseExistingNames(photo) {
         const raw = (photo.names || '').trim();
@@ -707,6 +778,10 @@
         existing.forEach(n => ensureInPeopleList(n));
         editTagSelected = new Set(existing.map(n => n.toLowerCase()));
 
+        editTagCategory = (photo.cat === 'single' || photo.cat === 'dual' || photo.cat === 'group') ? photo.cat : 'single';
+        renderEditTagCategoryButtons();
+        if (editTagCategoryRow) editTagCategoryRow.style.display = photo.isLive ? 'flex' : 'none';
+
         renderEditTagFaces();
         if (editTagProgressText) editTagProgressText.textContent = (pos + 1) + ' / ' + editTagList.length;
         editTagPrevBtn.disabled = pos === 0;
@@ -756,6 +831,13 @@
         const finalNames = uploadPeople.filter(n => editTagSelected.has(n.toLowerCase()));
         const newNamesStr = serializeNames(finalNames, editTagPhoto);
         const photo = editTagPhoto;
+        // GitHub-এর পুরনো টেক্সট-ফাইল এন্ট্রি (# single/dual/group হেডার দিয়ে
+        // ক্যাটাগরাইজড) থেকে আসা ছবির জন্য মার্কার জোড়ার দরকার নেই — সেগুলোর
+        // ক্যাটাগরি হেডার থেকেই ঠিক হয়। শুধু live-upload (photo.isLive —
+        // Drive বা ImgBB+GitHub রুটে আপলোড হওয়া, doGet থেকে আসা) ক্ষেত্রে
+        // মার্কার জুড়ে পাঠাই, নাহলে দুই ধরনের ছবি গুলিয়ে যাবে।
+        const isLiveUpload = !!photo.isLive;
+        const captionToSend = isLiveUpload ? encodeCaptionWithCategory(newNamesStr, editTagCategory) : newNamesStr;
 
         editTagSaveBtn.disabled = true;
         editTagPrevBtn.disabled = true;
@@ -764,8 +846,8 @@
         editTagMsg.className = 'admin-msg';
 
         const payload = photo.fileId
-            ? { password: ADMIN_PASSWORD, action: 'updateCaption', fileId: photo.fileId, caption: newNamesStr, accountId: photo.acc || 'self' }
-            : { password: ADMIN_PASSWORD, action: 'updateText', url: photo.rawUrl, names: newNamesStr };
+            ? { password: ADMIN_PASSWORD, action: 'updateCaption', fileId: photo.fileId, caption: captionToSend, accountId: photo.acc || 'self' }
+            : { password: ADMIN_PASSWORD, action: 'updateText', url: photo.rawUrl, names: captionToSend };
 
         return fetch(APPS_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) })
             .then(r => r.json())
@@ -774,6 +856,7 @@
                 if (res.success) {
                     photo.names = newNamesStr;
                     photo.title = newNamesStr || photo.title;
+                    if (isLiveUpload) photo.cat = editTagCategory;
                     const sectionWords = SECTION_SEARCH_WORDS[photo.cat] || [];
                     photo.searchIndex = [newNamesStr, ...sectionWords].join(' ').toLowerCase();
                     editTagMsg.textContent = '✅ Saved';
@@ -820,7 +903,8 @@
         // caption ফেস-ট্যাগিং ধাপ থেকে তৈরি — Drive আর ImgBB দুটো
         // destination-এর জন্যই ঠিক একই caption/tag ব্যবহার হয়, তাই
         // manual নাম-টাইপ করা আলাদা করে লাগে না ImgBB-র জন্য।
-        const caption = Array.from(photo.tagIdxs).map(i => uploadPeople[i]).join(', ');
+        const namesOnly = Array.from(photo.tagIdxs).map(i => uploadPeople[i]).join(', ');
+        const caption = encodeCaptionWithCategory(namesOnly, photo.category);
 
         if (getUploadDestination() === 'imgbb') {
             return uploadOnePhotoToImgbb_(photo, caption);

@@ -63,16 +63,10 @@
     let selectedPhotos = [];
     let currentTagIdx = 0;
 
-    // 🆕 Single/Dual/Group ক্যাটাগরি — ব্যাকএন্ডে এর জন্য আলাদা কোনো ফিল্ড
-    // নেই (Apps Script শুধু caption/names টেক্সট নেয়), তাই caption-এর
-    // শেষে একটা লুকানো মার্কার হিসেবে জুড়ে পাঠানো হয়। index.html-এর
-    // decodeCaptionCategory() এটা ফেরত পার্স করে। মান বদলালে দুই
-    // ফাইলেই বদলাতে হবে (CATEGORY_MARKER একই থাকতে হবে)।
-    const CATEGORY_MARKER = '::cat::';
-    function encodeCaptionWithCategory(namesStr, cat) {
-        if (!cat) return namesStr || '';
-        return (namesStr || '') + CATEGORY_MARKER + cat;
-    }
+    // 🆕 Single/Dual/Group ক্যাটাগরি — ব্যাকএন্ড এখন এর জন্য আলাদা native
+    // "cat" ফিল্ড সাপোর্ট করে (caption/names থেকে সম্পূর্ণ আলাদা), তাই
+    // uploadOnePhoto() / saveCurrentEditTagPhoto()-এ সরাসরি `cat: ...`
+    // হিসেবে পাঠানো হয় — caption টেক্সটে কোনো মার্কার জুড়তে হয় না।
     function suggestCategoryFromCount(count) {
         if (count >= 3) return 'group';
         if (count === 2) return 'dual';
@@ -832,12 +826,11 @@
         const newNamesStr = serializeNames(finalNames, editTagPhoto);
         const photo = editTagPhoto;
         // GitHub-এর পুরনো টেক্সট-ফাইল এন্ট্রি (# single/dual/group হেডার দিয়ে
-        // ক্যাটাগরাইজড) থেকে আসা ছবির জন্য মার্কার জোড়ার দরকার নেই — সেগুলোর
-        // ক্যাটাগরি হেডার থেকেই ঠিক হয়। শুধু live-upload (photo.isLive —
-        // Drive বা ImgBB+GitHub রুটে আপলোড হওয়া, doGet থেকে আসা) ক্ষেত্রে
-        // মার্কার জুড়ে পাঠাই, নাহলে দুই ধরনের ছবি গুলিয়ে যাবে।
+        // ক্যাটাগরাইজড) থেকে আসা ছবির cat বদলানো এখান থেকে সাপোর্ট করা হয়
+        // না — সেগুলোর ক্যাটাগরি হেডার থেকেই ঠিক হয়। শুধু live-upload
+        // (photo.isLive — Drive বা ImgBB+GitHub রুটে আপলোড হওয়া, doGet
+        // থেকে আসা) ক্ষেত্রে native "cat" ফিল্ড পাঠাই।
         const isLiveUpload = !!photo.isLive;
-        const captionToSend = isLiveUpload ? encodeCaptionWithCategory(newNamesStr, editTagCategory) : newNamesStr;
 
         editTagSaveBtn.disabled = true;
         editTagPrevBtn.disabled = true;
@@ -846,8 +839,8 @@
         editTagMsg.className = 'admin-msg';
 
         const payload = photo.fileId
-            ? { password: ADMIN_PASSWORD, action: 'updateCaption', fileId: photo.fileId, caption: captionToSend, accountId: photo.acc || 'self' }
-            : { password: ADMIN_PASSWORD, action: 'updateText', url: photo.rawUrl, names: captionToSend };
+            ? { password: ADMIN_PASSWORD, action: 'updateCaption', fileId: photo.fileId, caption: newNamesStr, cat: isLiveUpload ? editTagCategory : undefined, accountId: photo.acc || 'self' }
+            : { password: ADMIN_PASSWORD, action: 'updateText', url: photo.rawUrl, names: newNamesStr };
 
         return fetch(APPS_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) })
             .then(r => r.json())
@@ -903,11 +896,11 @@
         // caption ফেস-ট্যাগিং ধাপ থেকে তৈরি — Drive আর ImgBB দুটো
         // destination-এর জন্যই ঠিক একই caption/tag ব্যবহার হয়, তাই
         // manual নাম-টাইপ করা আলাদা করে লাগে না ImgBB-র জন্য।
-        const namesOnly = Array.from(photo.tagIdxs).map(i => uploadPeople[i]).join(', ');
-        const caption = encodeCaptionWithCategory(namesOnly, photo.category);
+        const caption = Array.from(photo.tagIdxs).map(i => uploadPeople[i]).join(', ');
+        const cat = photo.category;
 
         if (getUploadDestination() === 'imgbb') {
-            return uploadOnePhotoToImgbb_(photo, caption);
+            return uploadOnePhotoToImgbb_(photo, caption, cat);
         }
 
         return fetch(APPS_SCRIPT_URL, {
@@ -917,24 +910,25 @@
                 image: photo.base64,
                 mimeType: photo.mime,
                 filename: photo.name,
-                caption: caption
+                caption: caption,
+                cat: cat
             })
         })
         .then(r => r.json())
         .catch(() => ({ success: false, error: 'Network error' }));
     }
 
-    // ImgBB route: ছবি → ImgBB (direct link) → সেই link + caption
-    // GitHub-এর টেক্সট ফাইলে (addTextLink action দিয়ে)। রিটার্ন-করা
-    // shape uploadAllPhotos()-এর জন্য Drive route-এর মতোই
+    // ImgBB route: ছবি → ImgBB (direct link) → সেই link + caption + cat
+    // GitHub-এর টেক্সট ফাইলে/imgbb-links.json-এ (addTextLink action দিয়ে)।
+    // রিটার্ন-করা shape uploadAllPhotos()-এর জন্য Drive route-এর মতোই
     // { success, accountId, ... } — তাই নিচের progress/face-learning
     // কোডে কোনো বদল লাগে না।
-    function uploadOnePhotoToImgbb_(photo, caption) {
+    function uploadOnePhotoToImgbb_(photo, caption, cat) {
         return uploadToImgbb_(photo.base64).then(imgRes => {
             if (!imgRes.success) {
                 return { success: false, error: 'ImgBB: ' + imgRes.error };
             }
-            return addLinkToGithub_(imgRes.url, caption).then(ghRes => {
+            return addLinkToGithub_(imgRes.url, caption, cat).then(ghRes => {
                 if (!ghRes || !ghRes.success) {
                     return { success: false, error: 'GitHub: ' + ((ghRes && ghRes.error) || 'unknown error') };
                 }
@@ -1279,14 +1273,15 @@
             .catch(() => ({ success: false, error: 'ImgBB network error' }));
     }
 
-    function addLinkToGithub_(url, names) {
+    function addLinkToGithub_(url, names, cat) {
         return fetch(APPS_SCRIPT_URL, {
             method: 'POST',
             body: JSON.stringify({
                 password: ADMIN_PASSWORD,
                 action: 'addTextLink',
                 url: url,
-                names: names || ''
+                names: names || '',
+                cat: cat
             })
         })
         .then(r => r.json())

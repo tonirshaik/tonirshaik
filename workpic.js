@@ -15,7 +15,7 @@
    ============================================================ */
 
 // TODO: এটা আপনার নিজের একটা পাসওয়ার্ড দিয়ে বদলে দিন
-const WORKPIC_LOCAL_PASSWORD = '889900';
+const WORKPIC_LOCAL_PASSWORD = '';
 
 // imgbb API key
 const IMGBB_API_KEY = 'fbf9f03772f70e689d52d28b0a0afc86';

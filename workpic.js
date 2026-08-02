@@ -14,12 +14,10 @@
    won't show older uploads — only what you upload in this visit).
    ============================================================ */
 
-// TODO: এটা আপনার নিজের একটা পাসওয়ার্ড দিয়ে বদলে দিন
-const WORKPIC_LOCAL_PASSWORD = '';
-
-// imgbb API key
-const IMGBB_API_KEY = 'fbf9f03772f70e689d52d28b0a0afc86';
-const IMGBB_UPLOAD_URL = 'https://api.imgbb.com/1/upload?key=' + IMGBB_API_KEY;
+// Apps Script backend (Code.gs) — handles password check, uploads the
+// image to imgbb server-side (so the imgbb API key never reaches the
+// browser), and saves the gallery list permanently to a GitHub file.
+const WORKPIC_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyaP3hpU471aMaRTHaJo5yG5MqG4EyaR8U4Yo1pyrmU-YleGRXfwOMpac8QXyNx5u1Mlw/exec';
 
 (function () {
     const navWorkPicLink       = document.getElementById('navWorkPicLink');
@@ -60,10 +58,43 @@ const IMGBB_UPLOAD_URL = 'https://api.imgbb.com/1/upload?key=' + IMGBB_API_KEY;
 
     if (!navWorkPicLink) return;
 
-    // In-memory only — resets on page refresh (by design, per user's choice)
-    let workpicImages = []; // { url, deleteUrl, name }
+    // workpicImages now comes from the Apps Script backend (GitHub-saved),
+    // so it persists across refreshes/devices — not session-only anymore.
+    let workpicImages = []; // { url, name, time, deleteUrl? }
     let workpicLbIdx = 0;
     let workpicSelectedFiles = [];
+
+    // Kept in memory only after a successful unlock, so add/delete calls
+    // to the backend can re-send it. Never stored, never sent anywhere
+    // except this Apps Script URL.
+    let workpicSessionPassword = null;
+
+    // ------------------------------------------------------------
+    // Apps Script backend helpers
+    // ------------------------------------------------------------
+    function workpicBackendPost(body) {
+        // text/plain avoids a CORS preflight (Apps Script doesn't handle
+        // OPTIONS), while Code.gs still parses e.postData.contents as JSON fine.
+        return fetch(WORKPIC_APPS_SCRIPT_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(body)
+        }).then(r => r.json());
+    }
+
+    function workpicBackendGet() {
+        return fetch(WORKPIC_APPS_SCRIPT_URL, { method: 'GET' }).then(r => r.json());
+    }
+
+    function loadWorkpicGalleryFromServer() {
+        workpicGalleryLoading.style.display = 'block';
+        return workpicBackendGet()
+            .then(result => {
+                workpicImages = (result && result.success && Array.isArray(result.images)) ? result.images : [];
+            })
+            .catch(() => { workpicImages = []; })
+            .then(() => renderWorkpicGallery());
+    }
 
     // allow only image files now (imgbb only hosts images)
     workpicFileInput.setAttribute('accept', 'image/*');
@@ -97,14 +128,27 @@ const IMGBB_UPLOAD_URL = 'https://api.imgbb.com/1/upload?key=' + IMGBB_API_KEY;
 
     function tryWorkpicUnlock() {
         const entered = workpicPasswordInput.value;
-        if (entered === WORKPIC_LOCAL_PASSWORD) {
-            workpicLockOverlay.classList.remove('open');
-            resetWorkpicUploadFlow();
-            workpicUploadOverlay.classList.add('open');
-            renderWorkpicGallery();
-        } else {
-            workpicLockMsg.textContent = 'ভুল পাসওয়ার্ড';
-        }
+        workpicUnlockBtn.disabled = true;
+        workpicLockMsg.textContent = 'যাচাই করা হচ্ছে...';
+
+        workpicBackendPost({ password: entered, action: 'verify' })
+            .then(result => {
+                if (result && result.success) {
+                    workpicSessionPassword = entered;
+                    workpicLockOverlay.classList.remove('open');
+                    resetWorkpicUploadFlow();
+                    workpicUploadOverlay.classList.add('open');
+                    return loadWorkpicGalleryFromServer();
+                } else {
+                    workpicLockMsg.textContent = 'ভুল পাসওয়ার্ড';
+                }
+            })
+            .catch(() => {
+                workpicLockMsg.textContent = 'সার্ভারে সমস্যা হয়েছে, আবার চেষ্টা করুন';
+            })
+            .finally(() => {
+                workpicUnlockBtn.disabled = false;
+            });
     }
     workpicUnlockBtn.addEventListener('click', tryWorkpicUnlock);
     workpicPasswordInput.addEventListener('keydown', (e) => {
@@ -175,29 +219,37 @@ const IMGBB_UPLOAD_URL = 'https://api.imgbb.com/1/upload?key=' + IMGBB_API_KEY;
     });
 
     // ------------------------------------------------------------
-    // Upload to imgbb
+    // Upload — file goes to Apps Script as base64; the backend uploads
+    // it to imgbb (key stays server-side) and saves it to GitHub in
+    // one round trip.
     // ------------------------------------------------------------
-    function uploadOneWorkpicFile(file) {
-        const form = new FormData();
-        form.append('image', file);
+    function fileToBase64_(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+                const result = String(reader.result || '');
+                resolve(result.split(',')[1] || ''); // strip "data:image/...;base64,"
+            };
+            reader.onerror = () => reject(new Error('File read failed'));
+            reader.readAsDataURL(file);
+        });
+    }
 
-        return fetch(IMGBB_UPLOAD_URL, {
-            method: 'POST',
-            body: form
-        })
-        .then(r => r.json())
-        .then(res => {
-            if (res && res.success && res.data && res.data.url) {
-                return {
-                    success: true,
-                    url: res.data.url,
-                    deleteUrl: res.data.delete_url || null,
-                    name: res.data.title || file.name || 'work-pic'
-                };
-            }
-            return { success: false, error: (res && res.error && res.error.message) || 'Upload failed' };
-        })
-        .catch(() => ({ success: false, error: 'Network error' }));
+    function uploadOneWorkpicFile(file) {
+        return fileToBase64_(file)
+            .then(base64 => workpicBackendPost({
+                password: workpicSessionPassword,
+                action: 'upload',
+                image: base64,
+                name: file.name || 'work-pic'
+            }))
+            .then(res => {
+                if (res && res.success) {
+                    return { success: true, url: res.url, name: res.name, images: res.images };
+                }
+                return { success: false, error: (res && res.error) || 'Upload failed' };
+            })
+            .catch(() => ({ success: false, error: 'Network error' }));
     }
 
     workpicSendBtn.addEventListener('click', () => {
@@ -241,7 +293,11 @@ const IMGBB_UPLOAD_URL = 'https://api.imgbb.com/1/upload?key=' + IMGBB_API_KEY;
             uploadOneWorkpicFile(workpicSelectedFiles[i]).then(res => {
                 if (res && res.success) {
                     done++;
-                    workpicImages.unshift({ url: res.url, deleteUrl: res.deleteUrl, name: res.name });
+                    if (Array.isArray(res.images)) {
+                        workpicImages = res.images;
+                    } else {
+                        workpicImages.unshift({ url: res.url, name: res.name, time: Date.now() });
+                    }
                 } else {
                     failed++;
                 }
@@ -308,8 +364,27 @@ const IMGBB_UPLOAD_URL = 'https://api.imgbb.com/1/upload?key=' + IMGBB_API_KEY;
                 e.preventDefault(); e.stopPropagation();
                 const ok = window.confirm('এই ছবিটা গ্যালারি থেকে সরাতে চান? (' + (img.name || '') + ')');
                 if (!ok) return;
-                workpicImages.splice(idx, 1);
-                renderWorkpicGallery();
+
+                const deleteBtn = actions.querySelector('.wp-delete');
+                deleteBtn.disabled = true;
+
+                workpicBackendPost({
+                    password: workpicSessionPassword,
+                    action: 'delete',
+                    url: img.url
+                })
+                .then(result => {
+                    if (result && result.success && Array.isArray(result.images)) {
+                        workpicImages = result.images;
+                    } else {
+                        // fall back to local removal so the UI stays in sync
+                        workpicImages.splice(idx, 1);
+                    }
+                })
+                .catch(() => {
+                    workpicImages.splice(idx, 1);
+                })
+                .then(() => renderWorkpicGallery());
             });
 
             item.appendChild(link);

@@ -249,7 +249,7 @@ const WORKPIC_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyaP3hp
                 }
                 return { success: false, error: (res && res.error) || 'Upload failed' };
             })
-            .catch(() => ({ success: false, error: 'Network error' }));
+            .catch(err => ({ success: false, error: (err && err.message) || 'Network error' }));
     }
 
     workpicSendBtn.addEventListener('click', () => {
@@ -266,12 +266,12 @@ const WORKPIC_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyaP3hp
     });
 
     function startWorkpicUploadBatch() {
-        let done = 0, failed = 0;
+        let done = 0, failed = 0, lastError = '';
         function next(i) {
             if (i >= workpicSelectedFiles.length) {
                 workpicMsg.textContent = failed === 0
-                    ? `✅ ${done} টা ছবি imgbb-তে আপলোড হয়েছে!`
-                    : `✅ ${done} সফল, ❌ ${failed} ব্যর্থ`;
+                    ? `✅ ${done} টা ছবি আপলোড হয়েছে!`
+                    : `✅ ${done} সফল, ❌ ${failed} ব্যর্থ — ${lastError}`;
                 workpicMsg.className = failed === 0 ? 'admin-msg ok' : 'admin-msg err';
                 workpicSendBtn.disabled = false;
                 if (done > 0) renderWorkpicGallery();
@@ -300,6 +300,7 @@ const WORKPIC_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyaP3hp
                     }
                 } else {
                     failed++;
+                    lastError = (res && res.error) || 'অজানা এরর';
                 }
                 workpicDoneCount.textContent = done + failed;
                 workpicProgressFill.style.width = ((done + failed) / workpicSelectedFiles.length * 100) + '%';

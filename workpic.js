@@ -80,9 +80,7 @@ const WORKPIC_CACHE_PREFIX = 'workpicGalleryCache_v2_';
         function updateWorkpicLightbox() {
             const img = workpicImages[workpicLbIdx];
             if (!img) return;
-            const downloadUrl = img.source === 'imgbb'
-                ? img.url
-                : 'https://drive.google.com/uc?export=download&id=' + img.id;
+            const downloadUrl = 'https://drive.google.com/uc?export=download&id=' + img.id;
             wplbImg.src = img.url;
             wplbTitle.textContent = img.name || '';
             wplbCounter.textContent = (workpicLbIdx + 1) + ' / ' + workpicImages.length;
@@ -639,9 +637,7 @@ const WORKPIC_CACHE_PREFIX = 'workpicGalleryCache_v2_';
             });
 
             files.forEach((img) => {
-                const downloadUrl = img.source === 'imgbb'
-                    ? img.url
-                    : 'https://drive.google.com/uc?export=download&id=' + img.id;
+                const downloadUrl = 'https://drive.google.com/uc?export=download&id=' + img.id;
                 const isImage = (img.mimeType || '').startsWith('image/');
 
                 const item = document.createElement('div');
@@ -842,7 +838,7 @@ const WORKPIC_CACHE_PREFIX = 'workpicGalleryCache_v2_';
             function next(i) {
                 if (i >= workpicSelectedFiles.length) {
                     workpicMsg.textContent = failed === 0
-                        ? `✅ All ${done} file(s) uploaded successfully!`
+                        ? `✅ All ${done} file(s) uploaded to Drive successfully!`
                         : `✅ ${done} succeeded, ❌ ${failed} failed`;
                     workpicMsg.className = failed === 0 ? 'admin-msg ok' : 'admin-msg err';
                     workpicSendBtn.disabled = false;

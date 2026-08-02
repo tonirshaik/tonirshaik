@@ -1411,20 +1411,19 @@
         group: ['group', 'দলগত', 'গ্রুপ']
     };
 
-    // 🆕 Live upload-এ (Drive / ImgBB+GitHub) কোনো native "category" ফিল্ড
-    // নেই — ব্যাকএন্ড শুধু caption/names টেক্সট নেয় আর ফেরত দেয়। তাই
-    // Single/Dual/Group সিলেকশনটা admin-upload.js এই caption স্ট্রিং-এর
-    // শেষে একটা লুকানো মার্কার হিসেবে বসিয়ে পাঠায় (CATEGORY_MARKER),
-    // আর এখানে সেটা পার্স করে আসল নাম আর ক্যাটাগরি আলাদা করা হয়।
-    // দুই ফাইলেই এই একই কনস্ট্যান্ট থাকতে হবে।
+    // 🆕 ব্যাকএন্ড এখন প্রতিটা ছবির সাথে native "cat" ফিল্ড ফেরত দেয়
+    // (single/dual/group/"") — caption থেকে সম্পূর্ণ আলাদা। CATEGORY_MARKER
+    // আর decodeCaptionCategory() শুধু ব্যাকওয়ার্ড-কম্প্যাটিবিলিটির জন্য
+    // রাখা হয়েছে, যদি কোনো পুরনো টেস্ট এন্ট্রির caption-এ এখনো মার্কার
+    // বসানো থাকে (নতুন আপলোডে আর হবে না)।
     const CATEGORY_MARKER = '::cat::';
     function decodeCaptionCategory(rawCaption) {
         const raw = String(rawCaption == null ? '' : rawCaption);
         const idx = raw.indexOf(CATEGORY_MARKER);
-        if (idx === -1) return { names: raw.trim(), cat: 'uncategorized' };
+        if (idx === -1) return { names: raw.trim(), cat: null };
         const names = raw.slice(0, idx).trim();
         let cat = raw.slice(idx + CATEGORY_MARKER.length).trim().toLowerCase();
-        if (cat !== 'single' && cat !== 'dual' && cat !== 'group') cat = 'uncategorized';
+        if (cat !== 'single' && cat !== 'dual' && cat !== 'group') cat = null;
         return { names: names, cat: cat };
     }
 
@@ -1470,7 +1469,8 @@
     function liveImageToPhoto(img, idx) {
         const decoded = decodeCaptionCategory(img.caption);
         const caption = decoded.names;
-        const cat = decoded.cat;
+        let cat = String(img.cat || '').trim().toLowerCase();
+        if (cat !== 'single' && cat !== 'dual' && cat !== 'group') cat = decoded.cat || 'uncategorized';
         const sectionWords = SECTION_SEARCH_WORDS[cat] || [];
         return {
             // Grid/lightbox display: small, fast-loading thumbnail.

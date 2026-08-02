@@ -14,10 +14,16 @@
    won't show older uploads — only what you upload in this visit).
    ============================================================ */
 
-// Apps Script backend (Code.gs) — handles password check, uploads the
-// image to imgbb server-side (so the imgbb API key never reaches the
-// browser), and saves the gallery list permanently to a GitHub file.
+// Apps Script backend (Code.gs) — handles password check and saves the
+// gallery list permanently to a file in your GitHub repo.
 const WORKPIC_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyaP3hpU471aMaRTHaJo5yG5MqG4EyaR8U4Yo1pyrmU-YleGRXfwOMpac8QXyNx5u1Mlw/exec';
+
+// imgbb API key — the image itself is uploaded straight from the browser
+// (imgbb blocks server/cloud-originated uploads like Apps Script's, so this
+// can't be proxied). Only the resulting url/name is then saved via the
+// Apps Script backend above.
+const IMGBB_API_KEY = 'fbf9f03772f70e689d52d28b0a0afc86';
+const IMGBB_UPLOAD_URL = 'https://api.imgbb.com/1/upload?key=' + IMGBB_API_KEY;
 
 (function () {
     const navWorkPicLink       = document.getElementById('navWorkPicLink');
@@ -219,37 +225,46 @@ const WORKPIC_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyaP3hp
     });
 
     // ------------------------------------------------------------
-    // Upload — file goes to Apps Script as base64; the backend uploads
-    // it to imgbb (key stays server-side) and saves it to GitHub in
-    // one round trip.
+    // Upload — image goes straight from the browser to imgbb (imgbb
+    // blocks cloud/server-originated uploads, so this can't run inside
+    // Apps Script). Once we have the imgbb url, it's saved to GitHub
+    // via the Apps Script backend.
     // ------------------------------------------------------------
-    function fileToBase64_(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => {
-                const result = String(reader.result || '');
-                resolve(result.split(',')[1] || ''); // strip "data:image/...;base64,"
-            };
-            reader.onerror = () => reject(new Error('File read failed'));
-            reader.readAsDataURL(file);
-        });
-    }
-
     function uploadOneWorkpicFile(file) {
-        return fileToBase64_(file)
-            .then(base64 => workpicBackendPost({
+        const form = new FormData();
+        form.append('image', file);
+
+        return fetch(IMGBB_UPLOAD_URL, {
+            method: 'POST',
+            body: form
+        })
+        .then(r => r.json())
+        .then(res => {
+            if (res && res.success && res.data && res.data.url) {
+                return {
+                    success: true,
+                    url: res.data.url,
+                    name: res.data.title || file.name || 'work-pic'
+                };
+            }
+            return { success: false, error: (res && res.error && res.error.message) || 'imgbb upload failed' };
+        })
+        .then(res => {
+            if (!res.success) return res;
+            // save the new entry to GitHub via the backend (default action = add)
+            return workpicBackendPost({
                 password: workpicSessionPassword,
-                action: 'upload',
-                image: base64,
-                name: file.name || 'work-pic'
-            }))
-            .then(res => {
-                if (res && res.success) {
-                    return { success: true, url: res.url, name: res.name, images: res.images };
+                url: res.url,
+                name: res.name
+            }).then(saveRes => {
+                if (saveRes && saveRes.success && Array.isArray(saveRes.images)) {
+                    return { success: true, url: res.url, name: res.name, images: saveRes.images };
                 }
-                return { success: false, error: (res && res.error) || 'Upload failed' };
-            })
-            .catch(err => ({ success: false, error: (err && err.message) || 'Network error' }));
+                // imgbb upload succeeded but saving failed — still show it locally
+                return { success: true, url: res.url, name: res.name };
+            }).catch(() => ({ success: true, url: res.url, name: res.name }));
+        })
+        .catch(err => ({ success: false, error: (err && err.message) || 'Network error' }));
     }
 
     workpicSendBtn.addEventListener('click', () => {

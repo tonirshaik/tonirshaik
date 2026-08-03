@@ -37,7 +37,6 @@
     <meta property="og:description" content="Tonir Shaik's official photo gallery — all photos, albums, and updates in one place.">
     <meta property="og:url" content="https://tonirshaik.github.io/tonirshaik/">
     <meta property="og:locale" content="bn_BD">
-    <meta property="og:site_name" content="Tonir Shaik Official Gallery">
 
     
     <meta name="twitter:card" content="summary">
@@ -94,7 +93,6 @@
         button,
         .nav-links a,
         .filter-btn,
-        .load-more-btn,
         .admin-btn,
         .admin-btn-secondary,
         .lb-dl,
@@ -112,7 +110,6 @@
         .nav-links a:hover,
         .filter-btn:hover,
         .filter-btn.active,
-        .load-more-btn:hover,
         .admin-btn:hover,
         .admin-btn-secondary:hover,
         .lb-dl:hover,
@@ -132,11 +129,10 @@
         }
         .photo-item:hover {
             box-shadow:
-                0 0 0 1px rgba(63,168,255,0.65),
-                0 0 30px 6px rgba(63,168,255,0.55),
-                0 0 70px 14px rgba(63,168,255,0.30),
-                0 22px 40px rgba(0,0,0,0.55);
-            transform: translateY(-8px) scale(1.035);
+                0 0 0 1px rgba(63,168,255,0.42),
+                0 0 18px 4px rgba(63,168,255,0.33),
+                0 0 42px 8px rgba(63,168,255,0.18),
+                0 22px 40px rgba(0,0,0,0.48);
             z-index: 2;
         }
         .strip-item {
@@ -158,7 +154,7 @@
             100% { background-position: 0% 50%; }
         }
         .photo-item:hover::before {
-            opacity: 1;
+            opacity: 0.6;
         }
         .photo-item::before {
             content: '';
@@ -167,20 +163,21 @@
             border-radius: 6px;
             background: linear-gradient(135deg, #3FA8FF, #0040ff, #7FCBFF, #00c3ff, #3FA8FF);
             background-size: 300% 300%;
-            animation: neon-border-run 2.5s linear infinite;
+            background-position: 0% 50%;
             z-index: -1;
             opacity: 0;
             transition: opacity 0.35s ease;
         }
-        .photo-item:hover::before { opacity: 1; }
+        .photo-item:hover::before { opacity: 0.6; }
 
         nav {
             position: fixed; top: 0; left: 0; right: 0; z-index: 100;
             padding: 16px 40px;
             display: flex; justify-content: space-between; align-items: center;
             background: rgba(5, 10, 22, 0.72);
-            backdrop-filter: blur(10px) saturate(1.3);
-            -webkit-backdrop-filter: blur(10px) saturate(1.3);
+            backdrop-filter: blur(3px) saturate(1.3);
+            -webkit-backdrop-filter: blur(3px) saturate(1.3);
+            will-change: transform;
             border-bottom: 1px solid rgba(63,168,255,0.18);
             box-shadow: 0 4px 30px rgba(63,168,255,0.08), 0 1px 0 rgba(63,168,255,0.15);
         }
@@ -234,22 +231,126 @@
             transform: translateY(-2px) scale(1.03);
         }
 
-        .section-header { text-align: center; padding: 40px 20px 28px; }
+        .nav-links li.nav-hidden-btn { display: none; }
+
+        .nav-hamburger {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+            width: 38px;
+            height: 38px;
+            margin-left: 18px;
+            background: rgba(63,168,255,0.06);
+            border: 1px solid rgba(63,168,255,0.3);
+            border-radius: 6px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .nav-hamburger span {
+            display: block;
+            width: 18px;
+            height: 2px;
+            background: var(--gold-light);
+            border-radius: 2px;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+        .nav-hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+        .nav-hamburger.open span:nth-child(2) { opacity: 0; }
+        .nav-hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+        .side-drawer-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 199;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.05s linear;
+        }
+        .side-drawer-overlay.open { opacity: 1; pointer-events: auto; }
+
+        .side-drawer {
+            position: fixed;
+            top: 74px; right: 24px;
+            width: 300px;
+            max-width: 86vw;
+            background: rgba(6,11,20,0.99);
+            border: 1px solid rgba(63,168,255,0.25);
+            border-radius: 10px;
+            box-shadow: 0 0 0 1px rgba(63,168,255,0.15), 0 20px 60px rgba(0,0,0,0.6), 0 0 40px rgba(63,168,255,0.15);
+            z-index: 200;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.05s linear;
+            display: flex;
+            flex-direction: column;
+            padding: 24px 22px;
+        }
+        .side-drawer.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .side-drawer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+        .side-drawer-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 20px; font-weight: 600; color: #fff;
+        }
+        .side-drawer-title span { color: var(--gold); }
+        .side-drawer-close {
+            background: none; border: none; color: var(--muted);
+            font-size: 24px; line-height: 1; cursor: pointer;
+        }
+        .side-drawer-close:hover { color: var(--gold); }
+
+        .side-drawer-links {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            list-style: none;
+        }
+        .side-drawer-links a {
+            display: flex; align-items: center; justify-content: center;
+            padding: 14px 18px;
+            border: 1px solid rgba(63,168,255,0.3);
+            border-radius: 4px;
+            font-size: 12px; letter-spacing: 0.15em; text-transform: uppercase;
+            color: var(--muted); text-decoration: none;
+        }
+        .side-drawer-links a:hover { color: var(--gold); }
+
+        .section-header { text-align: center; padding: 64px 20px 28px; }
         .section-eyebrow {
-            font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase;
-            color: var(--gold); margin-bottom: 16px;
+            font-size: 13px; font-weight: 600; letter-spacing: 0.35em; text-transform: uppercase;
+            color: var(--gold-light); margin-bottom: 18px;
+            text-shadow: 0 0 10px rgba(63,168,255,0.35);
         }
         .section-title {
             font-family: 'Cormorant Garamond', serif;
             font-size: clamp(36px, 5vw, 56px); font-weight: 300;
             color: #fff; line-height: 1.1;
+            margin-top: 14px;
         }
         .section-title em { font-style: italic; color: var(--gold-light); }
-        .section-rule {
-            width: 48px; height: 1px;
-            background: var(--gold); opacity: 0.4;
-            margin: 20px auto 0;
+        .section-rule { display: none; }
+        .section-official-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 26px;
+            padding: 8px 20px;
+            border: 1px solid rgba(63,168,255,0.3);
+            border-radius: 4px;
+            font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase;
+            color: var(--muted); text-decoration: none;
         }
+        .section-official-btn:hover { color: var(--gold); }
 
         .search-wrap {
             display: flex; flex-direction: column; align-items: center;
@@ -460,14 +561,14 @@
 
         .gallery-section { padding: 0 24px 80px; max-width: 1400px; margin: 0 auto; }
 
+        /* 🆕 আগে এটা CSS grid ছিল। এখন virtualized rendering-এর জন্য
+           position:relative container — প্রতিটা .photo-item এখন JS দিয়ে
+           absolute-positioned, শুধু viewport-এর কাছে যেগুলো আছে সেগুলোই
+           DOM-এ থাকে (দেখুন computeVirtualLayout/reconcileVirtualWindow)। */
         .masonry {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
+            position: relative;
+            width: 100%;
         }
-        @media (max-width: 1100px) { .masonry { grid-template-columns: repeat(3, 1fr); } }
-        @media (max-width: 700px) { .masonry { grid-template-columns: repeat(2, 1fr); } }
-        @media (max-width: 400px) { .masonry { grid-template-columns: 1fr; } }
 
         .photo-item {
             position: relative; border-radius: 4px; overflow: hidden;
@@ -478,9 +579,7 @@
         .photo-item img {
             width: 100%; height: 100%; display: block;
             object-fit: cover;
-            transition: transform 0.6s cubic-bezier(0.25,0.46,0.45,0.94);
         }
-        .photo-item:hover img { transform: scale(1.04); }
         .photo-overlay {
             position: absolute; inset: 0;
             background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 50%);
@@ -517,27 +616,8 @@
         body.admin-mode .edit-tag-btn { display: flex; }
         .edit-tag-btn:hover { background: #3FA8FF !important; color: #fff !important; border-color: #3FA8FF !important; }
 
-        .load-more-wrap {
-            display: flex; justify-content: center;
-            margin-top: 40px;
-        }
-        .load-more-btn {
-            font-size: 12px; font-weight: 500;
-            letter-spacing: 0.15em; text-transform: uppercase;
-            color: var(--gold); background: transparent;
-            border: 1px solid var(--border);
-            padding: 14px 40px; border-radius: 2px;
-            cursor: pointer; transition: background 0.3s, color 0.3s;
-        }
-        .load-more-btn:hover { background: var(--gold); color: #000; }
-        .load-more-count {
-            display: block; margin-top: 10px;
-            text-align: center;
-            font-size: 11px; color: var(--muted);
-            letter-spacing: 0.08em;
-        }
-
         .featured-strip {
+            display: none !important;
             padding: 80px 0; overflow: hidden;
             border-top: 1px solid var(--border);
             border-bottom: 1px solid var(--border);
@@ -998,18 +1078,33 @@
 <nav>
     <a href="#" class="nav-logo">Tonir <span>Shaik</span></a>
     <ul class="nav-links">
-        <li class="chase-wrap"><a href="#" id="navGalleryLink" class="nav-chase-btn nav-premium"><span class="pl">U</span><span class="pl">p</span><span class="pl">l</span><span class="pl">o</span><span class="pl">a</span><span class="pl">d</span></a>
+        <li class="chase-wrap nav-hidden-btn"><a href="#" id="navGalleryLink" class="nav-chase-btn nav-premium"><span class="pl">U</span><span class="pl">p</span><span class="pl">l</span><span class="pl">o</span><span class="pl">a</span><span class="pl">d</span></a>
         </li>
-        <li><a href="#" id="navWorkPicLink" class="nav-shine-btn">Work Pic</a></li>
-        <li><a href="https://tonirshaik.github.io/tonirshaik_web/" target="_blank" class="nav-shine-btn">Official Site</a></li>
+        <li class="nav-hidden-btn"><a href="#" id="navWorkPicLink" class="nav-shine-btn">Work Pic</a></li>
+        <li class="nav-hidden-btn"><a href="https://tonirshaik.github.io/tonirshaik_web/" target="_blank" class="nav-shine-btn">Official Site</a></li>
     </ul>
+    <button class="nav-hamburger" id="navHamburgerBtn" aria-label="Open menu">
+        <span></span><span></span><span></span>
+    </button>
 </nav>
+
+<div class="side-drawer-overlay" id="sideDrawerOverlay"></div>
+<div class="side-drawer" id="sideDrawer">
+    <div class="side-drawer-header">
+        <div class="side-drawer-title">Tonir <span>Shaik</span></div>
+        <button class="side-drawer-close" id="sideDrawerClose" aria-label="Close menu">&times;</button>
+    </div>
+    <ul class="side-drawer-links">
+        <li><a href="#" id="sideGalleryLink">Upload</a></li>
+        <li><a href="#" id="sideWorkPicLink">Work Pic</a></li>
+    </ul>
+</div>
 
 <section id="gallery">
     <div class="section-header reveal">
-        <p class="section-eyebrow">Portfolio</p>
-        <h2 class="section-title">Photo <em>Gallery</em></h2>
+                <h2 class="section-title">Photo <em>Gallery</em></h2>
         <div class="section-rule"></div>
+        <a href="https://tonirshaik.github.io/tonirshaik_web/" target="_blank" class="section-official-btn">Official Site</a>
     </div>
 
     <div class="stats-row reveal">
@@ -1062,13 +1157,6 @@
             Loading gallery…
         </div>
         <div class="masonry" id="masonry" style="display:none;"></div>
-
-        <div class="load-more-wrap reveal" id="loadMoreWrap" style="display:none;">
-            <div style="text-align:center;">
-                <button class="load-more-btn" id="loadMoreBtn">Load More</button>
-                <span class="load-more-count" id="loadMoreCount"></span>
-            </div>
-        </div>
     </div>
 </section>
 
@@ -1371,17 +1459,27 @@
 
 <script>
     const CATEGORY_LABELS = { single: 'Single', dual: 'Dual', group: 'Group' };
-    const PAGE_SIZE = 16;
 
     let allPhotos = [];
     let currentList = [];
-    let visibleCount = 0;
     let currentIdx = 0;
     let activeFilter = 'all';
     let searchQuery = '';
 
     const csvUrl = 'https://raw.githubusercontent.com/tonirshaik/tonirshaik/refs/heads/main/Tonir%20photo%20Link.txt';
     const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyLRiJ9ueiqnc7kYc188HTg41wJNF3W1eighA2WA7xq9nUfMTJflzefxdXsrjIHOgXiLw/exec';
+
+    // 🆕 Google Apps Script কখনো কখনো (cold start-এ) অনেক দেরি করে বা
+    // hang করে থাকে — তাই কোনো fetch যাতে অনির্দিষ্টকাল অপেক্ষা না করে,
+    // একটা টাইমআউট বসানো হলো (ডিফল্ট ৮ সেকেন্ড)। সময় শেষ হলে fetch
+    // reject হবে, আর caller-দের existing .catch() স্বাভাবিকভাবেই সেটা
+    // handle করবে (যেমন cache/fallback দেখানো)।
+    function fetchWithTimeout(url, options, timeoutMs) {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), timeoutMs || 8000);
+        const opts = Object.assign({}, options, { signal: controller.signal });
+        return fetch(url, opts).finally(() => clearTimeout(timer));
+    }
 
     function getDriveFileId(url) {
         let m = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
@@ -1395,11 +1493,17 @@
         return /drive\.google\.com/.test(url);
     }
 
+    // 🆕 সব Drive thumbnail এখন সরাসরি drive.google.com-এর বদলে আমাদের
+    // নিজস্ব Cloudflare Worker (image-proxy-worker.js) দিয়ে সার্ভ হয়।
+    // প্রতিটা ছবি একবার fetch হয়ে Cloudflare edge-এ ৩০ দিন cache থাকে,
+    // ফলে হাজার হাজার ছবি লোড হলেও Drive বারবার হিট হয়ে throttle হয় না।
+    const IMAGE_PROXY_BASE = 'https://tonir-image-proxy.tonirshaik.workers.dev';
+
     function toRenderableUrl(url, size) {
         if (isGoogleDriveUrl(url)) {
             const id = getDriveFileId(url);
             if (id) {
-                return 'https://drive.google.com/thumbnail?id=' + id + '&sz=w' + (size || 1000);
+                return IMAGE_PROXY_BASE + '/img?id=' + id + '&sz=w' + (size || 1000);
             }
         }
         return url;
@@ -1461,6 +1565,7 @@
 
                 photos.push({
                     url: toRenderableUrl(url, 1000),
+                    thumbUrl: toRenderableUrl(url, 200),
                     rawUrl: url,
                     downloadUrl: toDownloadUrl(url),
                     idx: idx,
@@ -1483,8 +1588,9 @@
         if (cat !== 'single' && cat !== 'dual' && cat !== 'group') cat = decoded.cat || 'uncategorized';
         const sectionWords = SECTION_SEARCH_WORDS[cat] || [];
         return {
-            // Grid/lightbox display: small, fast-loading thumbnail.
+            // Grid display: small, fast-loading thumbnail.
             url: toRenderableUrl(img.url, 1000),
+            thumbUrl: toRenderableUrl(img.url, 200),
             rawUrl: img.url,
             // Download button: full-quality original file, not the thumbnail.
             downloadUrl: toDownloadUrl(img.url),
@@ -1500,7 +1606,7 @@
     }
 
     function fetchLiveUploads() {
-        return fetch(APPS_SCRIPT_URL)
+        return fetchWithTimeout(APPS_SCRIPT_URL, {}, 8000)
             .then(r => r.json())
             .then(res => (res && res.success && Array.isArray(res.images)) ? res.images : [])
             .catch(() => []);
@@ -1580,18 +1686,44 @@
         }
     });
 
-    const imgObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                const img = entry.target;
-                if (img.dataset.src) {
-                    img.src = img.dataset.src;
-                    img.removeAttribute('data-src');
-                }
-                imgObserver.unobserve(img);
-            }
-        });
-    }, { rootMargin: '300px 0px' });
+    // =====================================================================
+    // 🆕 VIRTUALIZED GRID — শুধু viewport + বাফার-এর ছবিগুলোই DOM-এ থাকে
+    // -----------------------------------------------------------------
+    // আগে "Load More"-এ ১৬টা করে ছবি DOM-এ *যোগ* হতো, কমতো না — হাজার
+    // হাজার ছবিতে DOM ভারী হয়ে ব্রাউজার স্লো হয়ে যেত। এখন প্রতিটা ছবির
+    // aspect-ratio সমান (3:4) হওয়ায় প্রতিটা row-এর উচ্চতা predictable,
+    // তাই পুরো গ্রিডের row/column গণিত করে শুধু scroll-এর কাছাকাছি
+    // থাকা ছবিগুলোই real DOM node হিসেবে বসানো হয় (absolute position
+    // দিয়ে), বাকি জায়গাটা masonry container-এর height দিয়ে reserve করা
+    // থাকে — scrollbar স্বাভাবিক আচরণ করে, কিন্তু DOM সবসময় হালকা থাকে।
+    // =====================================================================
+
+    const GRID_GAP = 16;
+    const BUFFER_ROWS = 3; // viewport-এর উপরে/নিচে অতিরিক্ত কয়েক সারি রেন্ডার করা থাকে, যাতে দ্রুত scroll করলেও ফাঁকা না দেখায়
+
+    const renderedItems = new Map(); // photo.idx -> DOM element (বর্তমানে DOM-এ যা আছে)
+    let virtualPhotos = [];          // বর্তমানে layout করা তালিকা (currentList-এর সাথে মিরর করা)
+    let virtualLayout = { columns: 4, itemWidth: 0, itemHeight: 0, rowHeight: 0, totalRows: 0 };
+
+    function getColumnCount() {
+        const w = window.innerWidth;
+        if (w <= 400) return 1;
+        if (w <= 700) return 2;
+        if (w <= 1100) return 3;
+        return 4;
+    }
+
+    function computeVirtualLayout() {
+        const masonry = document.getElementById('masonry');
+        const containerWidth = masonry.clientWidth || masonry.parentElement.clientWidth || window.innerWidth;
+        const columns = getColumnCount();
+        const itemWidth = (containerWidth - GRID_GAP * (columns - 1)) / columns;
+        const itemHeight = itemWidth * 4 / 3; // aspect-ratio 3 / 4 (width : height)
+        const rowHeight = itemHeight + GRID_GAP;
+        const totalRows = Math.ceil(virtualPhotos.length / columns);
+        masonry.style.height = totalRows > 0 ? (totalRows * rowHeight - GRID_GAP) + 'px' : '0px';
+        virtualLayout = { columns, itemWidth, itemHeight, rowHeight, totalRows };
+    }
 
     function attachImgFallback(imgEl, photo) {
         let triedFallback = false;
@@ -1608,89 +1740,146 @@
             }
             const item = imgEl.closest('.photo-item, .strip-item');
             if (item) {
-                item.remove();
                 if (item.classList.contains('photo-item')) {
+                    renderedItems.delete(photo.idx);
                     const countEl = document.getElementById('photoCount');
                     if (countEl) {
                         const n = parseInt(countEl.textContent, 10);
                         if (!isNaN(n) && n > 0) countEl.textContent = n - 1;
                     }
                 }
+                item.remove();
             }
         });
     }
 
-    function renderGallery(photos, reset) {
-        const masonry = document.getElementById('masonry');
-        if (reset) { masonry.innerHTML = ''; visibleCount = 0; }
-        const start = visibleCount;
-        const end = Math.min(visibleCount + PAGE_SIZE, photos.length);
-        const slice = photos.slice(start, end);
-        slice.forEach((p, i) => {
-            const item = document.createElement('div');
-            item.className = 'photo-item reveal';
-            item.dataset.cat = p.cat;
-            const placeholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 3 4'%3E%3Crect width='3' height='4' fill='%230A1220'/%3E%3C/svg%3E";
-            item.innerHTML = `
-                <img data-src="${p.url}" src="${placeholder}" alt="${p.title}" style="background:#0A1220;">
-                <div class="photo-overlay">
-                    <div class="photo-meta">
-                        <div class="photo-tag">${CATEGORY_LABELS[p.cat] || ''}</div>
-                        <div class="photo-title">${p.title}</div>
-                    </div>
-                    <div class="photo-actions">
-                        <button class="photo-action-btn" title="Download" onclick="dlImg('${p.downloadUrl}','Tonir-${p.idx + 1}.jpg');event.stopPropagation()">
-                            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v11"/><path d="M7.5 10.5L12 15l4.5-4.5"/><path d="M5 20h14"/></svg>
-                        </button>
-                        <button class="photo-action-btn" title="Share" onclick="shareImg('${p.downloadUrl}','Tonir-${p.idx + 1}.jpg','${(p.title || 'Tonir Shaik').replace(/'/g, "\\'")}');event.stopPropagation()">
-                            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5.5" r="2.4"/><circle cx="6" cy="12" r="2.4"/><circle cx="18" cy="18.5" r="2.4"/><path d="M8.2 10.6l7.5-4.1"/><path d="M8.2 13.4l7.5 4.1"/></svg>
-                        </button>
-                        <button class="photo-action-btn edit-tag-btn" title="Edit tags" onclick="event.stopPropagation();openEditTagsByIdx(${p.idx})">
-                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-                        </button>
-                        ${p.fileId
-                            ? `<button class="photo-action-btn delete-btn" title="Delete" onclick="event.stopPropagation();deletePhotoConfirm('${p.fileId}', this, '${p.acc || 'self'}')">×</button>`
-                            : `<button class="photo-action-btn delete-btn" title="Delete" onclick="event.stopPropagation();deleteTextPhotoConfirm('${p.rawUrl.replace(/'/g, "\\'")}', this)">×</button>`}
-                    </div>
-                </div>`;
-            item.addEventListener('click', () => openLightbox(p.idx));
-            masonry.appendChild(item);
-            const imgEl = item.querySelector('img');
-            attachImgFallback(imgEl, p);
-            imgObserver.observe(imgEl);
-            setTimeout(() => item.classList.add('visible'), i * 40);
-        });
-        visibleCount = end;
-        updateLoadMoreUI(photos);
+    function createPhotoElement(p) {
+        const item = document.createElement('div');
+        item.className = 'photo-item reveal';
+        item.dataset.cat = p.cat;
+        item.innerHTML = `
+            <img src="${p.thumbUrl || p.url}" alt="${p.title}" loading="lazy" style="background:#0A1220;">
+            <div class="photo-overlay">
+                <div class="photo-meta">
+                    <div class="photo-tag">${CATEGORY_LABELS[p.cat] || ''}</div>
+                    <div class="photo-title">${p.title}</div>
+                </div>
+                <div class="photo-actions">
+                    <button class="photo-action-btn" title="Download" onclick="dlImg('${p.downloadUrl}','Tonir-${p.idx + 1}.jpg');event.stopPropagation()">
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v11"/><path d="M7.5 10.5L12 15l4.5-4.5"/><path d="M5 20h14"/></svg>
+                    </button>
+                    <button class="photo-action-btn" title="Share" onclick="shareImg('${p.downloadUrl}','Tonir-${p.idx + 1}.jpg','${(p.title || 'Tonir Shaik').replace(/'/g, "\\'")}');event.stopPropagation()">
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5.5" r="2.4"/><circle cx="6" cy="12" r="2.4"/><circle cx="18" cy="18.5" r="2.4"/><path d="M8.2 10.6l7.5-4.1"/><path d="M8.2 13.4l7.5 4.1"/></svg>
+                    </button>
+                    <button class="photo-action-btn edit-tag-btn" title="Edit tags" onclick="event.stopPropagation();openEditTagsByIdx(${p.idx})">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                    </button>
+                    ${p.fileId
+                        ? `<button class="photo-action-btn delete-btn" title="Delete" onclick="event.stopPropagation();deletePhotoConfirm('${p.fileId}', this, '${p.acc || 'self'}')">×</button>`
+                        : `<button class="photo-action-btn delete-btn" title="Delete" onclick="event.stopPropagation();deleteTextPhotoConfirm('${p.rawUrl.replace(/'/g, "\\'")}', this)">×</button>`}
+                </div>
+            </div>`;
+        item.addEventListener('click', () => openLightbox(p.idx));
+        attachImgFallback(item.querySelector('img'), p);
+        return item;
     }
 
-    function updateLoadMoreUI(photos) {
-        const wrap = document.getElementById('loadMoreWrap');
-        const countLabel = document.getElementById('loadMoreCount');
-        if (visibleCount >= photos.length) {
-            wrap.style.display = 'none';
-        } else {
-            wrap.style.display = 'flex';
-            wrap.classList.add('visible');
-            countLabel.textContent = visibleCount + ' / ' + photos.length + ' shown';
+    function positionItem(el, index) {
+        const { columns, itemWidth, itemHeight, rowHeight } = virtualLayout;
+        const row = Math.floor(index / columns);
+        const col = index % columns;
+        el.style.position = 'absolute';
+        el.style.left = (col * (itemWidth + GRID_GAP)) + 'px';
+        el.style.top = (row * rowHeight) + 'px';
+        el.style.width = itemWidth + 'px';
+        el.style.height = itemHeight + 'px';
+    }
+
+    function reconcileVirtualWindow() {
+        const masonry = document.getElementById('masonry');
+        const { rowHeight, totalRows, columns } = virtualLayout;
+
+        if (!rowHeight || totalRows === 0) {
+            renderedItems.forEach(el => el.remove());
+            renderedItems.clear();
+            return;
+        }
+
+        const rect = masonry.getBoundingClientRect();
+        const scrolledIntoMasonry = -rect.top; // masonry container-এর ভেতরে কতটা scroll হয়েছে
+        const viewportHeight = window.innerHeight;
+
+        let startRow = Math.floor(scrolledIntoMasonry / rowHeight) - BUFFER_ROWS;
+        let endRow = Math.ceil((scrolledIntoMasonry + viewportHeight) / rowHeight) + BUFFER_ROWS;
+        startRow = Math.max(0, startRow);
+        endRow = Math.min(totalRows, endRow);
+
+        const startIdx = startRow * columns;
+        const endIdx = Math.min(endRow * columns, virtualPhotos.length);
+
+        // viewport-window এর বাইরে চলে যাওয়া node সরিয়ে ফেলা (DOM হালকা রাখতে)
+        for (const [index, el] of renderedItems) {
+            if (index < startIdx || index >= endIdx) {
+                el.remove();
+                renderedItems.delete(index);
+            }
+        }
+
+        // window-এর ভেতরে থাকা কিন্তু এখনো DOM-এ নেই এমন ছবি যোগ করা
+        for (let i = startIdx; i < endIdx; i++) {
+            if (renderedItems.has(i)) continue;
+            const p = virtualPhotos[i];
+            if (!p) continue;
+            const el = createPhotoElement(p);
+            positionItem(el, i);
+            masonry.appendChild(el);
+            renderedItems.set(i, el);
+            requestAnimationFrame(() => el.classList.add('visible'));
         }
     }
 
-    document.getElementById('loadMoreBtn').addEventListener('click', () => {
-        renderGallery(currentList, false);
+    let virtualUpdateScheduled = false;
+    function scheduleVirtualUpdate() {
+        if (virtualUpdateScheduled) return;
+        virtualUpdateScheduled = true;
+        requestAnimationFrame(() => {
+            virtualUpdateScheduled = false;
+            reconcileVirtualWindow();
+        });
+    }
+
+    function resetVirtualGallery(photos) {
+        virtualPhotos = photos;
+        renderedItems.forEach(el => el.remove());
+        renderedItems.clear();
+        computeVirtualLayout();
+        reconcileVirtualWindow();
+    }
+
+    window.addEventListener('scroll', scheduleVirtualUpdate, { passive: true });
+
+    let virtualResizeTimer = null;
+    window.addEventListener('resize', () => {
+        clearTimeout(virtualResizeTimer);
+        virtualResizeTimer = setTimeout(() => {
+            computeVirtualLayout(); // কলাম সংখ্যা বদলাতে পারে (breakpoint), তাই layout নতুন করে গণনা
+            renderedItems.forEach(el => el.remove());
+            renderedItems.clear();
+            reconcileVirtualWindow();
+        }, 150);
     });
 
+    // ব্যাকওয়ার্ড-কম্প্যাটিবল নাম — showGallery() ও applyFiltersAndSearch()
+    // আগের মতোই renderGallery(currentList, true) কল করে, তাই ওই দুই জায়গায়
+    // কিছু বদলাতে হয়নি।
+    function renderGallery(photos, reset) {
+        if (reset) resetVirtualGallery(photos);
+    }
+
     function buildStrip(photos) {
-        const track = document.getElementById('stripTrack');
-        const stripSource = photos.length > 40 ? photos.slice(0, 40) : photos;
-        const doubled = [...stripSource, ...stripSource];
-        track.innerHTML = doubled.map(p =>
-            `<div class="strip-item"><img src="${p.url}" alt="" loading="lazy" onerror="this.onerror=null;${isGoogleDriveUrl(p.rawUrl) ? '' : ''}"></div>`
-        ).join('');
-        // Attach fallback handlers for the strip images too.
-        const stripImgs = track.querySelectorAll('img');
-        doubled.forEach((p, i) => attachImgFallback(stripImgs[i], p));
-        document.getElementById('stripSection').style.display = 'block';
+        // নিচের ছবির স্লাইডার বন্ধ করে দেওয়া হয়েছে (পারফরম্যান্সের জন্য) —
+        // তাই এই ফাংশন আর কিছু করে না।
+        return;
     }
 
     // Recomputes currentList from allPhotos using both the active category
@@ -1953,10 +2142,53 @@
     }, { threshold: 0.1 });
     document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
+    (function() {
+        const hamburgerBtn = document.getElementById('navHamburgerBtn');
+        const drawer = document.getElementById('sideDrawer');
+        const overlay = document.getElementById('sideDrawerOverlay');
+        const closeBtn = document.getElementById('sideDrawerClose');
+
+        function openDrawer() {
+            drawer.classList.add('open');
+            overlay.classList.add('open');
+            hamburgerBtn.classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeDrawer() {
+            drawer.classList.remove('open');
+            overlay.classList.remove('open');
+            hamburgerBtn.classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
+        hamburgerBtn.addEventListener('click', () => {
+            if (drawer.classList.contains('open')) closeDrawer();
+            else openDrawer();
+        });
+        closeBtn.addEventListener('click', closeDrawer);
+        overlay.addEventListener('click', closeDrawer);
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') closeDrawer();
+        });
+
+        document.getElementById('sideGalleryLink').addEventListener('click', (e) => {
+            e.preventDefault();
+            closeDrawer();
+            document.getElementById('navGalleryLink').click();
+        });
+        document.getElementById('sideWorkPicLink').addEventListener('click', (e) => {
+            e.preventDefault();
+            closeDrawer();
+            document.getElementById('navWorkPicLink').click();
+        });
+    })();
+
     </script>
-    <script src="admin-upload.js"></script>
     <script>
 
+    // 3D টিল্ট ইফেক্ট বন্ধ করে দেওয়া হয়েছে যাতে ছবিতে ক্লিক/হোভার করলে
+    // ছবিগুলো নড়াচড়া বা ঘোরাঘুরি না করে।
+    /*
     (function() {
         function applyTilt(card) {
             if (card._tiltBound) return;
@@ -2008,9 +2240,55 @@
         const observer = new MutationObserver(bindAll);
         observer.observe(document.getElementById('masonry') || document.body, { childList: true, subtree: true });
     })();
+    */
 
-    
     </script>
-    <script src="workpic.js"></script>
+    <script>
+    // 🆕 admin-upload.js ও workpic.js — এই দুইটা ফাইল শুধু admin/owner-এর
+    // কাজে লাগে (password-protected upload/dashboard), কিন্তু আগে প্রতিটা
+    // সাধারণ visitor-ও এগুলো ডাউনলোড করত। এখন এগুলো "lazy" — শুধুমাত্র
+    // "Upload" বা "Work Pic" লিংকে প্রথমবার ক্লিক করলে তখন ডাউনলোড হয়।
+    // capture-phase-এ handler বসিয়ে আসল script লোড হওয়ার আগেই ক্লিক ধরে
+    // ফেলা হয়, script লোড শেষ হলে সেই handler সরিয়ে আবার click() dispatch
+    // করা হয় — তখন script-এর নিজস্ব listener (যেটা এখন attach হয়ে গেছে)
+    // স্বাভাবিকভাবেই কাজ করে, ঠিক যেন প্রথম ক্লিকেই সরাসরি কাজ করেছে।
+    (function () {
+        function lazyLoadOnFirstClick(linkId, scriptSrc) {
+            const link = document.getElementById(linkId);
+            if (!link) return;
+            let loading = false;
+            let loaded = false;
+
+            function handler(e) {
+                if (loaded) return;
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                if (loading) return;
+                loading = true;
+                const prevCursor = link.style.cursor;
+                link.style.cursor = 'wait';
+
+                const script = document.createElement('script');
+                script.src = scriptSrc;
+                script.onload = function () {
+                    loaded = true;
+                    link.style.cursor = prevCursor;
+                    link.removeEventListener('click', handler, true);
+                    link.click(); // এখন script-এর real listener এটা ধরবে
+                };
+                script.onerror = function () {
+                    loading = false;
+                    link.style.cursor = prevCursor;
+                };
+                document.body.appendChild(script);
+            }
+
+            link.addEventListener('click', handler, true);
+        }
+
+        lazyLoadOnFirstClick('navGalleryLink', 'admin-upload.js');
+        lazyLoadOnFirstClick('navWorkPicLink', 'workpic.js');
+    })();
+    </script>
 </body>
 </html>

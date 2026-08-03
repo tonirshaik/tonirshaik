@@ -91,18 +91,30 @@ const IMGBB_UPLOAD_URL = 'https://api.imgbb.com/1/upload?key=' + IMGBB_API_KEY;
     // ------------------------------------------------------------
     // Apps Script backend helpers
     // ------------------------------------------------------------
-    function workpicBackendPost(body) {
+    // 🆕 Google Apps Script কখনো কখনো (cold start-এ) অনেক দেরি করে বা
+    // hang করে থাকে — তাই টাইমআউট সহ fetch (ডিফল্ট ৮ সেকেন্ড, upload/
+    // delete-এর মতো ভারী action-এ বেশি সময় দরকার হলে caller নিজের
+    // টাইমআউট পাস করতে পারবে), যাতে "Loading..."/upload প্যানেল
+    // অনির্দিষ্টকাল আটকে না থাকে।
+    function fetchWithTimeout(url, options, timeoutMs) {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), timeoutMs || 8000);
+        const opts = Object.assign({}, options, { signal: controller.signal });
+        return fetch(url, opts).finally(() => clearTimeout(timer));
+    }
+
+    function workpicBackendPost(body, timeoutMs) {
         // text/plain avoids a CORS preflight (Apps Script doesn't handle
         // OPTIONS), while Code.gs still parses e.postData.contents as JSON fine.
-        return fetch(WORKPIC_APPS_SCRIPT_URL, {
+        return fetchWithTimeout(WORKPIC_APPS_SCRIPT_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify(body)
-        }).then(r => r.json());
+        }, timeoutMs).then(r => r.json());
     }
 
     function workpicBackendGet() {
-        return fetch(WORKPIC_APPS_SCRIPT_URL, { method: 'GET' }).then(r => r.json());
+        return fetchWithTimeout(WORKPIC_APPS_SCRIPT_URL, { method: 'GET' }, 8000).then(r => r.json());
     }
 
     // ------------------------------------------------------------
@@ -383,7 +395,7 @@ const IMGBB_UPLOAD_URL = 'https://api.imgbb.com/1/upload?key=' + IMGBB_API_KEY;
                 imageData: base64Data,
                 filename: file.name || 'work-file',
                 mimeType: file.type || 'application/octet-stream'
-            }))
+            }, 30000)) // 🆕 বড় ফাইল আপলোডে বেশি সময় লাগে বলে এখানে টাইমআউট ৩০ সেকেন্ড
             .then(res => {
                 if (res && res.success && Array.isArray(res.images)) {
                     return { success: true, images: res.images };
@@ -410,33 +422,43 @@ const IMGBB_UPLOAD_URL = 'https://api.imgbb.com/1/upload?key=' + IMGBB_API_KEY;
         let done = 0, failed = 0, lastError = '';
         const useDrive = !!(workpicDestDriveRadio && workpicDestDriveRadio.checked);
         const uploadOne = useDrive ? uploadOneWorkpicFileToDrive : uploadOneWorkpicFile;
-        function next(i) {
-            if (i >= workpicSelectedFiles.length) {
-                workpicMsg.textContent = failed === 0
-                    ? `✅ ${done} টা ফাইল আপলোড হয়েছে!`
-                    : `✅ ${done} সফল, ❌ ${failed} ব্যর্থ — ${lastError}`;
-                workpicMsg.className = failed === 0 ? 'admin-msg ok' : 'admin-msg err';
-                workpicSendBtn.disabled = false;
-                if (done > 0) renderWorkpicGallery();
-                if (failed === 0) {
-                    setTimeout(() => {
-                        workpicFileInput.value = '';
-                        workpicThumbs.innerHTML = '';
-                        workpicSelectedFiles = [];
-                        workpicSendBtn.disabled = true;
-                        workpicProgressWrap.style.display = 'none';
-                        workpicProgressFill.style.width = '0%';
-                        workpicMsg.textContent = '';
-                        workpicUploadPanel.style.display = 'none';
-                        workpicGalleryWrap.style.display = 'block';
-                    }, 1800);
-                }
-                return;
+        // 🆕 একটার পর একটা না করে একসাথে WORKPIC_UPLOAD_CONCURRENCY টা ফাইল
+        // parallel-এ আপলোড হয় — অনেকগুলো ফাইল সিলেক্ট করলে আগের চেয়ে অনেক দ্রুত শেষ হবে।
+        const WORKPIC_UPLOAD_CONCURRENCY = 3;
+
+        function finishAll() {
+            workpicMsg.textContent = failed === 0
+                ? `✅ ${done} টা ফাইল আপলোড হয়েছে!`
+                : `✅ ${done} সফল, ❌ ${failed} ব্যর্থ — ${lastError}`;
+            workpicMsg.className = failed === 0 ? 'admin-msg ok' : 'admin-msg err';
+            workpicSendBtn.disabled = false;
+            if (done > 0) renderWorkpicGallery();
+            if (failed === 0) {
+                setTimeout(() => {
+                    workpicFileInput.value = '';
+                    workpicThumbs.innerHTML = '';
+                    workpicSelectedFiles = [];
+                    workpicSendBtn.disabled = true;
+                    workpicProgressWrap.style.display = 'none';
+                    workpicProgressFill.style.width = '0%';
+                    workpicMsg.textContent = '';
+                    workpicUploadPanel.style.display = 'none';
+                    workpicGalleryWrap.style.display = 'block';
+                }, 1800);
             }
-            uploadOne(workpicSelectedFiles[i]).then(res => {
+        }
+
+        function uploadAndTrack(file) {
+            return uploadOne(file).then(res => {
                 if (res && res.success) {
                     done++;
                     if (Array.isArray(res.images)) {
+                        // 🆕 Drive route সার্ভার থেকে প্রতিবার পুরো লিস্ট ফেরত দেয়।
+                        // parallel আপলোডে দুইটা রেসপন্স প্রায় একসাথে আসতে পারে, তাই
+                        // যেটা সবার শেষে resolve হয় সেটাই workpicImages-এ বসে —
+                        // ছবি হারানোর ঝুঁকি নেই যতক্ষণ ব্যাকএন্ড প্রতিটা append-এর পর
+                        // আপডেটেড পূর্ণ লিস্ট ফেরত দেয়, তবে সার্ভার সাইডে concurrent
+                        // write race থাকলে ওটা backend-এর দিক থেকেও দেখা দরকার।
                         workpicImages = res.images;
                     } else {
                         workpicImages.unshift({ url: res.url, name: res.name, time: Date.now() });
@@ -447,121 +469,185 @@ const IMGBB_UPLOAD_URL = 'https://api.imgbb.com/1/upload?key=' + IMGBB_API_KEY;
                 }
                 workpicDoneCount.textContent = done + failed;
                 workpicProgressFill.style.width = ((done + failed) / workpicSelectedFiles.length * 100) + '%';
-                next(i + 1);
             });
         }
-        next(0);
+
+        function nextBatch(startIdx) {
+            if (startIdx >= workpicSelectedFiles.length) {
+                finishAll();
+                return;
+            }
+            const batch = workpicSelectedFiles.slice(startIdx, startIdx + WORKPIC_UPLOAD_CONCURRENCY);
+            Promise.all(batch.map(uploadAndTrack)).then(() => {
+                nextBatch(startIdx + WORKPIC_UPLOAD_CONCURRENCY);
+            });
+        }
+        nextBatch(0);
     }
 
     // ------------------------------------------------------------
     // Gallery — shows both photos (real thumbnails, opens in the
     // lightbox) and any other file type from the Drive route (a
     // generic file card with its extension, opens/downloads directly).
+    //
+    // 🆕 Batched rendering: আগে workpicImages-এর পুরো লিস্টের জন্য
+    // একবারে DOM element বানানো হতো — কয়েকশো/হাজার ফাইল হলে প্যানেল
+    // খোলার সময় noticeable lag হতো। এখন প্রথমে শুধু WORKPIC_PAGE_SIZE
+    // (৪০টা) আইটেম বসে, বাকিগুলো একটা sentinel viewport-এ এলে
+    // (IntersectionObserver দিয়ে) ব্যাচ করে যোগ হয় — main gallery-র
+    // মতো পুরো absolute-position virtualization না হলেও, বেশিরভাগ
+    // ক্ষেত্রেই DOM হালকা রাখার জন্য যথেষ্ট এবং নিরাপদ (দুই ধরনের
+    // scroll container — panel ও fullpage — দুটোতেই কাজ করে, কারণ
+    // IntersectionObserver ancestor clipping নিজে থেকেই হিসেব করে)।
     // ------------------------------------------------------------
+    const WORKPIC_PAGE_SIZE = 40;
+    let workpicRenderedCount = 0;
+    let workpicLoadMoreObserver = null;
+
     function renderWorkpicGallery() {
         workpicGalleryLoading.style.display = 'none';
         workpicGallery.innerHTML = '';
+        if (workpicLoadMoreObserver) {
+            workpicLoadMoreObserver.disconnect();
+            workpicLoadMoreObserver = null;
+        }
+        workpicRenderedCount = 0;
 
         if (workpicImages.length === 0) {
             workpicGallery.innerHTML = '<p class="workpic-gallery-empty">এখনো কোনো ফাইল আপলোড হয়নি এই সেশনে।</p>';
             return;
         }
 
-        workpicImages.forEach((img, idx) => {
-            const item = document.createElement('div');
-            item.className = 'workpic-gallery-item';
-            const isFile = workpicIsNonImageEntry(img);
+        appendWorkpicBatch();
+    }
 
-            const link = document.createElement('a');
-            link.href = img.url;
-            link.rel = 'noopener';
+    function createWorkpicGalleryItem(img, idx) {
+        const item = document.createElement('div');
+        item.className = 'workpic-gallery-item';
+        const isFile = workpicIsNonImageEntry(img);
 
-            if (isFile) {
-                const fileBox = document.createElement('div');
-                fileBox.className = 'workpic-file-box';
-                fileBox.style.cssText = 'display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;background:#f2f2f2;border-radius:8px;padding:10px;box-sizing:border-box;text-align:center;';
-                fileBox.innerHTML = `<div style="font-size:32px;line-height:1;margin-bottom:6px;">📄</div><div style="font-size:12px;font-weight:700;color:#555;">${workpicFileExt(img.name)}</div>`;
-                link.appendChild(fileBox);
-            } else {
-                const thumb = document.createElement('img');
-                thumb.src = workpicRenderUrl(img.url);
-                thumb.alt = img.name || '';
-                thumb.loading = 'lazy';
-                thumb.decoding = 'async';
-                thumb.addEventListener('error', function onThumbErr() {
-                    // thumbnail endpoint can occasionally lag right after upload —
-                    // fall back to the direct view url once.
-                    if (isWorkpicDriveUrl(img.url) && thumb.dataset.fallbackDone !== '1') {
-                        thumb.dataset.fallbackDone = '1';
-                        const id = getWorkpicDriveFileId(img.url);
-                        if (id) thumb.src = 'https://drive.google.com/uc?export=view&id=' + id;
-                    }
-                });
-                link.appendChild(thumb);
-            }
+        const link = document.createElement('a');
+        link.href = img.url;
+        link.rel = 'noopener';
 
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                if (isFile) {
-                    // Not a photo — open the file directly (Drive's own
-                    // viewer/downloader) instead of the image lightbox.
-                    window.open(img.url, '_blank', 'noopener');
-                } else {
-                    openWorkpicLightbox(idx);
+        if (isFile) {
+            const fileBox = document.createElement('div');
+            fileBox.className = 'workpic-file-box';
+            fileBox.style.cssText = 'display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;background:#f2f2f2;border-radius:8px;padding:10px;box-sizing:border-box;text-align:center;';
+            fileBox.innerHTML = `<div style="font-size:32px;line-height:1;margin-bottom:6px;">📄</div><div style="font-size:12px;font-weight:700;color:#555;">${workpicFileExt(img.name)}</div>`;
+            link.appendChild(fileBox);
+        } else {
+            const thumb = document.createElement('img');
+            thumb.src = workpicRenderUrl(img.url);
+            thumb.alt = img.name || '';
+            thumb.loading = 'lazy';
+            thumb.decoding = 'async';
+            thumb.addEventListener('error', function onThumbErr() {
+                // thumbnail endpoint can occasionally lag right after upload —
+                // fall back to the direct view url once.
+                if (isWorkpicDriveUrl(img.url) && thumb.dataset.fallbackDone !== '1') {
+                    thumb.dataset.fallbackDone = '1';
+                    const id = getWorkpicDriveFileId(img.url);
+                    if (id) thumb.src = 'https://drive.google.com/uc?export=view&id=' + id;
                 }
             });
+            link.appendChild(thumb);
+        }
 
-            const nameEl = document.createElement('span');
-            nameEl.className = 'wp-name';
-            nameEl.textContent = img.name || '';
-
-            const actions = document.createElement('div');
-            actions.className = 'wp-actions';
-            actions.innerHTML = `
-                <button type="button" class="wp-action-btn wp-dl" title="Download">⬇</button>
-                <button type="button" class="wp-action-btn wp-share" title="Share">↗</button>
-                <button type="button" class="wp-action-btn wp-delete" title="Remove from gallery">✕</button>
-            `;
-            actions.querySelector('.wp-dl').addEventListener('click', (e) => {
-                e.preventDefault(); e.stopPropagation();
-                dlImg(workpicDownloadUrl(img.url), img.name || (isFile ? 'work-file' : 'work-pic.jpg'));
-            });
-            actions.querySelector('.wp-share').addEventListener('click', (e) => {
-                e.preventDefault(); e.stopPropagation();
-                shareImg(workpicDownloadUrl(img.url), img.name || (isFile ? 'work-file' : 'work-pic.jpg'), img.name || 'Work Pic');
-            });
-            actions.querySelector('.wp-delete').addEventListener('click', (e) => {
-                e.preventDefault(); e.stopPropagation();
-                const ok = window.confirm('এই ফাইলটা গ্যালারি থেকে সরাতে চান? (' + (img.name || '') + ')');
-                if (!ok) return;
-
-                const deleteBtn = actions.querySelector('.wp-delete');
-                deleteBtn.disabled = true;
-
-                workpicBackendPost({
-                    password: workpicSessionPassword,
-                    action: 'delete',
-                    url: img.url
-                })
-                .then(result => {
-                    if (result && result.success && Array.isArray(result.images)) {
-                        workpicImages = result.images;
-                    } else {
-                        // fall back to local removal so the UI stays in sync
-                        workpicImages.splice(idx, 1);
-                    }
-                })
-                .catch(() => {
-                    workpicImages.splice(idx, 1);
-                })
-                .then(() => renderWorkpicGallery());
-            });
-
-            item.appendChild(link);
-            item.appendChild(nameEl);
-            item.appendChild(actions);
-            workpicGallery.appendChild(item);
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (isFile) {
+                // Not a photo — open the file directly (Drive's own
+                // viewer/downloader) instead of the image lightbox.
+                window.open(img.url, '_blank', 'noopener');
+            } else {
+                openWorkpicLightbox(idx);
+            }
         });
+
+        const nameEl = document.createElement('span');
+        nameEl.className = 'wp-name';
+        nameEl.textContent = img.name || '';
+
+        const actions = document.createElement('div');
+        actions.className = 'wp-actions';
+        actions.innerHTML = `
+            <button type="button" class="wp-action-btn wp-dl" title="Download">⬇</button>
+            <button type="button" class="wp-action-btn wp-share" title="Share">↗</button>
+            <button type="button" class="wp-action-btn wp-delete" title="Remove from gallery">✕</button>
+        `;
+        actions.querySelector('.wp-dl').addEventListener('click', (e) => {
+            e.preventDefault(); e.stopPropagation();
+            dlImg(workpicDownloadUrl(img.url), img.name || (isFile ? 'work-file' : 'work-pic.jpg'));
+        });
+        actions.querySelector('.wp-share').addEventListener('click', (e) => {
+            e.preventDefault(); e.stopPropagation();
+            shareImg(workpicDownloadUrl(img.url), img.name || (isFile ? 'work-file' : 'work-pic.jpg'), img.name || 'Work Pic');
+        });
+        actions.querySelector('.wp-delete').addEventListener('click', (e) => {
+            e.preventDefault(); e.stopPropagation();
+            const ok = window.confirm('এই ফাইলটা গ্যালারি থেকে সরাতে চান? (' + (img.name || '') + ')');
+            if (!ok) return;
+
+            const deleteBtn = actions.querySelector('.wp-delete');
+            deleteBtn.disabled = true;
+
+            workpicBackendPost({
+                password: workpicSessionPassword,
+                action: 'delete',
+                url: img.url
+            })
+            .then(result => {
+                if (result && result.success && Array.isArray(result.images)) {
+                    workpicImages = result.images;
+                } else {
+                    // fall back to local removal so the UI stays in sync
+                    workpicImages.splice(idx, 1);
+                }
+            })
+            .catch(() => {
+                workpicImages.splice(idx, 1);
+            })
+            .then(() => renderWorkpicGallery());
+        });
+
+        item.appendChild(link);
+        item.appendChild(nameEl);
+        item.appendChild(actions);
+        return item;
+    }
+
+    // পরের ব্যাচ (WORKPIC_PAGE_SIZE-টা আইটেম) DOM-এ যোগ করে, এবং লিস্টে
+    // আরও বাকি থাকলে শেষে একটা invisible "sentinel" বসায় যেটা viewport-এর
+    // কাছে এলে পরের ব্যাচ লোড হয়।
+    function appendWorkpicBatch() {
+        const start = workpicRenderedCount;
+        const end = Math.min(start + WORKPIC_PAGE_SIZE, workpicImages.length);
+        const frag = document.createDocumentFragment();
+        for (let idx = start; idx < end; idx++) {
+            frag.appendChild(createWorkpicGalleryItem(workpicImages[idx], idx));
+        }
+        workpicGallery.appendChild(frag);
+        workpicRenderedCount = end;
+
+        if (workpicRenderedCount >= workpicImages.length) return;
+
+        const sentinel = document.createElement('div');
+        sentinel.className = 'workpic-load-more-sentinel';
+        sentinel.style.cssText = 'grid-column: 1 / -1; height: 1px;';
+        workpicGallery.appendChild(sentinel);
+
+        workpicLoadMoreObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    workpicLoadMoreObserver.disconnect();
+                    workpicLoadMoreObserver = null;
+                    sentinel.remove();
+                    appendWorkpicBatch();
+                }
+            });
+        }, { rootMargin: '600px' });
+        workpicLoadMoreObserver.observe(sentinel);
     }
 
     // ------------------------------------------------------------

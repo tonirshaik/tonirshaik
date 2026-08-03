@@ -14,6 +14,17 @@
 (function () {
     let ADMIN_PASSWORD = '';
 
+    // 🆕 Google Apps Script কখনো কখনো (cold start-এ) অনেক দেরি করে বা
+    // hang করে থাকে — তাই টাইমআউট সহ fetch (ডিফল্ট ৮ সেকেন্ড), যাতে
+    // admin-এর কোনো action অনির্দিষ্টকাল "Checking..."/"Loading..."-এ
+    // আটকে না থাকে। ব্যবহারের ধরন fetch()-এর মতোই।
+    function fetchWithTimeout(url, options, timeoutMs) {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), timeoutMs || 8000);
+        const opts = Object.assign({}, options, { signal: controller.signal });
+        return fetch(url, opts).finally(() => clearTimeout(timer));
+    }
+
     document.getElementById('navGalleryLink').addEventListener('click', (e) => {
         e.preventDefault();
         adminLockOverlay.classList.add('open');
@@ -141,7 +152,7 @@
         const entered = adminPasswordInput.value;
         adminUnlockBtn.disabled = true;
         adminLockMsg.textContent = 'Checking...';
-        fetch(APPS_SCRIPT_URL, {
+        fetchWithTimeout(APPS_SCRIPT_URL, {
             method: 'POST',
             body: JSON.stringify({ password: entered, action: 'verify' })
         })
@@ -458,7 +469,7 @@
         if (item) item.style.opacity = '0.4';
         btnEl.disabled = true;
 
-        fetch(APPS_SCRIPT_URL, {
+        fetchWithTimeout(APPS_SCRIPT_URL, {
             method: 'POST',
             body: JSON.stringify({
                 password: ADMIN_PASSWORD,
@@ -500,7 +511,7 @@
         if (item) item.style.opacity = '0.4';
         btnEl.disabled = true;
 
-        fetch(APPS_SCRIPT_URL, {
+        fetchWithTimeout(APPS_SCRIPT_URL, {
             method: 'POST',
             body: JSON.stringify({
                 password: ADMIN_PASSWORD,
@@ -842,7 +853,7 @@
             ? { password: ADMIN_PASSWORD, action: 'updateCaption', fileId: photo.fileId, caption: newNamesStr, cat: isLiveUpload ? editTagCategory : undefined, accountId: photo.acc || 'self' }
             : { password: ADMIN_PASSWORD, action: 'updateText', url: photo.rawUrl, names: newNamesStr };
 
-        return fetch(APPS_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) })
+        return fetchWithTimeout(APPS_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) })
             .then(r => r.json())
             .then(res => {
                 editTagSaveBtn.disabled = false;
@@ -903,7 +914,7 @@
             return uploadOnePhotoToImgbb_(photo, caption, cat);
         }
 
-        return fetch(APPS_SCRIPT_URL, {
+        return fetchWithTimeout(APPS_SCRIPT_URL, {
             method: 'POST',
             body: JSON.stringify({
                 password: ADMIN_PASSWORD,
@@ -913,7 +924,7 @@
                 caption: caption,
                 cat: cat
             })
-        })
+        }, 30000) // 🆕 বড় ছবির ফাইল আপলোডে বেশি সময় লাগে বলে টাইমআউট ৩০ সেকেন্ড
         .then(r => r.json())
         .catch(() => ({ success: false, error: 'Network error' }));
     }
@@ -1149,7 +1160,7 @@
         removeAccConfirmMsg.textContent = '';
         if (triggerBtn) triggerBtn.disabled = true;
 
-        fetch(APPS_SCRIPT_URL, {
+        fetchWithTimeout(APPS_SCRIPT_URL, {
             method: 'POST',
             body: JSON.stringify({ password: ADMIN_PASSWORD, action: 'removeAccount', accountId: accountId })
         })
@@ -1189,7 +1200,7 @@
     function loadAccountsList() {
         if (!accountsListEl) return;
         accountsListEl.innerHTML = '<p class="admin-msg">Loading...</p>';
-        fetch(APPS_SCRIPT_URL, {
+        fetchWithTimeout(APPS_SCRIPT_URL, {
             method: 'POST',
             body: JSON.stringify({ password: ADMIN_PASSWORD, action: 'listAccounts' })
         })
@@ -1274,7 +1285,7 @@
     }
 
     function addLinkToGithub_(url, names, cat) {
-        return fetch(APPS_SCRIPT_URL, {
+        return fetchWithTimeout(APPS_SCRIPT_URL, {
             method: 'POST',
             body: JSON.stringify({
                 password: ADMIN_PASSWORD,
@@ -1304,7 +1315,7 @@
             accountsMsgEl.textContent = 'Adding...';
             accountsMsgEl.className = 'admin-msg';
 
-            fetch(APPS_SCRIPT_URL, {
+            fetchWithTimeout(APPS_SCRIPT_URL, {
                 method: 'POST',
                 body: JSON.stringify({
                     password: ADMIN_PASSWORD,

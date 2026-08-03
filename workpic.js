@@ -6,12 +6,15 @@
    Depends on globals already defined in index.html's main script:
    dlImg, shareImg.
 
-   IMGBB VERSION — Google Drive / Apps Script backend, folders,
-   move/copy/rename, and non-image files have all been removed.
-   Every uploaded photo goes straight to imgbb and only lives in
-   the gallery for the current browser session (nothing is saved
-   to any database, so refreshing or opening on another device
-   won't show older uploads — only what you upload in this visit).
+   DUAL-ROUTE VERSION — the upload panel has a "Google Drive" vs
+   "ImgBB + GitHub" radio choice (#workpicDestDriveRadio /
+   #workpicDestImgbbRadio). ImgBB route: image goes straight from the
+   browser to imgbb, then the resulting url is saved via Code.gs.
+   Drive route: image is base64-encoded and posted to Code.gs, which
+   saves it into a Drive folder (DRIVE_FOLDER_ID script property) and
+   saves the resulting share link the same way. Either way the url
+   ends up in the same saved gallery list, so both routes' photos show
+   up together in the dashboard.
    ============================================================ */
 
 // Apps Script backend (Code.gs) — handles password check and saves the
@@ -40,6 +43,8 @@ const IMGBB_UPLOAD_URL = 'https://api.imgbb.com/1/upload?key=' + IMGBB_API_KEY;
     const workpicUploadClose   = document.getElementById('workpicUploadClose');
     const workpicSettingsBtn   = document.getElementById('workpicSettingsBtn');
     const workpicUploadPanel   = document.getElementById('workpicUploadPanel');
+    const workpicDestDriveRadio = document.getElementById('workpicDestDriveRadio');
+    const workpicDestImgbbRadio = document.getElementById('workpicDestImgbbRadio');
     const workpicFileInput     = document.getElementById('workpicFileInput');
     const workpicThumbs        = document.getElementById('workpicThumbs');
     const workpicSendBtn       = document.getElementById('workpicSendBtn');
@@ -90,6 +95,48 @@ const IMGBB_UPLOAD_URL = 'https://api.imgbb.com/1/upload?key=' + IMGBB_API_KEY;
 
     function workpicBackendGet() {
         return fetch(WORKPIC_APPS_SCRIPT_URL, { method: 'GET' }).then(r => r.json());
+    }
+
+    // ------------------------------------------------------------
+    // Google Drive url helpers (Drive-route uploads are saved as
+    // drive.google.com/file/d/<id>/view links — those don't render
+    // directly in an <img> tag, so thumb/view/download urls need to
+    // be derived from the file id, same pattern as the main gallery).
+    // ------------------------------------------------------------
+    function isWorkpicDriveUrl(url) {
+        return /drive\.google\.com/.test(url || '');
+    }
+    function getWorkpicDriveFileId(url) {
+        let m = String(url || '').match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+        if (m) return m[1];
+        m = String(url || '').match(/[?&]id=([a-zA-Z0-9_-]+)/);
+        if (m) return m[1];
+        return null;
+    }
+    function workpicRenderUrl(url) {
+        if (isWorkpicDriveUrl(url)) {
+            const id = getWorkpicDriveFileId(url);
+            if (id) return 'https://drive.google.com/thumbnail?id=' + id + '&sz=w1000';
+        }
+        return url;
+    }
+    function workpicDownloadUrl(url) {
+        if (isWorkpicDriveUrl(url)) {
+            const id = getWorkpicDriveFileId(url);
+            if (id) return 'https://drive.google.com/uc?export=download&id=' + id;
+        }
+        return url;
+    }
+
+    // Reads a File as base64 (no data: prefix) so it can be JSON-posted
+    // to the Apps Script backend for saving into Drive.
+    function workpicFileToBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(String(reader.result).split(',')[1] || '');
+            reader.onerror = () => reject(new Error('File read failed'));
+            reader.readAsDataURL(file);
+        });
     }
 
     function loadWorkpicGalleryFromServer() {
@@ -267,6 +314,30 @@ const IMGBB_UPLOAD_URL = 'https://api.imgbb.com/1/upload?key=' + IMGBB_API_KEY;
         .catch(err => ({ success: false, error: (err && err.message) || 'Network error' }));
     }
 
+    // ------------------------------------------------------------
+    // Upload — Drive route. File is base64-encoded in the browser and
+    // sent straight to the Apps Script backend, which saves it into the
+    // Drive folder (DRIVE_FOLDER_ID) and appends the resulting share
+    // link to the same saved gallery list used by the imgbb route.
+    // ------------------------------------------------------------
+    function uploadOneWorkpicFileToDrive(file) {
+        return workpicFileToBase64(file)
+            .then(base64Data => workpicBackendPost({
+                password: workpicSessionPassword,
+                action: 'uploadDrive',
+                imageData: base64Data,
+                filename: file.name || 'work-pic.jpg',
+                mimeType: file.type || 'image/jpeg'
+            }))
+            .then(res => {
+                if (res && res.success && Array.isArray(res.images)) {
+                    return { success: true, images: res.images };
+                }
+                return { success: false, error: (res && res.error) || 'Drive আপলোড ব্যর্থ হয়েছে' };
+            })
+            .catch(err => ({ success: false, error: (err && err.message) || 'Network error' }));
+    }
+
     workpicSendBtn.addEventListener('click', () => {
         if (workpicSelectedFiles.length === 0) return;
         workpicSendBtn.disabled = true;
@@ -282,6 +353,8 @@ const IMGBB_UPLOAD_URL = 'https://api.imgbb.com/1/upload?key=' + IMGBB_API_KEY;
 
     function startWorkpicUploadBatch() {
         let done = 0, failed = 0, lastError = '';
+        const useDrive = !!(workpicDestDriveRadio && workpicDestDriveRadio.checked);
+        const uploadOne = useDrive ? uploadOneWorkpicFileToDrive : uploadOneWorkpicFile;
         function next(i) {
             if (i >= workpicSelectedFiles.length) {
                 workpicMsg.textContent = failed === 0
@@ -305,7 +378,7 @@ const IMGBB_UPLOAD_URL = 'https://api.imgbb.com/1/upload?key=' + IMGBB_API_KEY;
                 }
                 return;
             }
-            uploadOneWorkpicFile(workpicSelectedFiles[i]).then(res => {
+            uploadOne(workpicSelectedFiles[i]).then(res => {
                 if (res && res.success) {
                     done++;
                     if (Array.isArray(res.images)) {
@@ -346,10 +419,19 @@ const IMGBB_UPLOAD_URL = 'https://api.imgbb.com/1/upload?key=' + IMGBB_API_KEY;
             link.rel = 'noopener';
 
             const thumb = document.createElement('img');
-            thumb.src = img.url;
+            thumb.src = workpicRenderUrl(img.url);
             thumb.alt = img.name || '';
             thumb.loading = 'lazy';
             thumb.decoding = 'async';
+            thumb.addEventListener('error', function onThumbErr() {
+                // thumbnail endpoint can occasionally lag right after upload —
+                // fall back to the direct view url once.
+                if (isWorkpicDriveUrl(img.url) && thumb.dataset.fallbackDone !== '1') {
+                    thumb.dataset.fallbackDone = '1';
+                    const id = getWorkpicDriveFileId(img.url);
+                    if (id) thumb.src = 'https://drive.google.com/uc?export=view&id=' + id;
+                }
+            });
             link.appendChild(thumb);
 
             link.addEventListener('click', (e) => {
@@ -370,11 +452,11 @@ const IMGBB_UPLOAD_URL = 'https://api.imgbb.com/1/upload?key=' + IMGBB_API_KEY;
             `;
             actions.querySelector('.wp-dl').addEventListener('click', (e) => {
                 e.preventDefault(); e.stopPropagation();
-                dlImg(img.url, img.name || 'work-pic.jpg');
+                dlImg(workpicDownloadUrl(img.url), img.name || 'work-pic.jpg');
             });
             actions.querySelector('.wp-share').addEventListener('click', (e) => {
                 e.preventDefault(); e.stopPropagation();
-                shareImg(img.url, img.name || 'work-pic.jpg', img.name || 'Work Pic');
+                shareImg(workpicDownloadUrl(img.url), img.name || 'work-pic.jpg', img.name || 'Work Pic');
             });
             actions.querySelector('.wp-delete').addEventListener('click', (e) => {
                 e.preventDefault(); e.stopPropagation();
@@ -427,11 +509,11 @@ const IMGBB_UPLOAD_URL = 'https://api.imgbb.com/1/upload?key=' + IMGBB_API_KEY;
     function updateWorkpicLightbox() {
         const img = workpicImages[workpicLbIdx];
         if (!img) return;
-        wplbImg.src = img.url;
+        wplbImg.src = workpicRenderUrl(img.url);
         wplbTitle.textContent = img.name || '';
         wplbCounter.textContent = (workpicLbIdx + 1) + ' / ' + workpicImages.length;
-        wplbDl.onclick = () => dlImg(img.url, img.name || 'work-pic.jpg');
-        wplbShare.onclick = () => shareImg(img.url, img.name || 'work-pic.jpg', img.name || 'Work Pic');
+        wplbDl.onclick = () => dlImg(workpicDownloadUrl(img.url), img.name || 'work-pic.jpg');
+        wplbShare.onclick = () => shareImg(workpicDownloadUrl(img.url), img.name || 'work-pic.jpg', img.name || 'Work Pic');
     }
     wplbClose.onclick = closeWorkpicLightbox;
     workpicLightbox.addEventListener('click', e => {

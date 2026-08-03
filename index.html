@@ -64,6 +64,12 @@
     <link rel="dns-prefetch" href="https://raw.githubusercontent.com">
     <link rel="dns-prefetch" href="https://script.google.com">
     <link rel="dns-prefetch" href="https://drive.google.com">
+    <!-- 🆕 SPEED: gallery-live.json (আসল/লাইভ ছবির একমাত্র সোর্স) fetch
+         browser JS পার্স হওয়ার আগেই শুরু করিয়ে দেওয়া হচ্ছে, যাতে প্রথম
+         পেইন্ট আরো আগে হয় ("blink of an eye")। নিচের script-এ একই
+         URL fetch করলে browser আগে থেকে চলতে থাকা এই request-টাই
+         re-use করবে। -->
+    <link rel="preload" as="fetch" crossorigin="anonymous" href="https://raw.githubusercontent.com/tonirshaik/tonirshaik/refs/heads/main/gallery-live.json">
     <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=Inter:wght@300;400;500&display=swap" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=Inter:wght@300;400;500&display=swap" rel="stylesheet"></noscript>
     <style>
@@ -1625,7 +1631,11 @@
     // Script কল ছাড়াই। ফলাফল দ্রুত লোড আর cold-start-এর ঝামেলা নেই।
     // Apps Script এখন কল হয় শুধু admin panel থেকে (upload/delete/edit)।
     function fetchLiveUploadsOnce(timeoutMs) {
-        return fetchWithTimeout(GALLERY_EXPORT_RAW_URL, { cache: 'no-store' }, timeoutMs)
+        // 🆕 priority: 'high' — সাপোর্ট করা ব্রাউজারে (Chromium-ভিত্তিক)
+        // এই রিকোয়েস্টকে অন্য সব asset (font, css ইত্যাদি)-এর আগে পাঠাতে
+        // বলা হচ্ছে, যাতে আসল গ্যালারি ডেটা যত দ্রুত সম্ভব চলে আসে।
+        // অসমর্থিত ব্রাউজারে এই অপশনটা এমনিই ignore হয়ে যায়, ভাঙে না।
+        return fetchWithTimeout(GALLERY_EXPORT_RAW_URL, { cache: 'no-store', priority: 'high' }, timeoutMs)
             .then(r => r.json())
             .then(res => (res && Array.isArray(res.images)) ? res.images : null)
             .catch(() => null);
@@ -1695,6 +1705,15 @@
         } catch (e) {  }
     });
 
+    // 🆕 SPEED FIX: আগে এখানে প্রথমে legacy .txt ফাইল (csvUrl) resolve
+    // হওয়ার জন্য অপেক্ষা করা হতো — localStorage cache না থাকলে (নতুন
+    // ব্রাউজার) ততক্ষণ কোনো ছবিই দেখানো হতো না, যদিও আসল/নতুন সব ছবি
+    // gallery-live.json-এই থাকে (এখন থেকে ImgBB ছবিও শুধু এখানেই, .txt-এ
+    // আর লেখা হয় না — backend দেখো)। এখন দুটো fetch-ই "race" করে —
+    // যেটা আগে রেসপন্স দেয় সেটা দিয়েই সাথে সাথে প্রথম পেইন্ট হয়ে যায়
+    // (blink-of-an-eye), বাকিটা এলে merge করে ফাইনাল লিস্ট বসে।
+    // gallery-live.json-কে অগ্রাধিকার দেওয়া হয় প্রথম-পেইন্টের জন্য
+    // (এটাই আসল/সঠিক-অর্ডারের ডেটা), .txt শুধু ফলব্যাক/পরে-merge হিসেবে।
     const oldPhotosPromise = fetch(csvUrl)
         .then(r => r.text())
         .then(textData => textData ? parsePhotoFile(textData) : [])
@@ -1702,25 +1721,53 @@
 
     const liveImagesPromise = fetchLiveUploads();
 
-    oldPhotosPromise.then(oldPhotos => {
-        if (!paintedFromCache) {
-            showGallery(oldPhotos);
+    let oldPhotosResult = null;
+    let liveImagesResult = null;
+    let firstPaintDone = false;
+
+    function maybeFirstPaint() {
+        if (paintedFromCache || firstPaintDone) return;
+        if (liveImagesResult && liveImagesResult.length > 0) {
+            firstPaintDone = true;
+            showGallery(liveImagesResult.map((img, i) => liveImageToPhoto(img, i)));
+        } else if (oldPhotosResult !== null) {
+            firstPaintDone = true;
+            showGallery(oldPhotosResult);
         }
+        // liveImagesResult resolved কিন্তু খালি, আর oldPhotosResult এখনো
+        // আসেনি — তখন কিছু না করে oldPhotos আসা পর্যন্ত অপেক্ষা করা হয়,
+        // যাতে খামাখা একটা ফাঁকা গ্যালারি ফ্ল্যাশ না করে।
+    }
 
-        liveImagesPromise.then(liveImages => {
-            const merged = buildMergedPhotoList(oldPhotos, liveImages);
-            showGallery(merged);
-            try { localStorage.setItem(PHOTO_CACHE_KEY, JSON.stringify(merged)); } catch (e) {}
+    function maybeFinalPaint() {
+        if (oldPhotosResult === null || liveImagesResult === null) return;
+        const merged = buildMergedPhotoList(oldPhotosResult, liveImagesResult);
+        showGallery(merged);
+        try { localStorage.setItem(PHOTO_CACHE_KEY, JSON.stringify(merged)); } catch (e) {}
 
-            if (!liveImages || liveImages.length === 0) {
-                retryLiveUploadsInBackground(oldPhotos);
-            }
-        });
+        if (!liveImagesResult.length) {
+            retryLiveUploadsInBackground(oldPhotosResult);
+        }
+    }
+
+    oldPhotosPromise.then(oldPhotos => {
+        oldPhotosResult = oldPhotos;
+        maybeFirstPaint();
+        maybeFinalPaint();
     }).catch(() => {
-        if (!paintedFromCache) {
+        oldPhotosResult = [];
+        maybeFirstPaint();
+        maybeFinalPaint();
+        if (!paintedFromCache && !firstPaintDone) {
             document.getElementById('loadingState').innerHTML =
                 '<p style="color:var(--muted)">Could not load photos. Check your connection.</p>';
         }
+    });
+
+    liveImagesPromise.then(liveImages => {
+        liveImagesResult = liveImages || [];
+        maybeFirstPaint();
+        maybeFinalPaint();
     });
 
     // =====================================================================

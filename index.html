@@ -1726,16 +1726,26 @@
     }
 
     function attachImgFallback(imgEl, photo) {
-        let triedFallback = false;
+        // 🆕 আগে প্রথম fallback-ই সরাসরি drive.google.com-এ চলে যেত — এই
+        // একটা লিংকই visitor-এর নিজের Google session/cookie-এর উপর নির্ভর
+        // করে slow/inconsistent আচরণ করত। এখন প্রথমে proxy-কেই আবার
+        // cache-busting param দিয়ে retry করা হয় (edge cache-এ পুরনো bad
+        // response আটকে থাকলে সেটা এড়াতে), যাতে যতটা সম্ভব সবাই একই
+        // fast, consistent path দিয়ে ছবি পায়। সরাসরি Drive লিংক শুধু
+        // একদম শেষ, সবচেয়ে কম-ব্যবহৃত fallback হিসেবে থেকে যায়।
+        let stage = 0; // 0 = original, 1 = proxy retry, 2 = direct drive, 3 = give up
         imgEl.addEventListener('error', function onErr() {
-            if (!triedFallback) {
-                triedFallback = true;
-                if (isGoogleDriveUrl(photo.rawUrl)) {
-                    const id = getDriveFileId(photo.rawUrl);
-                    if (id) {
-                        imgEl.src = 'https://drive.google.com/uc?export=view&id=' + id;
-                        return;
-                    }
+            stage++;
+            if (stage === 1) {
+                const retryUrl = photo.url + (photo.url.indexOf('?') === -1 ? '?' : '&') + 'retry=' + Date.now();
+                imgEl.src = retryUrl;
+                return;
+            }
+            if (stage === 2 && isGoogleDriveUrl(photo.rawUrl)) {
+                const id = getDriveFileId(photo.rawUrl);
+                if (id) {
+                    imgEl.src = 'https://drive.google.com/uc?export=view&id=' + id;
+                    return;
                 }
             }
             const item = imgEl.closest('.photo-item, .strip-item');

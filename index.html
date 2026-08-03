@@ -1469,6 +1469,18 @@
 
     const csvUrl = 'https://raw.githubusercontent.com/tonirshaik/tonirshaik/refs/heads/main/Tonir%20photo%20Link.txt';
     const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyLRiJ9ueiqnc7kYc188HTg41wJNF3W1eighA2WA7xq9nUfMTJflzefxdXsrjIHOgXiLw/exec';
+    // APPS_SCRIPT_URL এখনো এখানে দরকার — admin-upload.js এই global-টাই
+    // ব্যবহার করে upload/delete/caption-edit করার সময় (এই ফাইলে অন্য
+    // কোথাও পরিবর্তন হয়নি)। কিন্তু সাধারণ ভিজিটরের গ্যালারি-লোডে (নিচের
+    // fetchLiveUploadsOnce) এখন আর এই URL কল হয় না।
+
+    // 🆕 Apps Script backend-এ নতুন যোগ করা periodic export
+    // (exportLiveGalleryToGithub_) এখান থেকে GitHub-এ একটা static JSON
+    // ফাইল হিসেবে "live" ছবির লিস্ট রাখে — সাধারণ ভিজিটর এখন Apps
+    // Script (/exec) কল না করে সরাসরি এই static ফাইলটাই পড়ে। Apps
+    // Script কল হয় শুধু admin panel থেকে upload/delete/edit করলে (আর
+    // ব্যাকগ্রাউন্ডে প্রতি ১৫ মিনিটে backend-এর নিজস্ব periodic trigger)।
+    const GALLERY_EXPORT_RAW_URL = 'https://raw.githubusercontent.com/tonirshaik/tonirshaik/refs/heads/main/gallery-live.json';
 
     // 🆕 Google Apps Script কখনো কখনো (cold start-এ) অনেক দেরি করে বা
     // hang করে থাকে — তাই কোনো fetch যাতে অনির্দিষ্টকাল অপেক্ষা না করে,
@@ -1604,16 +1616,18 @@
         };
     }
 
-    // 🆕 Google Apps Script/Drive মাঝেমধ্যে ঠান্ডা শুরু (cold start) হলে
-    // প্রথম রিকোয়েস্টে অনেক দেরি করে বা টাইমআউট হয়ে যায় — ফলে নতুন
-    // আপলোড করা (বিশেষ করে Drive ফোল্ডারের) ছবি প্রথমবারে ধরা পড়ে না।
-    // তাই প্রথম চেষ্টা দ্রুত টাইমআউটে (১০সে) ব্যর্থ/খালি হলে, একটু বেশি
-    // সময় (২৫সে) দিয়ে ব্যাকগ্রাউন্ডে আরেকবার চেষ্টা করা হয়, আর সফল হলে
-    // গ্যালারি নিঃশব্দে (কোনো ম্যানুয়াল রিফ্রেশ ছাড়াই) আপডেট হয়ে যায়।
+    // 🆕 আগে এখানে সরাসরি Apps Script (/exec, doGet()) কল হতো — প্রতিটা
+    // ভিজিটরের প্রতিটা পেজ-লোডে backend-কে জাগাতে হতো (cold start সহ),
+    // যেটা ধীর আর অপচয়। এখন backend নিজেই periodically (আর প্রতিটা
+    // upload/delete/edit-এর পরপরই) একই ডেটা GitHub-এ একটা static JSON
+    // ফাইলে (GALLERY_EXPORT_RAW_URL) এক্সপোর্ট করে রাখে — সাধারণ
+    // ভিজিটরের গ্যালারি এখন সরাসরি সেই static ফাইলটাই পড়ে, কোনো Apps
+    // Script কল ছাড়াই। ফলাফল দ্রুত লোড আর cold-start-এর ঝামেলা নেই।
+    // Apps Script এখন কল হয় শুধু admin panel থেকে (upload/delete/edit)।
     function fetchLiveUploadsOnce(timeoutMs) {
-        return fetchWithTimeout(APPS_SCRIPT_URL, {}, timeoutMs)
+        return fetchWithTimeout(GALLERY_EXPORT_RAW_URL, { cache: 'no-store' }, timeoutMs)
             .then(r => r.json())
-            .then(res => (res && res.success && Array.isArray(res.images)) ? res.images : null)
+            .then(res => (res && Array.isArray(res.images)) ? res.images : null)
             .catch(() => null);
     }
 

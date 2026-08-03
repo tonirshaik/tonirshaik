@@ -974,7 +974,7 @@
                     : `✅ ${done} succeeded, ❌ ${failed} failed`;
                 adminUploadMsg.className = failed === 0 ? 'admin-msg ok' : 'admin-msg err';
                 isUploading = false;
-                refreshGalleryWithLiveUploads(4);
+                refreshGalleryWithLiveUploads(6);
                 setTimeout(() => {
                     adminUploadOverlay.classList.remove('open');
                     resetUploadFlow();
@@ -1009,14 +1009,22 @@
         }
     });
 
+    // 🆕 backend-এর export এখন async (upload response-এর ~৩s পর একটা
+    // trigger export চালায়, তারপর GitHub commit), আর raw.githubusercontent.com
+    // এর নিজস্ব CDN cache-ও (কয়েক সেকেন্ড থেকে কয়েক মিনিট) থাকতে পারে।
+    // তাই এখানে (ক) cache-busting query param দিয়ে সেই CDN cache
+    // বাইপাস করা হচ্ছে (fetchLiveUploadsOnce(timeout, true)) — সাধারণ
+    // ভিজিটরের প্রথম লোডে এটা হয় না, শুধু নিজের upload-এর পরে; আর
+    // (খ) রিট্রাই window বাড়ানো হয়েছে (৬ বার, ৫s পরপর = ৩০s) যাতে
+    // export + commit শেষ হওয়ার জন্য যথেষ্ট সময় থাকে।
     function refreshGalleryWithLiveUploads(attemptsLeft) {
         attemptsLeft = (typeof attemptsLeft === 'number') ? attemptsLeft : 0;
         try {
             fetch(csvUrl).then(r => r.text()).catch(() => '').then(textData => {
                 const oldPhotos = textData ? parsePhotoFile(textData) : [];
-                fetchLiveUploads().then(liveImages => {
+                fetchLiveUploadsOnce(10000, true).then(liveImages => {
                     try {
-                        allPhotos = buildMergedPhotoList(oldPhotos, liveImages);
+                        allPhotos = buildMergedPhotoList(oldPhotos, liveImages || []);
                         document.getElementById('photoCount').textContent = allPhotos.length;
                         applyFiltersAndSearch();
                         buildStrip(allPhotos);
@@ -1027,7 +1035,7 @@
         } catch (e) {  }
 
         if (attemptsLeft > 0) {
-            setTimeout(() => refreshGalleryWithLiveUploads(attemptsLeft - 1), 4000);
+            setTimeout(() => refreshGalleryWithLiveUploads(attemptsLeft - 1), 5000);
         }
     }
 
@@ -1285,14 +1293,16 @@
     }
 
     function addLinkToGithub_(url, names, cat) {
-        // 🆕 এই action ব্যাকএন্ডে JSON ফাইলে লেখার পর সাথে সাথে
-        // exportLiveGalleryToGithub()-ও কল করে (GitHub থেকে read +
-        // commit — দুইটা GitHub API round-trip)। Apps Script cold-start
-        // মিলিয়ে এটা প্রায়ই ৮ সেকেন্ডের বেশি সময় নেয়, তাই ডিফল্ট
-        // ৮s timeout দিলে ক্লায়েন্ট ভুলভাবে "failed" দেখায় যদিও
-        // ব্যাকএন্ডে কাজ আসলে সফল হয়ে যায় (Apps Script execution
-        // ক্লায়েন্ট abort করলেও সার্ভারে চলতেই থাকে) — তাই এখানে
-        // অনেক বড় timeout (২৫s) দেওয়া হলো।
+        // 🆕 SPEED FIX: আগে এই action ব্যাকএন্ডে JSON ফাইলে লেখার পর
+        // response দেওয়ার আগেই সরাসরি exportLiveGalleryToGithub() (২টা
+        // GitHub API round-trip + satellite থাকলে সেগুলোও) শেষ হওয়ার
+        // অপেক্ষা করত — cold-start মিলিয়ে প্রায়ই ২৫s+ লেগে যেত, client
+        // timeout করে ভুলভাবে "failed" দেখাত অথচ ব্যাকএন্ডে কাজ শেষমেশ
+        // সফলই হতো। এখন backend (Code.gs) export-টা একটা background
+        // trigger দিয়ে async করে দেয় — এই request এখন শুধু Drive-এ
+        // লিংক লেখা পর্যন্তই অপেক্ষা করে, তাই অনেক দ্রুত সাড়া দেয়।
+        // তাই timeout-ও কমিয়ে আনা হলো, যাতে সত্যিকারের network সমস্যায়
+        // দ্রুত জানা যায়।
         return fetchWithTimeout(APPS_SCRIPT_URL, {
             method: 'POST',
             body: JSON.stringify({
@@ -1302,7 +1312,7 @@
                 names: names || '',
                 cat: cat
             })
-        }, 25000)
+        }, 15000)
         .then(r => r.json())
         .catch(() => ({ success: false, error: 'Network error' }));
     }

@@ -579,6 +579,7 @@
         .photo-item img {
             width: 100%; height: 100%; display: block;
             object-fit: cover;
+            transition: opacity .25s ease;
         }
         .photo-overlay {
             position: absolute; inset: 0;
@@ -633,7 +634,7 @@
             width: 280px; height: 380px; flex-shrink: 0;
             border-radius: 4px; overflow: hidden; position: relative;
         }
-        .strip-item img { width: 100%; height: 100%; object-fit: cover; }
+        .strip-item img { width: 100%; height: 100%; object-fit: cover; transition: opacity .25s ease; }
         @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
         .admin-overlay {
@@ -1493,17 +1494,14 @@
         return /drive\.google\.com/.test(url);
     }
 
-    // 🆕 সব Drive thumbnail এখন সরাসরি drive.google.com-এর বদলে আমাদের
-    // নিজস্ব Cloudflare Worker (image-proxy-worker.js) দিয়ে সার্ভ হয়।
-    // প্রতিটা ছবি একবার fetch হয়ে Cloudflare edge-এ ৩০ দিন cache থাকে,
-    // ফলে হাজার হাজার ছবি লোড হলেও Drive বারবার হিট হয়ে throttle হয় না।
-    const IMAGE_PROXY_BASE = 'https://tonir-image-proxy.tonirshaik.workers.dev';
-
+    // 🆕 Cloudflare Worker প্রক্সি বাদ দেওয়া হয়েছে — এখন সব Drive ছবি
+    // সরাসরি Google-এর নিজস্ব thumbnail endpoint (drive.google.com/thumbnail)
+    // থেকে লোড হয়, আর ImgBB লিংক এমনিতেই সরাসরি (কোনো প্রক্সি লাগে না)।
     function toRenderableUrl(url, size) {
         if (isGoogleDriveUrl(url)) {
             const id = getDriveFileId(url);
             if (id) {
-                return IMAGE_PROXY_BASE + '/img?id=' + id + '&sz=w' + (size || 1000);
+                return 'https://drive.google.com/thumbnail?id=' + id + '&sz=w' + (size || 1000);
             }
         }
         return url;
@@ -1600,16 +1598,37 @@
             searchIndex: [caption, ...sectionWords].join(' ').toLowerCase(),
             title: caption || ('New Photo ' + (idx + 1)),
             fileId: img.id || null,
+            date: img.date || null,
             acc: img.acc || 'self',
             isLive: true
         };
     }
 
-    function fetchLiveUploads() {
-        return fetchWithTimeout(APPS_SCRIPT_URL, {}, 8000)
+    // 🆕 Google Apps Script/Drive মাঝেমধ্যে ঠান্ডা শুরু (cold start) হলে
+    // প্রথম রিকোয়েস্টে অনেক দেরি করে বা টাইমআউট হয়ে যায় — ফলে নতুন
+    // আপলোড করা (বিশেষ করে Drive ফোল্ডারের) ছবি প্রথমবারে ধরা পড়ে না।
+    // তাই প্রথম চেষ্টা দ্রুত টাইমআউটে (১০সে) ব্যর্থ/খালি হলে, একটু বেশি
+    // সময় (২৫সে) দিয়ে ব্যাকগ্রাউন্ডে আরেকবার চেষ্টা করা হয়, আর সফল হলে
+    // গ্যালারি নিঃশব্দে (কোনো ম্যানুয়াল রিফ্রেশ ছাড়াই) আপডেট হয়ে যায়।
+    function fetchLiveUploadsOnce(timeoutMs) {
+        return fetchWithTimeout(APPS_SCRIPT_URL, {}, timeoutMs)
             .then(r => r.json())
-            .then(res => (res && res.success && Array.isArray(res.images)) ? res.images : [])
-            .catch(() => []);
+            .then(res => (res && res.success && Array.isArray(res.images)) ? res.images : null)
+            .catch(() => null);
+    }
+
+    function fetchLiveUploads() {
+        return fetchLiveUploadsOnce(10000).then(images => images !== null ? images : []);
+    }
+
+    function retryLiveUploadsInBackground(oldPhotos) {
+        fetchLiveUploadsOnce(25000).then(images => {
+            if (images && images.length) {
+                const merged = buildMergedPhotoList(oldPhotos, images);
+                showGallery(merged);
+                try { localStorage.setItem(PHOTO_CACHE_KEY, JSON.stringify(merged)); } catch (e) {}
+            }
+        });
     }
 
     function buildMergedPhotoList(oldPhotos, liveImages) {
@@ -1678,6 +1697,10 @@
             const merged = buildMergedPhotoList(oldPhotos, liveImages);
             showGallery(merged);
             try { localStorage.setItem(PHOTO_CACHE_KEY, JSON.stringify(merged)); } catch (e) {}
+
+            if (!liveImages || liveImages.length === 0) {
+                retryLiveUploadsInBackground(oldPhotos);
+            }
         });
     }).catch(() => {
         if (!paintedFromCache) {
@@ -1726,15 +1749,37 @@
     }
 
     function attachImgFallback(imgEl, photo) {
-        // 🆕 আগে প্রথম fallback-ই সরাসরি drive.google.com-এ চলে যেত — এই
-        // একটা লিংকই visitor-এর নিজের Google session/cookie-এর উপর নির্ভর
-        // করে slow/inconsistent আচরণ করত। এখন প্রথমে proxy-কেই আবার
-        // cache-busting param দিয়ে retry করা হয় (edge cache-এ পুরনো bad
-        // response আটকে থাকলে সেটা এড়াতে), যাতে যতটা সম্ভব সবাই একই
-        // fast, consistent path দিয়ে ছবি পায়। সরাসরি Drive লিংক শুধু
-        // একদম শেষ, সবচেয়ে কম-ব্যবহৃত fallback হিসেবে থেকে যায়।
-        let stage = 0; // 0 = original, 1 = proxy retry, 2 = direct drive, 3 = give up
+        // 🆕 প্রথমে thumbnail URL-টাই cache-busting param দিয়ে একবার retry
+        // করা হয় (transient নেটওয়ার্ক/৪০৪ এড়াতে); তারপরও fail করলে
+        // সরাসরি drive.google.com/uc?export=view লিংকে fallback করা হয়,
+        // যেটা visitor-এর নিজের Google session-এর উপর নির্ভর করে বলে
+        // সবচেয়ে কম-ব্যবহৃত শেষ ধাপ হিসেবে রাখা আছে।
+        let stage = 0; // 0 = original, 1 = cache-bust retry, 2 = direct drive uc link, 3 = give up
+
+        // 🆕 নতুন Drive-আপলোড করা ছবির ক্ষেত্রে file.setSharing() করার
+        // পরও Google-এর নিজের CDN-এ thumbnail/uc লিংক আসলে সার্ভ হওয়া
+        // শুরু করতে (permission propagate হতে) কিছুক্ষণ সময় লাগতে পারে —
+        // এটা backend-এর কোনো bug না, Google Drive-এর নিজস্ব আচরণ।
+        // তাই আপলোডের ৫ মিনিটের মধ্যেকার ছবির জন্য, বাকি সব fallback
+        // fail করলেও সাথে সাথে বাদ না দিয়ে অল্প delay-তে (১সে, ২সে,
+        // ৩সে) আরও কয়েকবার চেষ্টা করা হয়।
+        const isFresh = !!(photo.date && (Date.now() - new Date(photo.date).getTime() < 5 * 60 * 1000));
+        let freshRetries = 0;
+        const MAX_FRESH_RETRIES = 3;
+
+        // 🆕 রিট্রাই যত দ্রুতই করা হোক, Google-এর সার্ভার সাইড
+        // propagation আসলে যতক্ষণ সময় নেয় ততক্ষণ ছবিটা আসবে না — তাই
+        // মিলিসেকেন্ডে রিট্রাই করলেও ছবি তাড়াতাড়ি আসবে না। যেটা আসলে
+        // চোখে লাগে সেটা হলো ব্রোকেন-ইমেজ আইকন। তাই সেটাই ঢেকে রাখা
+        // হচ্ছে: fail করলে সাথে সাথে ছবিটা অদৃশ্য করে দেওয়া হয় (নিচের
+        // dark background রঙই দেখা যায়), আর সফল হলে আস্তে fade-in
+        // হয়ে যায় — কোনো ভাঙা আইকন কখনো দেখা যায় না।
+        imgEl.addEventListener('load', function onLoad() {
+            imgEl.style.opacity = '1';
+        });
+
         imgEl.addEventListener('error', function onErr() {
+            imgEl.style.opacity = '0';
             stage++;
             if (stage === 1) {
                 const retryUrl = photo.url + (photo.url.indexOf('?') === -1 ? '?' : '&') + 'retry=' + Date.now();
@@ -1747,6 +1792,14 @@
                     imgEl.src = 'https://drive.google.com/uc?export=view&id=' + id;
                     return;
                 }
+            }
+            if (isFresh && freshRetries < MAX_FRESH_RETRIES) {
+                freshRetries++;
+                const delay = 1000 * freshRetries;
+                setTimeout(() => {
+                    imgEl.src = photo.thumbUrl + (photo.thumbUrl.indexOf('?') === -1 ? '?' : '&') + 'wake=' + Date.now();
+                }, delay);
+                return;
             }
             const item = imgEl.closest('.photo-item, .strip-item');
             if (item) {

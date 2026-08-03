@@ -1285,6 +1285,14 @@
     }
 
     function addLinkToGithub_(url, names, cat) {
+        // 🆕 এই action ব্যাকএন্ডে JSON ফাইলে লেখার পর সাথে সাথে
+        // exportLiveGalleryToGithub()-ও কল করে (GitHub থেকে read +
+        // commit — দুইটা GitHub API round-trip)। Apps Script cold-start
+        // মিলিয়ে এটা প্রায়ই ৮ সেকেন্ডের বেশি সময় নেয়, তাই ডিফল্ট
+        // ৮s timeout দিলে ক্লায়েন্ট ভুলভাবে "failed" দেখায় যদিও
+        // ব্যাকএন্ডে কাজ আসলে সফল হয়ে যায় (Apps Script execution
+        // ক্লায়েন্ট abort করলেও সার্ভারে চলতেই থাকে) — তাই এখানে
+        // অনেক বড় timeout (২৫s) দেওয়া হলো।
         return fetchWithTimeout(APPS_SCRIPT_URL, {
             method: 'POST',
             body: JSON.stringify({
@@ -1294,7 +1302,7 @@
                 names: names || '',
                 cat: cat
             })
-        })
+        }, 25000)
         .then(r => r.json())
         .catch(() => ({ success: false, error: 'Network error' }));
     }

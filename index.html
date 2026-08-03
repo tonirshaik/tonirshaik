@@ -8,7 +8,7 @@
   <meta property="og:site_name" content="Tonir Shaik">
   <meta name="application-name" content="Tonir Shaik">
 
-  <!-- Schema.org Structured Data (Google-কে সঠিক নাম বোঝাতে সবচেয়ে বেশি সাহায্য করে) -->
+  <!-- Schema.org Structured Data (Google-কে সঠিক নাম বোঝাতে সবচেয়ে বেশি সাহায্য করে) -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -1298,6 +1298,16 @@
         <div class="workpic-fullpage-content">
             <div id="workpicUploadPanel" style="display:none;">
                 <h4 style="font-size:14px;">📤 Upload New</h4>
+
+                <div class="admin-dest-row" style="display:flex; gap:18px; align-items:center; margin-bottom:10px; font-size:14px;">
+                    <label style="display:flex; align-items:center; gap:6px; cursor:pointer; margin:0;">
+                        <input type="radio" name="workpicUploadDest" value="drive" id="workpicDestDriveRadio" checked> Google Drive
+                    </label>
+                    <label style="display:flex; align-items:center; gap:6px; cursor:pointer; margin:0;">
+                        <input type="radio" name="workpicUploadDest" value="imgbb" id="workpicDestImgbbRadio"> ImgBB + GitHub
+                    </label>
+                </div>
+
                 <input type="file" class="admin-input" id="workpicFileInput" accept="image/*" multiple>
                 <div class="upload-thumbs" id="workpicThumbs"></div>
                 <button class="admin-btn" id="workpicSendBtn" disabled>Upload →</button>

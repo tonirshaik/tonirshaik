@@ -1255,7 +1255,7 @@
                 <div class="tag-progress-track"><div class="tag-progress-fill" id="tagProgressFill"></div></div>
                 <div class="tag-progress-text"><span id="tagPhotoNum">1</span>/<span id="tagPhotoTotal">1</span></div>
             </div>
-            <img class="admin-preview" id="tagPreviewImg" alt="preview" style="display:block;">
+            <img class="admin-preview" id="tagPreviewImg" alt="preview" decoding="async" style="display:block;">
             <div class="tag-cat-row" id="tagCategoryRow">
                 <span class="tag-cat-label">Category:</span>
                 <button type="button" class="tag-cat-btn" data-cat="single">Single</button>
@@ -1337,7 +1337,7 @@
     <div class="admin-box admin-box-wide" id="adminEditTagBox">
         <button class="admin-close" id="adminEditTagClose">×</button>
         <h4>✎ Edit Tags <span id="editTagProgressText" style="font-size:12px; color:var(--muted); font-weight:normal;"></span></h4>
-        <img class="admin-preview" id="editTagPreviewImg" alt="preview" style="display:block;">
+        <img class="admin-preview" id="editTagPreviewImg" alt="preview" decoding="async" style="display:block;">
         <div class="tag-cat-row" id="editTagCategoryRow">
             <span class="tag-cat-label">Category:</span>
             <button type="button" class="tag-cat-btn" data-cat="single">Single</button>
@@ -1421,7 +1421,7 @@
     <button class="lb-nav lb-prev" id="wplbPrev">‹</button>
     <button class="lb-nav lb-next" id="wplbNext">›</button>
     <div class="lb-inner">
-        <img id="wplbImg" src="" alt="">
+        <img id="wplbImg" src="" alt="" decoding="async">
         <div class="lb-meta">
             <span class="lb-title" id="wplbTitle"></span>
             <span class="lb-counter" id="wplbCounter"></span>
@@ -1442,7 +1442,7 @@
     <button class="lb-nav lb-prev" id="lbPrev">‹</button>
     <button class="lb-nav lb-next" id="lbNext">›</button>
     <div class="lb-inner">
-        <img id="lbImg" src="" alt="">
+        <img id="lbImg" src="" alt="" decoding="async">
         <div class="lb-meta">
             <span class="lb-title" id="lbTitle"></span>
             <span class="lb-counter" id="lbCounter"></span>
@@ -1835,7 +1835,7 @@
         item.className = 'photo-item reveal';
         item.dataset.cat = p.cat;
         item.innerHTML = `
-            <img src="${p.thumbUrl || p.url}" alt="${p.title}" loading="lazy" style="background:#0A1220;">
+            <img src="${p.thumbUrl || p.url}" alt="${p.title}" loading="lazy" decoding="async" style="background:#0A1220;">
             <div class="photo-overlay">
                 <div class="photo-meta">
                     <div class="photo-tag">${CATEGORY_LABELS[p.cat] || ''}</div>

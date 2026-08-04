@@ -215,11 +215,8 @@
                 ADMIN_PASSWORD = entered;
                 window.ADMIN_PASSWORD = entered; // face-recognition.js এর জন্য
                 adminLockOverlay.classList.remove('open');
-                // 🆕 আগে এখানে adminUploadOverlay সাথে সাথে খুলে যেত (পুরো
-                // upload dashboard)। এখন পাসওয়ার্ড দেওয়ার পর শুধু admin-mode
-                // চালু হবে (যেটা select/delete/edit বাটন visible করে) —
-                // dashboard আর নিজে থেকে খুলবে না, সবাই আগের মতোই select
-                // বাটন দিয়ে কাজ করতে পারবে।
+                resetUploadFlow();
+                adminUploadOverlay.classList.add('open');
                 document.body.classList.add('admin-mode');
             } else {
                 adminLockMsg.textContent = res.error || 'Wrong password';

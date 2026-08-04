@@ -514,6 +514,22 @@
         showTagStep(0);
     });
 
+    // 🆕 delete-এর পরও এখন upload-এর মতোই একটা bust=true (cache-busting)
+    // গ্যালারি রিফ্রেশ ট্রিগার করা হয় (নিচের refreshGalleryWithLiveUploads),
+    // শুধু admin-এর নিজের `allPhotos.filter(...)` স্প্লাইসের উপর ভরসা না
+    // করে। এতে দুটো সুবিধা: (১) যদি ব্যাকএন্ডের delete action-ও Drive
+    // export/GitHub commit করে, admin নিজে সত্যিকারের আপডেটেড merged
+    // লিস্টটাই দেখবে (স্টেল লোকাল স্টেট না); (২) কয়েকবার রিট্রাই
+    // (৩০s ধরে ৫s পরপর, GALLERY_EXPORT_RAW_URL-এর bust query param দিয়ে)
+    // GitHub-এর raw.githubusercontent.com CDN cache বাইপাস করার চেষ্টা
+    // করে যাতে সম্ভব হলে দ্রুত সাড়া মেলে।
+    // ⚠️ সীমাবদ্ধতা: এটা শুধু admin-এর নিজের ব্রাউজারের রিফ্রেশ দ্রুত
+    // করে। সাধারণ ভিজিটররা এখনো GALLERY_EXPORT_RAW_URL-এর সাধারণ
+    // (bust ছাড়া) fetch ব্যবহার করে, যেটা backend-এর periodic export
+    // trigger (কমেন্ট অনুযায়ী প্রতি ~১৫ মিনিটে) আর GitHub-এর নিজস্ব CDN
+    // cache propagation-এর উপর নির্ভরশীল — এই ফ্রন্টএন্ড ফাইল থেকে সেই
+    // ১০-১৫ মিনিট delay সম্পূর্ণ দূর করা যায় না, কারণ সেটা Apps
+    // Script (Code.gs)-এর export trigger interval-এ ঠিক করতে হবে।
     function deletePhotoConfirm(fileId, btnEl, accountId) {
         if (!confirm('Are you sure you want to permanently delete this photo?')) return;
 
@@ -541,6 +557,7 @@
                     const n = parseInt(countEl.textContent, 10);
                     if (!isNaN(n) && n > 0) countEl.textContent = n - 1;
                 }
+                refreshGalleryWithLiveUploads(6);
             } else {
                 if (item) item.style.opacity = '1';
                 btnEl.disabled = false;
@@ -582,6 +599,7 @@
                     const n = parseInt(countEl.textContent, 10);
                     if (!isNaN(n) && n > 0) countEl.textContent = n - 1;
                 }
+                refreshGalleryWithLiveUploads(6);
             } else {
                 if (item) item.style.opacity = '1';
                 btnEl.disabled = false;
@@ -1084,6 +1102,10 @@
     // ভিজিটরের প্রথম লোডে এটা হয় না, শুধু নিজের upload-এর পরে; আর
     // (খ) রিট্রাই window বাড়ানো হয়েছে (৬ বার, ৫s পরপর = ৩০s) যাতে
     // export + commit শেষ হওয়ার জন্য যথেষ্ট সময় থাকে।
+    // 🆕 এখন upload-এর পাশাপাশি delete-এর পরেও (উপরে দুটো
+    // deletePhotoConfirm/deleteTextPhotoConfirm ফাংশনে) একই ফাংশন কল
+    // করা হয়, যাতে admin এর নিজের ভিউ দ্রুত + সঠিকভাবে merged/আপডেটেড
+    // লিস্ট দেখায়, শুধু client-side splice-এর উপর নির্ভর না করে।
     function refreshGalleryWithLiveUploads(attemptsLeft) {
         attemptsLeft = (typeof attemptsLeft === 'number') ? attemptsLeft : 0;
         try {

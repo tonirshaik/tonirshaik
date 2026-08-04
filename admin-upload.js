@@ -25,6 +25,29 @@
         return fetch(url, opts).finally(() => clearTimeout(timer));
     }
 
+    // 🆕 plain fetch()-এ upload progress ইভেন্ট পাওয়া যায় না — তাই
+    // বড় ছবির POST-গুলোর (upload-all-photos step) জন্য XMLHttpRequest
+    // ব্যবহার করা হয়, কারণ xhr.upload.onprogress আসল বাইট-অনুপাতে
+    // কল হয়। বাকি ব্যবহার (return shape, error handling) fetchWithTimeout-এর
+    // মতোই রাখা হয়েছে যাতে caller-দের কিছু বদলাতে না হয়।
+    function postWithProgress(url, bodyObj, timeoutMs, onProgress) {
+        return new Promise((resolve) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', url, true);
+            xhr.timeout = timeoutMs || 30000;
+            xhr.upload.onprogress = function (e) {
+                if (onProgress && e.lengthComputable) onProgress(e.loaded / e.total);
+            };
+            xhr.onload = function () {
+                try { resolve(JSON.parse(xhr.responseText)); }
+                catch (e) { resolve({ success: false, error: 'Bad response' }); }
+            };
+            xhr.onerror = function () { resolve({ success: false, error: 'Network error' }); };
+            xhr.ontimeout = function () { resolve({ success: false, error: 'Timeout' }); };
+            xhr.send(JSON.stringify(bodyObj));
+        });
+    }
+
     document.getElementById('navGalleryLink').addEventListener('click', (e) => {
         e.preventDefault();
         adminLockOverlay.classList.add('open');
@@ -903,7 +926,12 @@
         });
     });
 
-    function uploadOnePhoto(photo) {
+    // 🆕 uploadOnePhoto এখন একটা optional onProgress(fraction 0..1)
+    // callback নেয় — Drive route plain fetchWithTimeout-এর বদলে
+    // postWithProgress (XMLHttpRequest ভিত্তিক) ব্যবহার করে, যাতে
+    // "Uploading..." bar আসল আপলোড অগ্রগতি অনুযায়ী আস্তে আস্তে ভরে,
+    // শুধু শেষে হুট করে ১০০% না হয়ে যায়।
+    function uploadOnePhoto(photo, onProgress) {
         // caption ফেস-ট্যাগিং ধাপ থেকে তৈরি — Drive আর ImgBB দুটো
         // destination-এর জন্যই ঠিক একই caption/tag ব্যবহার হয়, তাই
         // manual নাম-টাইপ করা আলাদা করে লাগে না ImgBB-র জন্য।
@@ -911,22 +939,17 @@
         const cat = photo.category;
 
         if (getUploadDestination() === 'imgbb') {
-            return uploadOnePhotoToImgbb_(photo, caption, cat);
+            return uploadOnePhotoToImgbb_(photo, caption, cat, onProgress);
         }
 
-        return fetchWithTimeout(APPS_SCRIPT_URL, {
-            method: 'POST',
-            body: JSON.stringify({
-                password: ADMIN_PASSWORD,
-                image: photo.base64,
-                mimeType: photo.mime,
-                filename: photo.name,
-                caption: caption,
-                cat: cat
-            })
-        }, 30000) // 🆕 বড় ছবির ফাইল আপলোডে বেশি সময় লাগে বলে টাইমআউট ৩০ সেকেন্ড
-        .then(r => r.json())
-        .catch(() => ({ success: false, error: 'Network error' }));
+        return postWithProgress(APPS_SCRIPT_URL, {
+            password: ADMIN_PASSWORD,
+            image: photo.base64,
+            mimeType: photo.mime,
+            filename: photo.name,
+            caption: caption,
+            cat: cat
+        }, 30000, onProgress); // 🆕 বড় ছবির ফাইল আপলোডে বেশি সময় লাগে বলে টাইমআউট ৩০ সেকেন্ড
     }
 
     // ImgBB route: ছবি → ImgBB (direct link) → সেই link + caption + cat
@@ -934,12 +957,18 @@
     // রিটার্ন-করা shape uploadAllPhotos()-এর জন্য Drive route-এর মতোই
     // { success, accountId, ... } — তাই নিচের progress/face-learning
     // কোডে কোনো বদল লাগে না।
-    function uploadOnePhotoToImgbb_(photo, caption, cat) {
-        return uploadToImgbb_(photo.base64).then(imgRes => {
+    // ImgBB আপলোড অংশটাকেই মূল progress ধরা হয় (~৯০%), GitHub-এ
+    // লিংক লেখার ছোট রিকোয়েস্টটা বাকি ~১০% — শেষে onProgress(1)
+    // কল করে bar পুরোপুরি ভরিয়ে দেয়।
+    function uploadOnePhotoToImgbb_(photo, caption, cat, onProgress) {
+        return uploadToImgbb_(photo.base64, function (frac) {
+            if (onProgress) onProgress(frac * 0.9);
+        }).then(imgRes => {
             if (!imgRes.success) {
                 return { success: false, error: 'ImgBB: ' + imgRes.error };
             }
             return addLinkToGithub_(imgRes.url, caption, cat).then(ghRes => {
+                if (onProgress) onProgress(1);
                 if (!ghRes || !ghRes.success) {
                     return { success: false, error: 'GitHub: ' + ((ghRes && ghRes.error) || 'unknown error') };
                 }
@@ -981,7 +1010,13 @@
                 }, 2500);
                 return;
             }
-            uploadOnePhoto(selectedPhotos[i]).then(res => {
+            // 🆕 প্রতিটা ছবির নিজস্ব আপলোড fraction (0..1) সামগ্রিক
+            // (done+failed+frac)/total হিসেবে bar-এ প্রতিফলিত হয়, তাই
+            // একটা ছবি হলেও (0/1) আপলোড হতে হতে bar আস্তে আস্তে ভরে।
+            uploadOnePhoto(selectedPhotos[i], function (frac) {
+                const overallPct = ((done + failed) + frac) / selectedPhotos.length * 100;
+                uploadProgressFill.style.width = overallPct + '%';
+            }).then(res => {
                 if (res && res.success) {
                     done++;
                     // ছবিটা আসলে কোন অ্যাকাউন্টে সেভ হলো (self বা কোনো
@@ -1275,21 +1310,36 @@
     // =====================================================================
     const IMGBB_API_KEY = 'bcb4dbe1b4e6af2e98b259afc291e550'; // 👉 https://api.imgbb.com/ থেকে নিজের key বসাও
 
-    function uploadToImgbb_(base64) {
+    // 🆕 onProgress যোগ হয়েছে — FormData POST-ও XMLHttpRequest দিয়ে
+    // পাঠানো হয় (fetch()-এ upload progress পাওয়া যায় না) যাতে ImgBB
+    // route-এও bar লাইভ ভরতে থাকে, শুধু Drive route-এ না।
+    function uploadToImgbb_(base64, onProgress) {
         const raw = base64.split(',').pop(); // "data:image/...;base64," প্রিফিক্স বাদ
         const form = new FormData();
         form.append('key', IMGBB_API_KEY);
         form.append('image', raw);
 
-        return fetch('https://api.imgbb.com/1/upload', { method: 'POST', body: form })
-            .then(r => r.json())
-            .then(json => {
-                if (json && json.success && json.data && json.data.url) {
-                    return { success: true, url: json.data.url };
+        return new Promise((resolve) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', 'https://api.imgbb.com/1/upload', true);
+            xhr.upload.onprogress = function (e) {
+                if (onProgress && e.lengthComputable) onProgress(e.loaded / e.total);
+            };
+            xhr.onload = function () {
+                try {
+                    const json = JSON.parse(xhr.responseText);
+                    if (json && json.success && json.data && json.data.url) {
+                        resolve({ success: true, url: json.data.url });
+                    } else {
+                        resolve({ success: false, error: (json && json.error && json.error.message) || 'ImgBB upload failed' });
+                    }
+                } catch (e) {
+                    resolve({ success: false, error: 'Bad response' });
                 }
-                return { success: false, error: (json && json.error && json.error.message) || 'ImgBB upload failed' };
-            })
-            .catch(() => ({ success: false, error: 'ImgBB network error' }));
+            };
+            xhr.onerror = function () { resolve({ success: false, error: 'ImgBB network error' }); };
+            xhr.send(form);
+        });
     }
 
     function addLinkToGithub_(url, names, cat) {

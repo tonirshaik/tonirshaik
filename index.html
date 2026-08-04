@@ -725,17 +725,6 @@
         /* 🆕 MULTI-SELECT: "Select" toggle বাটন, checkbox, আর নিচের bulk
            action bar (Download/Share/Edit tags/Delete Selected) — সব
            delete-btn/edit-tag-btn-এর মতোই শুধু body.admin-mode-এ visible। */
-        /* 🆕 MULTI-SELECT: nav bar-এর ডান কোনায়, hamburger বাটনের পাশে
-           checklist-আইকন বাটন — শুধু body.admin-mode-এ visible, ঠিক
-           hamburger বাটনের মতোই একই সাইজে বসানো হয়েছে। */
-        .nav-select-btn { display: none; }
-        body.admin-mode .nav-select-btn {
-            display: flex; align-items: center; justify-content: center;
-            width: 38px; height: 38px; margin-left: 12px;
-            background: rgba(63,168,255,0.06); border: 1px solid rgba(63,168,255,0.3);
-            border-radius: 6px; cursor: pointer; flex-shrink: 0; color: var(--gold-light);
-        }
-        body.select-mode .nav-select-btn { background: var(--gold); color: #000; border-color: var(--gold); }
 
         .photo-select-check {
             position: absolute; top: 8px; left: 8px; z-index: 3;
@@ -1297,9 +1286,6 @@
         <p class="search-status" id="searchStatus"></p>
     </div>
     <div style="display:flex; align-items:center;">
-        <button class="nav-select-btn" id="selectModeToggleBtn" type="button" title="Select photos" aria-label="Select photos">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M17.5 14.5l1.5 1.5 3-3"/></svg>
-        </button>
         <button class="nav-hamburger" id="navHamburgerBtn" aria-label="Open menu">
             <span></span><span></span><span></span>
         </button>
@@ -2266,10 +2252,6 @@
         });
     }
 
-    const selectModeToggleBtn = document.getElementById('selectModeToggleBtn');
-    if (selectModeToggleBtn) {
-        selectModeToggleBtn.addEventListener('click', () => setSelectMode(!selectMode));
-    }
     const publicSelectBtn = document.getElementById('publicSelectBtn');
     if (publicSelectBtn) {
         publicSelectBtn.addEventListener('click', () => setSelectMode(!selectMode));

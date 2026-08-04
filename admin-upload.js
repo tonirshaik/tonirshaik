@@ -1,4 +1,4 @@
-/* ============================================================
+/* ============================================================ 
    admin-upload.js
    Photo Gallery Admin: Upload + Face-Tag flow for Tonir Shaik's
    gallery site. Loaded by index.html via <script src="admin-upload.js">.

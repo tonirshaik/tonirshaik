@@ -1608,8 +1608,14 @@
         const sectionWords = SECTION_SEARCH_WORDS[cat] || [];
         return {
             // Grid display: small, fast-loading thumbnail.
+            // 🆕 THUMBNAIL FIX: ImgBB-হোস্টেড ছবির জন্য backend এখন সাথে
+            // img.thumbUrl (ImgBB-এর medium/thumb লিংক) পাঠায় — সেটা থাকলে
+            // সরাসরি সেটাই ব্যবহার হয় (toRenderableUrl শুধু Drive URL রিসাইজ
+            // করতে পারে, ImgBB URL অপরিবর্তিতই রেখে দেয়)। পুরনো এন্ট্রি বা
+            // Drive-hosted ছবির জন্য img.thumbUrl খালি থাকবে, তখন আগের মতোই
+            // toRenderableUrl(img.url, 200) fallback হিসেবে ব্যবহার হয়।
             url: toRenderableUrl(img.url, 1000),
-            thumbUrl: toRenderableUrl(img.url, 200),
+            thumbUrl: img.thumbUrl ? img.thumbUrl : toRenderableUrl(img.url, 200),
             rawUrl: img.url,
             // Download button: full-quality original file, not the thumbnail.
             downloadUrl: toDownloadUrl(img.url),

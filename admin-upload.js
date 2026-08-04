@@ -25,11 +25,40 @@
         return fetch(url, opts).finally(() => clearTimeout(timer));
     }
 
-    // 🆕 plain fetch()-এ upload progress ইভেন্ট পাওয়া যায় না — তাই
-    // বড় ছবির POST-গুলোর (upload-all-photos step) জন্য XMLHttpRequest
-    // ব্যবহার করা হয়, কারণ xhr.upload.onprogress আসল বাইট-অনুপাতে
-    // কল হয়। বাকি ব্যবহার (return shape, error handling) fetchWithTimeout-এর
-    // মতোই রাখা হয়েছে যাতে caller-দের কিছু বদলাতে না হয়।
+    // 🆕 Apps Script-এর exec URL POST করলে ভেতরে ভেতরে একটা 302
+    // রিডাইরেক্ট (script.googleusercontent.com-এ) হয়, যেটা fetch()
+    // ঠিকভাবে handle করে কিন্তু বড় base64 body (কয়েক MB ছবি) নিয়ে
+    // XMLHttpRequest-এ মাঝেমধ্যে ফেইল করে — তাই Drive route-এর আসল
+    // request আগের মতোই fetchWithTimeout (fetch-ভিত্তিক, বিশ্বস্ত)
+    // দিয়ে যায়। real byte-progress এখানে পাওয়া যায় না বলে bar-টা
+    // এই simulated ease-এর মাধ্যমে আস্তে আস্তে ~৯০% পর্যন্ত ভরতে
+    // থাকে, তারপর আসল response এলে ১০০%-এ snap করে।
+    function fetchWithSimulatedProgress(url, options, timeoutMs, onProgress) {
+        return new Promise((resolve) => {
+            let simulated = 0;
+            const timer = setInterval(() => {
+                simulated += (0.9 - simulated) * 0.12;
+                if (onProgress) onProgress(Math.min(simulated, 0.9));
+            }, 150);
+
+            fetchWithTimeout(url, options, timeoutMs)
+                .then(r => r.json())
+                .then(res => {
+                    clearInterval(timer);
+                    if (onProgress) onProgress(1);
+                    resolve(res);
+                })
+                .catch(() => {
+                    clearInterval(timer);
+                    if (onProgress) onProgress(1);
+                    resolve({ success: false, error: 'Network error' });
+                });
+        });
+    }
+
+    // ImgBB আপলোড আলাদা ডোমেইনে (api.imgbb.com) সরাসরি FormData POST,
+    // কোনো Apps Script রিডাইরেক্ট নেই — এখানে XMLHttpRequest নিরাপদ,
+    // তাই এই রুটে আসল xhr.upload.onprogress ব্যবহার করা হয়।
     function postWithProgress(url, bodyObj, timeoutMs, onProgress) {
         return new Promise((resolve) => {
             const xhr = new XMLHttpRequest();
@@ -942,13 +971,16 @@
             return uploadOnePhotoToImgbb_(photo, caption, cat, onProgress);
         }
 
-        return postWithProgress(APPS_SCRIPT_URL, {
-            password: ADMIN_PASSWORD,
-            image: photo.base64,
-            mimeType: photo.mime,
-            filename: photo.name,
-            caption: caption,
-            cat: cat
+        return fetchWithSimulatedProgress(APPS_SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                password: ADMIN_PASSWORD,
+                image: photo.base64,
+                mimeType: photo.mime,
+                filename: photo.name,
+                caption: caption,
+                cat: cat
+            })
         }, 30000, onProgress); // 🆕 বড় ছবির ফাইল আপলোডে বেশি সময় লাগে বলে টাইমআউট ৩০ সেকেন্ড
     }
 

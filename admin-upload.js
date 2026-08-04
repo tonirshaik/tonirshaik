@@ -557,7 +557,7 @@
                     const n = parseInt(countEl.textContent, 10);
                     if (!isNaN(n) && n > 0) countEl.textContent = n - 1;
                 }
-                refreshGalleryWithLiveUploads(6);
+                refreshGalleryWithLiveUploads(6, { fileId: fileId });
             } else {
                 if (item) item.style.opacity = '1';
                 btnEl.disabled = false;
@@ -599,7 +599,7 @@
                     const n = parseInt(countEl.textContent, 10);
                     if (!isNaN(n) && n > 0) countEl.textContent = n - 1;
                 }
-                refreshGalleryWithLiveUploads(6);
+                refreshGalleryWithLiveUploads(6, { rawUrl: rawUrl });
             } else {
                 if (item) item.style.opacity = '1';
                 btnEl.disabled = false;
@@ -1106,14 +1106,29 @@
     // deletePhotoConfirm/deleteTextPhotoConfirm ফাংশনে) একই ফাংশন কল
     // করা হয়, যাতে admin এর নিজের ভিউ দ্রুত + সঠিকভাবে merged/আপডেটেড
     // লিস্ট দেখায়, শুধু client-side splice-এর উপর নির্ভর না করে।
-    function refreshGalleryWithLiveUploads(attemptsLeft) {
+    // 🆕 exclude প্যারামিটার যোগ হলো — { fileId } বা { rawUrl } পাঠালে,
+    // merge করার পরপরই সেই ছবিটা আবার filter করে বাদ দেওয়া হয়। এটা
+    // দরকার কারণ delete-এর পর backend-এর export (GitHub commit) আর
+    // GitHub CDN cache আপডেট হতে কিছুটা সময় লাগে — এই কয়েক সেকেন্ড/
+    // মিনিটের মধ্যে refresh চললে পুরনো (এখনো delete-না-হওয়া) ডেটাই
+    // ফিরে আসতে পারে, আর ওই ছবিটা গ্যালারিতে আবার দেখা যেতে পারে।
+    // exclude দিয়ে client-side জোর করে সেটা আটকানো হয়, backend সত্যিই
+    // export শেষ না করা পর্যন্ত।
+    function refreshGalleryWithLiveUploads(attemptsLeft, exclude) {
         attemptsLeft = (typeof attemptsLeft === 'number') ? attemptsLeft : 0;
         try {
             fetch(csvUrl).then(r => r.text()).catch(() => '').then(textData => {
                 const oldPhotos = textData ? parsePhotoFile(textData) : [];
                 fetchLiveUploadsOnce(10000, true).then(liveImages => {
                     try {
-                        allPhotos = buildMergedPhotoList(oldPhotos, liveImages || []);
+                        let merged = buildMergedPhotoList(oldPhotos, liveImages || []);
+                        if (exclude) {
+                            merged = merged.filter(p =>
+                                (!exclude.fileId || p.fileId !== exclude.fileId) &&
+                                (!exclude.rawUrl || p.rawUrl !== exclude.rawUrl)
+                            );
+                        }
+                        allPhotos = merged;
                         document.getElementById('photoCount').textContent = allPhotos.length;
                         applyFiltersAndSearch();
                         buildStrip(allPhotos);
@@ -1124,7 +1139,7 @@
         } catch (e) {  }
 
         if (attemptsLeft > 0) {
-            setTimeout(() => refreshGalleryWithLiveUploads(attemptsLeft - 1), 5000);
+            setTimeout(() => refreshGalleryWithLiveUploads(attemptsLeft - 1, exclude), 5000);
         }
     }
 

@@ -58,18 +58,21 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
-    <link rel="preconnect" href="https://raw.githubusercontent.com">
     <link rel="preconnect" href="https://script.google.com">
+    <link rel="preconnect" href="https://script.googleusercontent.com">
     <link rel="preconnect" href="https://drive.google.com">
-    <link rel="dns-prefetch" href="https://raw.githubusercontent.com">
     <link rel="dns-prefetch" href="https://script.google.com">
+    <link rel="dns-prefetch" href="https://script.googleusercontent.com">
     <link rel="dns-prefetch" href="https://drive.google.com">
-    <!-- 🆕 SPEED: gallery-live.json (আসল/লাইভ ছবির একমাত্র সোর্স) fetch
-         browser JS পার্স হওয়ার আগেই শুরু করিয়ে দেওয়া হচ্ছে, যাতে প্রথম
-         পেইন্ট আরো আগে হয় ("blink of an eye")। নিচের script-এ একই
-         URL fetch করলে browser আগে থেকে চলতে থাকা এই request-টাই
-         re-use করবে। -->
-    <link rel="preload" as="fetch" crossorigin="anonymous" href="https://raw.githubusercontent.com/tonirshaik/tonirshaik/refs/heads/main/gallery-live.json">
+    <!-- 🆕 REVERTED TO LIVE BACKEND: static GitHub export (gallery-live.json)
+         বাদ দেওয়া হয়েছে — সেই ফাইলের নিজস্ব CDN cache-এর কারণে delete/upload
+         করার পরও পুরনো ডেটা কিছুক্ষণ থেকে যেত। এখন সরাসরি Apps Script
+         (/exec, doGet()) থেকেই লাইভ ডেটা আনা হয়, তাই মেটাডেটা বদলালে
+         (delete/upload/edit) সাথে সাথেই সব ভিজিটরের কাছে প্রতিফলিত হয় —
+         কোনো export/CDN propagation delay নেই। এখানে সেই একই /exec
+         URL preload করে রাখা হচ্ছে যাতে browser JS পার্স হওয়ার আগেই
+         request শুরু হয়ে যায়। -->
+    <link rel="preload" as="fetch" crossorigin="anonymous" href="https://script.google.com/macros/s/AKfycbyLRiJ9ueiqnc7kYc188HTg41wJNF3W1eighA2WA7xq9nUfMTJflzefxdXsrjIHOgXiLw/exec">
     <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=Inter:wght@300;400;500&display=swap" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=Inter:wght@300;400;500&display=swap" rel="stylesheet"></noscript>
     <style>
@@ -1475,18 +1478,18 @@
 
     const csvUrl = 'https://raw.githubusercontent.com/tonirshaik/tonirshaik/refs/heads/main/Tonir%20photo%20Link.txt';
     const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyLRiJ9ueiqnc7kYc188HTg41wJNF3W1eighA2WA7xq9nUfMTJflzefxdXsrjIHOgXiLw/exec';
-    // APPS_SCRIPT_URL এখনো এখানে দরকার — admin-upload.js এই global-টাই
-    // ব্যবহার করে upload/delete/caption-edit করার সময় (এই ফাইলে অন্য
-    // কোথাও পরিবর্তন হয়নি)। কিন্তু সাধারণ ভিজিটরের গ্যালারি-লোডে (নিচের
-    // fetchLiveUploadsOnce) এখন আর এই URL কল হয় না।
-
-    // 🆕 Apps Script backend-এ নতুন যোগ করা periodic export
-    // (exportLiveGalleryToGithub_) এখান থেকে GitHub-এ একটা static JSON
-    // ফাইল হিসেবে "live" ছবির লিস্ট রাখে — সাধারণ ভিজিটর এখন Apps
-    // Script (/exec) কল না করে সরাসরি এই static ফাইলটাই পড়ে। Apps
-    // Script কল হয় শুধু admin panel থেকে upload/delete/edit করলে (আর
-    // ব্যাকগ্রাউন্ডে প্রতি ১৫ মিনিটে backend-এর নিজস্ব periodic trigger)।
-    const GALLERY_EXPORT_RAW_URL = 'https://raw.githubusercontent.com/tonirshaik/tonirshaik/refs/heads/main/gallery-live.json';
+    // 🆕 REVERTED TO LIVE BACKEND: এখন সাধারণ ভিজিটরের গ্যালারি-লোডও
+    // (নিচের fetchLiveUploadsOnce) সরাসরি এই একই APPS_SCRIPT_URL
+    // (doGet()) কল করে — আগের GitHub static-export (GALLERY_EXPORT_RAW_URL)
+    // পদ্ধতি বাদ দেওয়া হয়েছে, কারণ সেটার export+CDN cache delay-এর জন্য
+    // delete/upload-এর পরও পুরনো ডেটা কিছুক্ষণ থেকে যেত। এখন delete/
+    // upload/edit করলে সব ভিজিটরই সাথে সাথে (একই request, কোনো মাঝের
+    // static ফাইল ছাড়া) আপডেটেড ডেটা পাবে।
+    // ⚠️ ট্রেড-অফ: প্রতি পেজ-লোডে Apps Script কল হওয়ায় (১) cold-start
+    // হলে প্রথম রিকোয়েস্ট কয়েক সেকেন্ড ধীর হতে পারে, (২) বেশি ভিজিটর
+    // একসাথে এলে Apps Script-এর দৈনিক execution quota-তে চাপ পড়তে
+    // পারে। এটা এখন জেনেশুনেই মেনে নেওয়া হচ্ছে, instant-delete visitor-
+    // experience-এর জন্য।
 
     // 🆕 Google Apps Script কখনো কখনো (cold start-এ) অনেক দেরি করে বা
     // hang করে থাকে — তাই কোনো fetch যাতে অনির্দিষ্টকাল অপেক্ষা না করে,
@@ -1622,38 +1625,34 @@
         };
     }
 
-    // 🆕 আগে এখানে সরাসরি Apps Script (/exec, doGet()) কল হতো — প্রতিটা
-    // ভিজিটরের প্রতিটা পেজ-লোডে backend-কে জাগাতে হতো (cold start সহ),
-    // যেটা ধীর আর অপচয়। এখন backend নিজেই periodically (আর প্রতিটা
-    // upload/delete/edit-এর পরপরই) একই ডেটা GitHub-এ একটা static JSON
-    // ফাইলে (GALLERY_EXPORT_RAW_URL) এক্সপোর্ট করে রাখে — সাধারণ
-    // ভিজিটরের গ্যালারি এখন সরাসরি সেই static ফাইলটাই পড়ে, কোনো Apps
-    // Script কল ছাড়াই। ফলাফল দ্রুত লোড আর cold-start-এর ঝামেলা নেই।
-    // Apps Script এখন কল হয় শুধু admin panel থেকে (upload/delete/edit)।
-    // 🆕 bust=true হলে URL-এর সাথে একটা টাইমস্ট্যাম্প query param
-    // জোড়া হয় — {cache:'no-store'} শুধু ব্রাউজারের নিজের cache
-    // এড়ায়, কিন্তু raw.githubusercontent.com নিজেও একটা edge/CDN
-    // cache রাখে (কয়েক মিনিট পর্যন্ত) যেটা এতে বাইপাস হয় না। নতুন
-    // query param মানে CDN-এর কাছে সেটা "আলাদা URL" — তাই cache miss
-    // হয়ে সরাসরি আসল (তাজা) কনটেন্ট আনে। সাধারণ ভিজিটরের প্রথম
-    // পেজ-লোডে এটা লাগে না (bust=false, ডিফল্ট) — শুধু আপলোডের
-    // পরপর নিজের নতুন ছবিটা তাড়াতাড়ি দেখার জন্য (admin-upload.js
-    // দেখো) ব্যবহার হয়, যাতে সাধারণ ভিজিটরদের জন্য CDN cache/rate-limit
-    // এর উপর বাড়তি চাপ না পড়ে।
+    // 🆕 REVERTED TO LIVE BACKEND: এই ফাংশন এখন সরাসরি Apps Script
+    // (/exec, doGet()) কল করে — আগের static GitHub export
+    // (gallery-live.json) পড়া বাদ দেওয়া হয়েছে, কারণ সেই ফাইলের নিজস্ব
+    // CDN cache-এর জন্য delete/upload-এর পরও পুরনো ডেটা কিছুক্ষণ থেকে
+    // যেত। doGet() একই shape-এর ডেটা রিটার্ন করে ({ success, images,
+    // faces }), তাই বাকি সব downstream কোড (liveImageToPhoto,
+    // buildMergedPhotoList ইত্যাদি) অপরিবর্তিত থাকল। bust প্যারামিটার
+    // এখন আর দরকার নেই (Apps Script কল কখনোই CDN cache হয় না, সবসময়ই
+    // তাজা ডেটা), কিন্তু backward-compat-এর জন্য parameter-টা রাখা হলো
+    // (admin-upload.js-এ এখনো fetchLiveUploadsOnce(timeoutMs, true) কল
+    // হয়) — bust=true হলেও এখানে কোনো আলাদা আচরণ হবে না, একই সরাসরি
+    // /exec কল হবে।
     function fetchLiveUploadsOnce(timeoutMs, bust) {
-        const url = bust ? (GALLERY_EXPORT_RAW_URL + '?t=' + Date.now()) : GALLERY_EXPORT_RAW_URL;
         // 🆕 priority: 'high' — সাপোর্ট করা ব্রাউজারে (Chromium-ভিত্তিক)
         // এই রিকোয়েস্টকে অন্য সব asset (font, css ইত্যাদি)-এর আগে পাঠাতে
         // বলা হচ্ছে, যাতে আসল গ্যালারি ডেটা যত দ্রুত সম্ভব চলে আসে।
         // অসমর্থিত ব্রাউজারে এই অপশনটা এমনিই ignore হয়ে যায়, ভাঙে না।
-        return fetchWithTimeout(url, { cache: 'no-store', priority: 'high' }, timeoutMs)
+        return fetchWithTimeout(APPS_SCRIPT_URL, { cache: 'no-store', priority: 'high' }, timeoutMs)
             .then(r => r.json())
-            .then(res => (res && Array.isArray(res.images)) ? res.images : null)
+            .then(res => (res && res.success && Array.isArray(res.images)) ? res.images : null)
             .catch(() => null);
     }
 
     function fetchLiveUploads() {
-        return fetchLiveUploadsOnce(10000, false).then(images => images !== null ? images : []);
+        // 🆕 timeout ১৫s করা হলো (আগে ১০s ছিল, তখন এটা একটা static
+        // GitHub ফাইল fetch করত) — এখন সরাসরি Apps Script কল হওয়ায়
+        // cold-start-এ একটু বেশি সময় লাগতে পারে, তাই সামান্য বাফার।
+        return fetchLiveUploadsOnce(15000, false).then(images => images !== null ? images : []);
     }
 
     function retryLiveUploadsInBackground(oldPhotos) {
@@ -1719,12 +1718,13 @@
     // 🆕 SPEED FIX: আগে এখানে প্রথমে legacy .txt ফাইল (csvUrl) resolve
     // হওয়ার জন্য অপেক্ষা করা হতো — localStorage cache না থাকলে (নতুন
     // ব্রাউজার) ততক্ষণ কোনো ছবিই দেখানো হতো না, যদিও আসল/নতুন সব ছবি
-    // gallery-live.json-এই থাকে (এখন থেকে ImgBB ছবিও শুধু এখানেই, .txt-এ
-    // আর লেখা হয় না — backend দেখো)। এখন দুটো fetch-ই "race" করে —
-    // যেটা আগে রেসপন্স দেয় সেটা দিয়েই সাথে সাথে প্রথম পেইন্ট হয়ে যায়
-    // (blink-of-an-eye), বাকিটা এলে merge করে ফাইনাল লিস্ট বসে।
-    // gallery-live.json-কে অগ্রাধিকার দেওয়া হয় প্রথম-পেইন্টের জন্য
-    // (এটাই আসল/সঠিক-অর্ডারের ডেটা), .txt শুধু ফলব্যাক/পরে-merge হিসেবে।
+    // লাইভ ব্যাকএন্ডেই (fetchLiveUploads → doGet()) থাকে (ImgBB ছবিও
+    // শুধু এখানেই, .txt-এ আর লেখা হয় না — backend দেখো)। এখন দুটো
+    // fetch-ই "race" করে — যেটা আগে রেসপন্স দেয় সেটা দিয়েই সাথে সাথে
+    // প্রথম পেইন্ট হয়ে যায় (blink-of-an-eye), বাকিটা এলে merge করে
+    // ফাইনাল লিস্ট বসে। লাইভ ব্যাকএন্ড-ডেটাকে অগ্রাধিকার দেওয়া হয়
+    // প্রথম-পেইন্টের জন্য (এটাই আসল/সঠিক-অর্ডারের ডেটা), .txt শুধু
+    // ফলব্যাক/পরে-merge হিসেবে।
     const oldPhotosPromise = fetch(csvUrl)
         .then(r => r.text())
         .then(textData => textData ? parsePhotoFile(textData) : [])
@@ -2426,4 +2426,4 @@
     })();
     </script>
 </body>
-</html> 
+</html>

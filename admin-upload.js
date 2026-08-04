@@ -1010,7 +1010,12 @@
             ? { password: ADMIN_PASSWORD, action: 'updateCaption', fileId: photo.fileId, caption: newNamesStr, cat: isLiveUpload ? editTagCategory : undefined, accountId: photo.acc || 'self' }
             : { password: ADMIN_PASSWORD, action: 'updateText', url: photo.rawUrl, names: newNamesStr };
 
-        return fetchWithTimeout(APPS_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) })
+        // 🆕 একই কারণে (deletePhotoConfirm/deleteTextPhotoConfirm দেখো) timeout
+        // ডিফল্ট ৮s থেকে বাড়িয়ে ৩০s করা হলো — Apps Script (backend) মাঝে
+        // মাঝে cold start/lock wait-এর কারণে ৮s পার হয়ে যেত, তখন client
+        // request abort করে ভুলভাবে "Network error" দেখাত, অথচ backend-এ
+        // tag আসলে ঠিকই সফলভাবে সেভ হয়ে যেত।
+        return fetchWithTimeout(APPS_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) }, 30000)
             .then(r => r.json())
             .then(res => {
                 editTagSaveBtn.disabled = false;

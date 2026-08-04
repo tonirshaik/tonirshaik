@@ -1,4 +1,4 @@
-/* ============================================================ 
+/* ============================================================
    admin-upload.js
    Photo Gallery Admin: Upload + Face-Tag flow for Tonir Shaik's
    gallery site. Loaded by index.html via <script src="admin-upload.js">.
@@ -537,6 +537,12 @@
         if (item) item.style.opacity = '0.4';
         btnEl.disabled = true;
 
+        // 🆕 timeout ৩০ সেকেন্ডে বাড়ানো হলো (আগে ডিফল্ট ৮s ছিল) — নতুন
+        // backend-এ delete request এখন synchronous GitHub export/commit
+        // শেষ না হওয়া পর্যন্ত অপেক্ষা করে (সাধারণত ২-৫s, কিন্তু lock
+        // wait/retry/cold-start মিলিয়ে মাঝেমধ্যে ৮s পার হয়ে যেতে পারে) —
+        // ৮s টাইমআউটে request abort হয়ে ভুলভাবে "Network error" দেখাত,
+        // অথচ backend-এ delete আসলে সফলই হয়ে যেত।
         fetchWithTimeout(APPS_SCRIPT_URL, {
             method: 'POST',
             body: JSON.stringify({
@@ -545,7 +551,7 @@
                 fileId: fileId,
                 accountId: accountId || 'self'
             })
-        })
+        }, 30000)
         .then(r => r.json())
         .then(res => {
             if (res.success) {
@@ -580,6 +586,8 @@
         if (item) item.style.opacity = '0.4';
         btnEl.disabled = true;
 
+        // 🆕 একই কারণে (উপরে deletePhotoConfirm দেখো) এখানেও timeout
+        // ৮s থেকে বাড়িয়ে ৩০s করা হলো।
         fetchWithTimeout(APPS_SCRIPT_URL, {
             method: 'POST',
             body: JSON.stringify({
@@ -587,7 +595,7 @@
                 action: 'deleteText',
                 url: rawUrl
             })
-        })
+        }, 30000)
         .then(r => r.json())
         .then(res => {
             if (res.success) {

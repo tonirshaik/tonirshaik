@@ -181,8 +181,9 @@
 
         nav {
             position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-            padding: 16px 40px;
-            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 40px;
+            display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
+            row-gap: 2px; column-gap: 16px;
             background: rgba(5, 10, 22, 0.72);
             backdrop-filter: blur(3px) saturate(1.3);
             -webkit-backdrop-filter: blur(3px) saturate(1.3);
@@ -190,6 +191,34 @@
             border-bottom: 1px solid rgba(63,168,255,0.18);
             box-shadow: 0 4px 30px rgba(63,168,255,0.08), 0 1px 0 rgba(63,168,255,0.15);
         }
+        .nav-search-wrap {
+            order: 3;
+            flex: 1 1 100%;
+            display: flex; flex-direction: column; align-items: center;
+        }
+        .nav-search-wrap .search-row { max-width: 640px; }
+        .nav-search-wrap .search-status { margin-top: 6px; }
+        .nav-gallery-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 50px; font-weight: 500;
+            color: #fff; line-height: 0.85;
+            margin-top: -26px; margin-bottom: 26px; text-align: center;
+        }
+        .nav-gallery-title em { font-style: italic; color: var(--gold-light); }
+        .nav-logo-wrap {
+            display: flex; flex-direction: column; align-items: flex-start; gap: 3px;
+        }
+        .nav-official-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 5px 14px;
+            border: 1px solid rgba(63,168,255,0.3);
+            border-radius: 4px;
+            font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase;
+            color: var(--muted); text-decoration: none;
+        }
+        .nav-official-btn:hover { color: var(--gold); }
         .nav-logo {
             font-family: 'Cormorant Garamond', serif;
             font-size: 22px; font-weight: 600; color: #fff;
@@ -334,7 +363,7 @@
         }
         .side-drawer-links a:hover { color: var(--gold); }
 
-        .section-header { text-align: center; padding: 64px 20px 28px; }
+        .section-header { text-align: center; padding: 120px 20px 28px; }
         .section-eyebrow {
             font-size: 13px; font-weight: 600; letter-spacing: 0.35em; text-transform: uppercase;
             color: var(--gold-light); margin-bottom: 18px;
@@ -368,12 +397,12 @@
         .search-bar {
             position: relative;
             overflow: hidden;
-            display: flex; align-items: center; gap: 10px;
-            width: 100%; max-width: 480px;
+            display: flex; align-items: center; gap: 7px;
+            flex: 1 1 160px; width: auto; max-width: 300px; min-width: 90px;
             background: var(--card-bg);
             border: 1px solid var(--border);
-            border-radius: 30px;
-            padding: 10px 16px;
+            border-radius: 20px;
+            padding: 7px 14px;
             transition: border-color 0.2s, box-shadow 0.2s;
             animation: searchBarGlow 3.2s ease-in-out infinite;
         }
@@ -399,11 +428,11 @@
             border-color: var(--gold);
             box-shadow: 0 0 0 3px var(--gold-dim);
         }
-        .search-icon { width: 16px; height: 16px; color: var(--muted); flex-shrink: 0; }
+        .search-icon { width: 12px; height: 12px; color: var(--muted); flex-shrink: 0; }
         .search-input {
             flex: 1; background: none; border: none; outline: none;
             color: #fff; font-family: 'Inter', sans-serif;
-            font-size: 14px; letter-spacing: 0.01em;
+            font-size: 12px; letter-spacing: 0.01em;
             min-width: 0;
         }
         .search-input::placeholder { color: var(--muted); }
@@ -415,7 +444,7 @@
         .search-clear:hover { color: var(--gold); }
         .mic-btn {
             position: relative;
-            width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+            width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0;
             display: flex; align-items: center; justify-content: center;
             background: var(--gold-dim); border: 1px solid var(--border);
             color: var(--gold); cursor: pointer;
@@ -443,7 +472,7 @@
         @keyframes micRingSpin {
             to { transform: rotate(360deg); }
         }
-        .mic-btn svg { width: 15px; height: 15px; position: relative; z-index: 1; }
+        .mic-btn svg { width: 11px; height: 11px; position: relative; z-index: 1; }
         .mic-btn:hover { border-color: var(--gold); }
         .mic-btn.listening {
             background: var(--gold); color: #000;
@@ -454,11 +483,11 @@
             50% { box-shadow: 0 0 0 8px rgba(63,168,255,0); }
         }
         .lang-toggle-btn {
-            font-family: 'Inter', sans-serif; font-size: 10.5px; font-weight: 700;
-            letter-spacing: 0.03em; color: var(--gold); flex-shrink: 0;
+            font-family: 'Inter', sans-serif; font-size: 9px; font-weight: 700;
+            letter-spacing: 0.02em; color: var(--gold); flex-shrink: 0;
             background: var(--gold-dim); border: 1px solid var(--border);
-            border-radius: 7px; padding: 5px 9px; cursor: pointer; line-height: 1;
-            min-width: 30px; text-align: center;
+            border-radius: 5px; padding: 3px 6px; cursor: pointer; line-height: 1;
+            min-width: 20px; text-align: center;
             transition: background 0.15s, color 0.15s, border-color 0.15s;
         }
         .lang-toggle-btn:hover { border-color: var(--gold); color: var(--gold-light); }
@@ -468,6 +497,73 @@
             color: var(--muted); min-height: 14px; text-align: center;
         }
         .search-status.active { color: var(--gold); }
+
+        .search-row {
+            display: flex; align-items: center; justify-content: center;
+            gap: 28px; width: 100%; flex-wrap: nowrap;
+        }
+        .filter-dropdown-wrap { position: relative; flex-shrink: 0; }
+        .filter-select-group {
+            display: flex; align-items: center; gap: 6px;
+            flex-wrap: nowrap; flex-shrink: 0;
+        }
+        .filter-dropdown-btn {
+            display: flex; align-items: center; gap: 5px;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 5px 9px;
+            font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+            color: var(--gold-light);
+            cursor: pointer;
+            transition: border-color 0.2s, box-shadow 0.2s, color 0.2s;
+        }
+        .filter-dropdown-btn:hover,
+        .filter-dropdown-btn.open {
+            border-color: var(--gold);
+            box-shadow: 0 0 0 3px var(--gold-dim);
+        }
+        .filter-dropdown-btn svg {
+            width: 12px; height: 12px; flex-shrink: 0;
+            transition: transform 0.2s ease;
+        }
+        .filter-dropdown-btn.open svg { transform: rotate(180deg); }
+        .filter-dropdown-menu {
+            position: absolute; top: calc(100% + 8px); right: 0;
+            min-width: 150px;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 6px;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.5), 0 0 20px rgba(63,168,255,0.15);
+            display: none;
+            flex-direction: column; gap: 4px;
+            z-index: 50;
+        }
+        .filter-dropdown-menu.open { display: flex; }
+        .filter-dropdown-item {
+            background: none; border: none; text-align: left;
+            padding: 9px 12px; border-radius: 6px;
+            font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;
+            color: rgba(255,255,255,0.6); cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+        }
+        .filter-dropdown-item:hover { background: var(--gold-dim); color: #fff; }
+        .filter-dropdown-item.active { background: rgba(63,168,255,0.16); color: var(--gold-light); }
+
+        .select-toggle-btn {
+            display: flex; align-items: center; gap: 4px; flex-shrink: 0;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 5px 9px;
+            font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+            color: var(--gold-light);
+            cursor: pointer;
+            transition: border-color 0.2s, box-shadow 0.2s, color 0.2s, background 0.2s;
+        }
+        .select-toggle-btn:hover { border-color: var(--gold); box-shadow: 0 0 0 3px var(--gold-dim); }
+        .select-toggle-btn.active { background: var(--gold); color: #000; border-color: var(--gold); }
 
         .filters {
             display: flex; justify-content: center; flex-wrap: wrap;
@@ -629,8 +725,17 @@
         /* 🆕 MULTI-SELECT: "Select" toggle বাটন, checkbox, আর নিচের bulk
            action bar (Download/Share/Edit tags/Delete Selected) — সব
            delete-btn/edit-tag-btn-এর মতোই শুধু body.admin-mode-এ visible। */
-        .select-toggle-btn { display: none; }
-        body.admin-mode .select-toggle-btn { display: inline-flex; }
+        /* 🆕 MULTI-SELECT: nav bar-এর ডান কোনায়, hamburger বাটনের পাশে
+           checklist-আইকন বাটন — শুধু body.admin-mode-এ visible, ঠিক
+           hamburger বাটনের মতোই একই সাইজে বসানো হয়েছে। */
+        .nav-select-btn { display: none; }
+        body.admin-mode .nav-select-btn {
+            display: flex; align-items: center; justify-content: center;
+            width: 38px; height: 38px; margin-left: 12px;
+            background: rgba(63,168,255,0.06); border: 1px solid rgba(63,168,255,0.3);
+            border-radius: 6px; cursor: pointer; flex-shrink: 0; color: var(--gold-light);
+        }
+        body.select-mode .nav-select-btn { background: var(--gold); color: #000; border-color: var(--gold); }
 
         .photo-select-check {
             position: absolute; top: 8px; left: 8px; z-index: 3;
@@ -669,6 +774,8 @@
         .bulk-action-bar button:disabled { opacity: 0.4; cursor: not-allowed; }
         .bulk-action-bar button.bulk-delete-btn:hover:not(:disabled) { background: #c0392b; color: #fff; border-color: #c0392b; }
         .bulk-action-bar button.bulk-cancel-btn { background: transparent; }
+        #bulkEditBtn, #bulkDeleteBtn { display: none; }
+        body.admin-mode #bulkEditBtn, body.admin-mode #bulkDeleteBtn { display: inline-block; }
 
         .featured-strip {
             display: none !important;
@@ -1001,6 +1108,9 @@
             font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase;
             color: var(--muted); margin-top: 4px;
         }
+        .nav-photo-stat { flex-shrink: 0; margin-right: 10px; }
+        .nav-photo-stat .stat-num { font-size: 34px; }
+        .nav-photo-stat .stat-label { font-size: 11px; letter-spacing: 0.15em; margin-top: 2px; }
 
         .lightbox {
             display: none; position: fixed; inset: 0; z-index: 1000;
@@ -1120,7 +1230,7 @@
         .reveal.visible { opacity: 1; transform: none; }
 
         @media (max-width: 600px) {
-            nav { padding: 14px 16px; }
+            nav { padding: 10px 16px; }
             .nav-links { gap: 12px; }
             .nav-links a { font-size: 9px; letter-spacing: 0.08em; }
             footer { flex-direction: column; text-align: center; }
@@ -1130,16 +1240,70 @@
 <body>
 
 <nav>
-    <a href="#" class="nav-logo">Tonir <span>Shaik</span></a>
+    <div class="nav-logo-wrap">
+        <a href="#" class="nav-logo">Tonir <span>Shaik</span></a>
+        <a href="https://tonirshaik.github.io/tonirshaik_web/" target="_blank" class="nav-official-btn">Official Site</a>
+    </div>
     <ul class="nav-links">
         <li class="chase-wrap nav-hidden-btn"><a href="#" id="navGalleryLink" class="nav-chase-btn nav-premium"><span class="pl">U</span><span class="pl">p</span><span class="pl">l</span><span class="pl">o</span><span class="pl">a</span><span class="pl">d</span></a>
         </li>
         <li class="nav-hidden-btn"><a href="#" id="navWorkPicLink" class="nav-shine-btn">Work Pic</a></li>
         <li class="nav-hidden-btn"><a href="https://tonirshaik.github.io/tonirshaik_web/" target="_blank" class="nav-shine-btn">Official Site</a></li>
     </ul>
-    <button class="nav-hamburger" id="navHamburgerBtn" aria-label="Open menu">
-        <span></span><span></span><span></span>
-    </button>
+    <div class="nav-search-wrap">
+        <h2 class="nav-gallery-title">Photo <em>Gallery</em></h2>
+        <div class="search-row">
+            <div class="stat nav-photo-stat">
+                <div class="stat-num" id="photoCount">—</div>
+                <div class="stat-label">Photos</div>
+            </div>
+            <div class="search-bar">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.6"/>
+                    <path d="M20 20L16.5 16.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                </svg>
+                <input type="text" id="searchInput" class="search-input"
+                       placeholder="Search by name…"
+                       autocomplete="off" spellcheck="false">
+                <button class="search-clear" id="searchClear" title="Clear" style="display:none;">×</button>
+                <button class="lang-toggle-btn" id="langToggleBtn" type="button" data-lang="bn-BD" title="ভাষা পরিবর্তন করতে ক্লিক করো">বাং</button>
+                <button class="mic-btn" id="micBtn" title="Voice search">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Z" stroke="currentColor" stroke-width="1.6"/>
+                        <path d="M19 11a7 7 0 0 1-14 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                        <path d="M12 18v3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="filter-select-group">
+                <div class="filter-dropdown-wrap">
+                    <button type="button" class="filter-dropdown-btn" id="filterDropdownBtn" aria-haspopup="true" aria-expanded="false">
+                        <span id="filterDropdownLabel">All</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+                    </button>
+                    <div class="filter-dropdown-menu" id="filterDropdownMenu">
+                        <button type="button" class="filter-dropdown-item active" data-filter="all">All</button>
+                        <button type="button" class="filter-dropdown-item" data-filter="single">Single</button>
+                        <button type="button" class="filter-dropdown-item" data-filter="dual">Dual</button>
+                        <button type="button" class="filter-dropdown-item" data-filter="group">Group</button>
+                    </div>
+                </div>
+                <button type="button" class="select-toggle-btn" id="publicSelectBtn" title="Select photos" aria-pressed="false">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M17.5 14.5l1.5 1.5 3-3"/></svg>
+                    <span>Select</span>
+                </button>
+            </div>
+        </div>
+        <p class="search-status" id="searchStatus"></p>
+    </div>
+    <div style="display:flex; align-items:center;">
+        <button class="nav-select-btn" id="selectModeToggleBtn" type="button" title="Select photos" aria-label="Select photos">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M17.5 14.5l1.5 1.5 3-3"/></svg>
+        </button>
+        <button class="nav-hamburger" id="navHamburgerBtn" aria-label="Open menu">
+            <span></span><span></span><span></span>
+        </button>
+    </div>
 </nav>
 
 <div class="side-drawer-overlay" id="sideDrawerOverlay"></div>
@@ -1155,17 +1319,12 @@
 </div>
 
 <section id="gallery">
-    <div class="section-header reveal">
-                <h2 class="section-title">Photo <em>Gallery</em></h2>
+    <div class="section-header reveal" style="padding-bottom:0;">
         <div class="section-rule"></div>
-        <a href="https://tonirshaik.github.io/tonirshaik_web/" target="_blank" class="section-official-btn">Official Site</a>
+        <a href="https://tonirshaik.github.io/tonirshaik_web/" target="_blank" class="section-official-btn" style="display:none;">Official Site</a>
     </div>
 
-    <div class="stats-row reveal">
-        <div class="stat">
-            <div class="stat-num" id="photoCount">—</div>
-            <div class="stat-label">Photos</div>
-        </div>
+    <div class="stats-row reveal" style="display:none;">
         <div class="stat">
             <div class="stat-num">2026</div>
             <div class="stat-label">Collection</div>
@@ -1174,36 +1333,6 @@
             <div class="stat-num">∞</div>
             <div class="stat-label">Memories</div>
         </div>
-    </div>
-
-    <div class="search-wrap reveal">
-        <div class="search-bar">
-            <svg class="search-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.6"/>
-                <path d="M20 20L16.5 16.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-            </svg>
-            <input type="text" id="searchInput" class="search-input"
-                   placeholder="Search by name…"
-                   autocomplete="off" spellcheck="false">
-            <button class="search-clear" id="searchClear" title="Clear" style="display:none;">×</button>
-            <button class="lang-toggle-btn" id="langToggleBtn" type="button" data-lang="bn-BD" title="ভাষা পরিবর্তন করতে ক্লিক করো">বাং</button>
-            <button class="mic-btn" id="micBtn" title="Voice search">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Z" stroke="currentColor" stroke-width="1.6"/>
-                    <path d="M19 11a7 7 0 0 1-14 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-                    <path d="M12 18v3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-                </svg>
-            </button>
-        </div>
-        <p class="search-status" id="searchStatus"></p>
-    </div>
-
-    <div class="filters reveal">
-        <button class="filter-btn active" data-filter="all"><span>All</span></button>
-        <button class="filter-btn" data-filter="single"><span>Single</span></button>
-        <button class="filter-btn" data-filter="dual"><span>Dual</span></button>
-        <button class="filter-btn" data-filter="group"><span>Group</span></button>
-        <button class="filter-btn select-toggle-btn" id="selectModeToggleBtn" type="button"><span>Select</span></button>
     </div>
 
     <div class="gallery-section">
@@ -2100,6 +2229,11 @@
     function setSelectMode(on) {
         selectMode = on;
         document.body.classList.toggle('select-mode', on);
+        const publicBtn = document.getElementById('publicSelectBtn');
+        if (publicBtn) {
+            publicBtn.classList.toggle('active', on);
+            publicBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+        }
         if (!on) {
             selectedKeys.clear();
             renderedItems.forEach(el => el.classList.remove('selected'));
@@ -2135,6 +2269,10 @@
     const selectModeToggleBtn = document.getElementById('selectModeToggleBtn');
     if (selectModeToggleBtn) {
         selectModeToggleBtn.addEventListener('click', () => setSelectMode(!selectMode));
+    }
+    const publicSelectBtn = document.getElementById('publicSelectBtn');
+    if (publicSelectBtn) {
+        publicSelectBtn.addEventListener('click', () => setSelectMode(!selectMode));
     }
     const bulkCancelBtn = document.getElementById('bulkCancelBtn');
     if (bulkCancelBtn) bulkCancelBtn.addEventListener('click', () => setSelectMode(false));
@@ -2279,24 +2417,45 @@
         }
     }
 
-    document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            activeFilter = btn.dataset.filter;
-            applyFiltersAndSearch();
+    // ---- Filter dropdown (replaces the old All/Single/Dual/Group button row) ----
+    const filterDropdownBtn = document.getElementById('filterDropdownBtn');
+    const filterDropdownMenu = document.getElementById('filterDropdownMenu');
+    const filterDropdownLabel = document.getElementById('filterDropdownLabel');
 
-            // premium ripple-from-click-point effect
-            const rect = btn.getBoundingClientRect();
-            const ripple = document.createElement('span');
-            const size = Math.max(rect.width, rect.height) * 1.6;
-            ripple.className = 'ripple';
-            ripple.style.width = ripple.style.height = size + 'px';
-            ripple.style.left = (e.clientX - rect.left - size / 2) + 'px';
-            ripple.style.top = (e.clientY - rect.top - size / 2) + 'px';
-            btn.appendChild(ripple);
-            ripple.addEventListener('animationend', () => ripple.remove());
+    function closeFilterDropdown() {
+        filterDropdownMenu.classList.remove('open');
+        filterDropdownBtn.classList.remove('open');
+        filterDropdownBtn.setAttribute('aria-expanded', 'false');
+    }
+    function toggleFilterDropdown() {
+        const isOpen = filterDropdownMenu.classList.toggle('open');
+        filterDropdownBtn.classList.toggle('open', isOpen);
+        filterDropdownBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    }
+
+    filterDropdownBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleFilterDropdown();
+    });
+
+    document.querySelectorAll('.filter-dropdown-item').forEach(item => {
+        item.addEventListener('click', () => {
+            document.querySelectorAll('.filter-dropdown-item').forEach(i => i.classList.remove('active'));
+            item.classList.add('active');
+            activeFilter = item.dataset.filter;
+            filterDropdownLabel.textContent = item.textContent;
+            applyFiltersAndSearch();
+            closeFilterDropdown();
         });
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!filterDropdownMenu.contains(e.target) && e.target !== filterDropdownBtn) {
+            closeFilterDropdown();
+        }
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeFilterDropdown();
     });
 
     // ---- Typing search (debounced, instant filter) ----
@@ -2499,6 +2658,21 @@
         entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
     }, { threshold: 0.1 });
     document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+    (function() {
+        const navEl = document.querySelector('nav');
+        const headerEl = document.querySelector('.section-header');
+        if (!navEl || !headerEl) return;
+        function syncNavSpacing() {
+            headerEl.style.paddingTop = (navEl.offsetHeight + 8) + 'px';
+        }
+        syncNavSpacing();
+        window.addEventListener('load', syncNavSpacing);
+        window.addEventListener('resize', syncNavSpacing);
+        if (window.ResizeObserver) {
+            new ResizeObserver(syncNavSpacing).observe(navEl);
+        }
+    })();
 
     (function() {
         const hamburgerBtn = document.getElementById('navHamburgerBtn');

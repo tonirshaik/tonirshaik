@@ -1025,7 +1025,7 @@
             if (!imgRes.success) {
                 return { success: false, error: 'ImgBB: ' + imgRes.error };
             }
-            return addLinkToGithub_(imgRes.url, caption, cat).then(ghRes => {
+            return addLinkToGithub_(imgRes.url, imgRes.thumbUrl, caption, cat).then(ghRes => {
                 if (onProgress) onProgress(1);
                 if (!ghRes || !ghRes.success) {
                     return { success: false, error: 'GitHub: ' + ((ghRes && ghRes.error) || 'unknown error') };
@@ -1406,7 +1406,19 @@
                 try {
                     const json = JSON.parse(xhr.responseText);
                     if (json && json.success && json.data && json.data.url) {
-                        resolve({ success: true, url: json.data.url });
+                        // 🆕 THUMBNAIL FIX: ImgBB রেসপন্সে original url-এর পাশাপাশি
+                        // thumb/medium সাইজের লিংকও থাকে — গ্রিডে এই ছোট ভার্সনটাই
+                        // ব্যবহার হবে (index.html দেখো), আসল বড় url শুধু
+                        // ডাউনলোড/ফুল-ভিউতে। ImgBB Drive-এর মতো কাস্টম পিক্সেল সাইজ
+                        // (&sz=w200) সাপোর্ট করে না — যা ফিক্সড অপশন আছে তার মধ্যে
+                        // "thumb" সবচেয়ে ছোট (Drive-এর 200px থাম্বনেইলের সবচেয়ে
+                        // কাছের), তাই গ্রিডের জন্য thumb-কেই আগে বেছে নেওয়া হচ্ছে।
+                        // thumb না থাকলে (কিছু ফরম্যাটে হয় না) medium, তাও না থাকলে
+                        // original-ই fallback হিসেবে যাবে — কিছু ভাঙবে না।
+                        const thumbUrl = (json.data.thumb && json.data.thumb.url)
+                            || (json.data.medium && json.data.medium.url)
+                            || json.data.url;
+                        resolve({ success: true, url: json.data.url, thumbUrl: thumbUrl });
                     } else {
                         resolve({ success: false, error: (json && json.error && json.error.message) || 'ImgBB upload failed' });
                     }
@@ -1419,7 +1431,7 @@
         });
     }
 
-    function addLinkToGithub_(url, names, cat) {
+    function addLinkToGithub_(url, thumbUrl, names, cat) {
         // 🆕 SPEED FIX: আগে এই action ব্যাকএন্ডে JSON ফাইলে লেখার পর
         // response দেওয়ার আগেই সরাসরি exportLiveGalleryToGithub() (২টা
         // GitHub API round-trip + satellite থাকলে সেগুলোও) শেষ হওয়ার
@@ -1436,6 +1448,7 @@
                 password: ADMIN_PASSWORD,
                 action: 'addTextLink',
                 url: url,
+                thumbUrl: thumbUrl || '',
                 names: names || '',
                 cat: cat
             })

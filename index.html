@@ -626,6 +626,50 @@
         body.admin-mode .edit-tag-btn { display: flex; }
         .edit-tag-btn:hover { background: #3FA8FF !important; color: #fff !important; border-color: #3FA8FF !important; }
 
+        /* 🆕 MULTI-SELECT: "Select" toggle বাটন, checkbox, আর নিচের bulk
+           action bar (Download/Share/Edit tags/Delete Selected) — সব
+           delete-btn/edit-tag-btn-এর মতোই শুধু body.admin-mode-এ visible। */
+        .select-toggle-btn { display: none; }
+        body.admin-mode .select-toggle-btn { display: inline-flex; }
+
+        .photo-select-check {
+            position: absolute; top: 8px; left: 8px; z-index: 3;
+            width: 24px; height: 24px; border-radius: 6px;
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(6px);
+            border: 1.5px solid rgba(255,255,255,0.55);
+            display: none; align-items: center; justify-content: center;
+            cursor: pointer; transition: all 0.15s;
+        }
+        body.select-mode .photo-select-check { display: flex; }
+        .photo-select-check svg { opacity: 0; transition: opacity 0.15s; }
+        .photo-item.selected .photo-select-check {
+            background: var(--gold); border-color: var(--gold);
+        }
+        .photo-item.selected .photo-select-check svg { opacity: 1; }
+        body.select-mode .photo-item.selected { outline: 2px solid var(--gold); outline-offset: -2px; }
+
+        .bulk-action-bar {
+            position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 160%);
+            z-index: 600; display: flex; align-items: center; gap: 8px;
+            background: rgba(8, 16, 32, 0.92); backdrop-filter: blur(20px) saturate(1.5);
+            -webkit-backdrop-filter: blur(20px) saturate(1.5);
+            border: 1px solid rgba(63,168,255,0.25); border-radius: 14px;
+            padding: 10px 14px; box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            transition: transform 0.25s ease; max-width: calc(100vw - 24px);
+            flex-wrap: wrap; justify-content: center; pointer-events: none;
+        }
+        body.select-mode .bulk-action-bar { transform: translate(-50%, 0); pointer-events: auto; }
+        .bulk-action-bar .bulk-count { color: var(--gold); font-size: 13px; white-space: nowrap; padding: 0 4px; }
+        .bulk-action-bar button {
+            border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.08);
+            color: #fff; border-radius: 8px; padding: 8px 12px; font-size: 12px;
+            cursor: pointer; white-space: nowrap; transition: all 0.15s;
+        }
+        .bulk-action-bar button:hover:not(:disabled) { background: var(--gold); color: #000; border-color: var(--gold); }
+        .bulk-action-bar button:disabled { opacity: 0.4; cursor: not-allowed; }
+        .bulk-action-bar button.bulk-delete-btn:hover:not(:disabled) { background: #c0392b; color: #fff; border-color: #c0392b; }
+        .bulk-action-bar button.bulk-cancel-btn { background: transparent; }
+
         .featured-strip {
             display: none !important;
             padding: 80px 0; overflow: hidden;
@@ -1159,6 +1203,7 @@
         <button class="filter-btn" data-filter="single"><span>Single</span></button>
         <button class="filter-btn" data-filter="dual"><span>Dual</span></button>
         <button class="filter-btn" data-filter="group"><span>Group</span></button>
+        <button class="filter-btn select-toggle-btn" id="selectModeToggleBtn" type="button"><span>Select</span></button>
     </div>
 
     <div class="gallery-section">
@@ -1169,6 +1214,18 @@
         <div class="masonry" id="masonry" style="display:none;"></div>
     </div>
 </section>
+
+<!-- 🆕 MULTI-SELECT bulk action bar — শুধু select-mode চালু থাকলে (নিচ থেকে
+     স্লাইড করে) দেখা যায়, দেখো CSS-এ .bulk-action-bar / body.select-mode। -->
+<div class="bulk-action-bar" id="bulkActionBar">
+    <span class="bulk-count" id="bulkCount">0 selected</span>
+    <button type="button" id="bulkSelectAllBtn">Select all</button>
+    <button type="button" id="bulkDownloadBtn" disabled>⬇ Download</button>
+    <button type="button" id="bulkShareBtn" disabled>⇪ Share</button>
+    <button type="button" id="bulkEditBtn" disabled>✎ Edit tags</button>
+    <button type="button" class="bulk-delete-btn" id="bulkDeleteBtn" disabled>🗑 Delete</button>
+    <button type="button" class="bulk-cancel-btn" id="bulkCancelBtn">Cancel</button>
+</div>
 
 <div class="featured-strip" id="stripSection" style="display:none;">
     <div class="strip-track" id="stripTrack"></div>
@@ -1896,10 +1953,13 @@
 
     function createPhotoElement(p) {
         const item = document.createElement('div');
-        item.className = 'photo-item reveal';
+        item.className = 'photo-item reveal' + (selectedKeys.has(getPhotoKey(p)) ? ' selected' : '');
         item.dataset.cat = p.cat;
         item.innerHTML = `
             <img src="${p.thumbUrl || p.url}" alt="${p.title}" loading="lazy" decoding="async" style="background:#0A1220;">
+            <div class="photo-select-check" data-select-check>
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#000" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>
+            </div>
             <div class="photo-overlay">
                 <div class="photo-meta">
                     <div class="photo-tag">${CATEGORY_LABELS[p.cat] || ''}</div>
@@ -1920,7 +1980,14 @@
                         : `<button class="photo-action-btn delete-btn" title="Delete" onclick="event.stopPropagation();deleteTextPhotoConfirm('${p.rawUrl.replace(/'/g, "\\'")}', this)">×</button>`}
                 </div>
             </div>`;
-        item.addEventListener('click', () => openLightbox(p.idx));
+        item.querySelector('[data-select-check]').addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleSelectPhoto(p);
+        });
+        item.addEventListener('click', () => {
+            if (selectMode) { toggleSelectPhoto(p); return; }
+            openLightbox(p.idx);
+        });
         attachImgFallback(item.querySelector('img'), p);
         return item;
     }
@@ -2009,6 +2076,156 @@
             reconcileVirtualWindow();
         }, 150);
     });
+
+    // =====================================================================
+    // 🆕 MULTI-SELECT: bulk Download / Share / Edit tags / Delete
+    // -----------------------------------------------------------------
+    // গ্রিডটা ভার্চুয়ালাইজড (উপরে দেখো renderedItems/virtualPhotos) —
+    // স্ক্রল করলে DOM নোড ক্রমাগত তৈরি/মুছে যেতে থাকে, তাই সিলেকশন কখনোই
+    // শুধু DOM class দিয়ে মনে রাখা যাবে না। বরং একটা স্থিতিশীল key
+    // (fileId থাকলে সেটা, নাহলে rawUrl) দিয়ে selectedKeys Set-এ রাখা হয় —
+    // createPhotoElement() প্রতিবার তৈরি হওয়ার সময় এই Set দেখেই ঠিক করে
+    // item-টা selected দেখাবে কিনা, তাই স্ক্রল করে ফিরে এলেও সিলেকশন হারায়
+    // না। ডিলিট/এডিট-এর নেটওয়ার্ক লজিক এখানে নেই — সেগুলো admin-upload.js-এর
+    // deleteMultipleConfirm() / openEditTagsForPhotos()-এ (bulk এর জন্য
+    // নতুন যোগ করা, বিদ্যমান single-item লজিকই reuse করে)।
+    // =====================================================================
+    let selectMode = false;
+    let selectedKeys = new Set();
+
+    function getPhotoKey(p) {
+        return p.fileId ? ('f:' + p.fileId) : ('u:' + (p.rawUrl || p.url));
+    }
+
+    function setSelectMode(on) {
+        selectMode = on;
+        document.body.classList.toggle('select-mode', on);
+        if (!on) {
+            selectedKeys.clear();
+            renderedItems.forEach(el => el.classList.remove('selected'));
+        }
+        updateBulkBar();
+    }
+
+    function toggleSelectPhoto(p) {
+        const key = getPhotoKey(p);
+        if (selectedKeys.has(key)) selectedKeys.delete(key);
+        else selectedKeys.add(key);
+
+        const el = renderedItems.get(p.idx);
+        if (el) el.classList.toggle('selected', selectedKeys.has(key));
+        updateBulkBar();
+    }
+
+    function getSelectedPhotos() {
+        return allPhotos.filter(p => selectedKeys.has(getPhotoKey(p))).sort((a, b) => a.idx - b.idx);
+    }
+
+    function updateBulkBar() {
+        const bar = document.getElementById('bulkActionBar');
+        if (!bar) return;
+        const n = selectedKeys.size;
+        document.getElementById('bulkCount').textContent = n + (n === 1 ? ' selected' : ' selected');
+        ['bulkDownloadBtn', 'bulkShareBtn', 'bulkEditBtn', 'bulkDeleteBtn'].forEach(id => {
+            const btn = document.getElementById(id);
+            if (btn) btn.disabled = n === 0;
+        });
+    }
+
+    const selectModeToggleBtn = document.getElementById('selectModeToggleBtn');
+    if (selectModeToggleBtn) {
+        selectModeToggleBtn.addEventListener('click', () => setSelectMode(!selectMode));
+    }
+    const bulkCancelBtn = document.getElementById('bulkCancelBtn');
+    if (bulkCancelBtn) bulkCancelBtn.addEventListener('click', () => setSelectMode(false));
+
+    const bulkSelectAllBtn = document.getElementById('bulkSelectAllBtn');
+    if (bulkSelectAllBtn) {
+        bulkSelectAllBtn.addEventListener('click', () => {
+            const allSelected = currentList.length > 0 && currentList.every(p => selectedKeys.has(getPhotoKey(p)));
+            if (allSelected) {
+                selectedKeys.clear();
+            } else {
+                currentList.forEach(p => selectedKeys.add(getPhotoKey(p)));
+            }
+            renderedItems.forEach((el, idx) => {
+                const p = virtualPhotos[idx];
+                if (p) el.classList.toggle('selected', selectedKeys.has(getPhotoKey(p)));
+            });
+            updateBulkBar();
+        });
+    }
+
+    // ---- Bulk Download: একটার পর একটা staggered timeout দিয়ে ডাউনলোড
+    // ট্রিগার করা হয় (ব্রাউজার একসাথে অনেকগুলো download popup ব্লক করে
+    // দিতে পারে) ----
+    const bulkDownloadBtn = document.getElementById('bulkDownloadBtn');
+    if (bulkDownloadBtn) {
+        bulkDownloadBtn.addEventListener('click', () => {
+            getSelectedPhotos().forEach((p, i) => {
+                setTimeout(() => dlImg(p.downloadUrl, 'Tonir-' + (p.idx + 1) + '.jpg'), i * 500);
+            });
+        });
+    }
+
+    // ---- Bulk Share: multi-file Web Share সাপোর্ট করা ব্রাউজারে একসাথে
+    // সব ফাইল শেয়ার করার চেষ্টা করে (ঠিক shareImg()-এর সিঙ্গেল-ফাইল
+    // ভার্সনের মতোই লজিক), নাহলে শুধু গ্যালারি লিংক শেয়ার/কপি হয় ----
+    const bulkShareBtn = document.getElementById('bulkShareBtn');
+    if (bulkShareBtn) {
+        bulkShareBtn.addEventListener('click', () => {
+            const photos = getSelectedPhotos();
+            if (photos.length === 0) return;
+            const pageUrl = 'https://tonirshaik.github.io/tonirshaik/';
+            const shareText = photos.length + ' photos — Tonir Shaik | Official Gallery';
+
+            Promise.all(photos.map(p =>
+                fetch(p.downloadUrl).then(r => r.blob()).then(blob =>
+                    new File([blob], 'Tonir-' + (p.idx + 1) + '.jpg', { type: blob.type || 'image/jpeg' })
+                )
+            )).then(files => {
+                if (navigator.canShare && navigator.canShare({ files: files })) {
+                    return navigator.share({ files: files, title: shareText, text: shareText });
+                }
+                throw new Error('multi-file-share-unsupported');
+            }).catch(() => {
+                if (navigator.share) {
+                    navigator.share({ title: shareText, text: shareText, url: pageUrl }).catch(() => {});
+                } else if (navigator.clipboard) {
+                    navigator.clipboard.writeText(pageUrl).then(() => {
+                        alert('লিংক কপি হয়েছে! এখন যেকোনো জায়গায় পেস্ট করে শেয়ার করতে পারবেন।');
+                    }).catch(() => {});
+                }
+            });
+        });
+    }
+
+    // ---- Bulk Edit tags: admin-upload.js-এর openEditTagsForPhotos() কল
+    // করে — বিদ্যমান editTagList/overlay-ই আবার ব্যবহার হয়, শুধু
+    // allPhotos-এর বদলে সিলেক্টেড ছবিগুলো দিয়ে list বসানো হয়, Prev/Next/Save
+    // অপরিবর্তিতই কাজ করে ----
+    const bulkEditBtn = document.getElementById('bulkEditBtn');
+    if (bulkEditBtn) {
+        bulkEditBtn.addEventListener('click', () => {
+            const photos = getSelectedPhotos();
+            if (photos.length === 0) return;
+            if (window.openEditTagsForPhotos) window.openEditTagsForPhotos(photos);
+        });
+    }
+
+    // ---- Bulk Delete: admin-upload.js-এর deleteMultipleConfirm() কল করে,
+    // যেটা ব্যাকএন্ডের নতুন deleteMultiple action ব্যবহার করে ----
+    const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+    if (bulkDeleteBtn) {
+        bulkDeleteBtn.addEventListener('click', () => {
+            const photos = getSelectedPhotos();
+            if (photos.length === 0) return;
+            if (!confirm('Are you sure you want to permanently delete ' + photos.length + ' selected photo(s)?')) return;
+            if (window.deleteMultipleConfirm) {
+                window.deleteMultipleConfirm(photos, bulkDeleteBtn, () => setSelectMode(false));
+            }
+        });
+    }
 
     // ব্যাকওয়ার্ড-কম্প্যাটিবল নাম — showGallery() ও applyFiltersAndSearch()
     // আগের মতোই renderGallery(currentList, true) কল করে, তাই ওই দুই জায়গায়

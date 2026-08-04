@@ -622,6 +622,71 @@
     }
     window.deleteTextPhotoConfirm = deleteTextPhotoConfirm;
 
+    // 🆕 MULTI-SELECT: index.html-এর "Delete selected" বাল্ক বাটন এটা কল
+    // করে। photos array-এর প্রতিটা আইটেম Drive/ImgBB (p.fileId থাকলে)
+    // অথবা legacy GitHub text-file (p.rawUrl) — দুটোই এক request-এই
+    // ব্যাকএন্ডের নতুন `deleteMultiple` action-এ পাঠানো হয় (দেখো Code.gs),
+    // যেটা প্রতিটা ছবি আলাদাভাবে ডিলিট করে কিন্তু GitHub export/commit
+    // শুধু ব্যাচ শেষে একবারই করে — তাই একসাথে অনেকগুলো ডিলিট করলেও
+    // অনেকগুলো আলাদা GitHub commit হয় না।
+    // আংশিক ব্যর্থতা (কিছু ছবি ডিলিট হলো, কিছু হলো না) হ্যান্ডল করা হয়:
+    // res.failed-এ যেগুলো ব্যর্থ হয়েছে তা বাদ দিয়ে বাকিগুলো optimistically
+    // allPhotos/UI থেকে সরানো হয়, তারপর refreshGalleryWithLiveUploads()
+    // দিয়ে সার্ভারের আসল অবস্থা দিয়ে নিশ্চিত করা হয় (ঠিক single-delete-এর
+    // মতোই)।
+    function deleteMultipleConfirm(photos, btnEl, onDone) {
+        if (!photos || photos.length === 0) return;
+
+        const items = photos.map(p => p.fileId
+            ? { fileId: p.fileId, accountId: p.acc || 'self' }
+            : { rawUrl: p.rawUrl });
+
+        if (btnEl) btnEl.disabled = true;
+
+        fetchWithTimeout(APPS_SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                password: ADMIN_PASSWORD,
+                action: 'deleteMultiple',
+                items: items
+            })
+        }, 60000)
+        .then(r => r.json())
+        .then(res => {
+            if (btnEl) btnEl.disabled = false;
+
+            const failedFileIds = new Set((res.failed || []).filter(f => f.fileId).map(f => f.fileId));
+            const failedRawUrls = new Set((res.failed || []).filter(f => f.rawUrl).map(f => f.rawUrl));
+
+            const deletedKeys = new Set();
+            photos.forEach(p => {
+                const failed = p.fileId ? failedFileIds.has(p.fileId) : failedRawUrls.has(p.rawUrl);
+                if (!failed) deletedKeys.add(p.fileId ? ('f:' + p.fileId) : ('u:' + p.rawUrl));
+            });
+
+            if (deletedKeys.size > 0) {
+                allPhotos = allPhotos.filter(p => !deletedKeys.has(p.fileId ? ('f:' + p.fileId) : ('u:' + p.rawUrl)));
+                allPhotos.forEach((p, i) => { p.idx = i; });
+                currentList = allPhotos;
+                const countEl = document.getElementById('photoCount');
+                if (countEl) countEl.textContent = allPhotos.length;
+                applyFiltersAndSearch();
+                refreshGalleryWithLiveUploads(6);
+            }
+
+            if (res.failed && res.failed.length > 0) {
+                alert((res.failed.length) + 'টা ছবি ডিলিট ব্যর্থ হয়েছে, বাকিগুলো ডিলিট হয়ে গেছে।');
+            }
+
+            if (onDone) onDone();
+        })
+        .catch(() => {
+            if (btnEl) btnEl.disabled = false;
+            alert('Network error, please try again');
+        });
+    }
+    window.deleteMultipleConfirm = deleteMultipleConfirm;
+
     const PHONETIC_CONSONANTS = [
         ['kkh','ক্ষ'], ['kh','খ'], ['k','ক'],
         ['gh','ঘ'], ['g','গ'], ['ng','ঙ'],
@@ -879,6 +944,20 @@
         adminEditTagOverlay.classList.add('open');
     }
     window.openEditTagsByIdx = openEditTagsByIdx;
+
+    // 🆕 MULTI-SELECT: index.html-এর "Edit tags" বাল্ক বাটন এটা কল করে —
+    // openEditTagsByIdx()-এর মতোই একই editTagList/overlay ব্যবহার করে,
+    // শুধু allPhotos-এর বদলে শুধু সিলেক্টেড ছবিগুলো দিয়ে list বসানো হয়।
+    // Prev/Next/Save লজিক (উপরে) অপরিবর্তিতই কাজ করে, তাই admin এক
+    // ছবি থেকে পরেরটায় গিয়ে সবগুলোর ট্যাগ/ক্যাটাগরি একে একে এডিট করতে
+    // পারে।
+    function openEditTagsForPhotos(photos) {
+        if (!photos || photos.length === 0) return;
+        editTagList = photos.slice().sort((a, b) => a.idx - b.idx);
+        loadEditTagAtPos(0);
+        adminEditTagOverlay.classList.add('open');
+    }
+    window.openEditTagsForPhotos = openEditTagsForPhotos;
 
     function closeEditTagOverlay() {
         adminEditTagOverlay.classList.remove('open');

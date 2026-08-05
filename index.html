@@ -1236,7 +1236,16 @@
             .nav-hamburger-wrap { flex-shrink: 0; }
             .nav-logo-wrap { flex-shrink: 0; min-width: 0; }
 
-            /* 🆕 মোবাইলে ৪-কলাম গ্রিডের জন্য সাইড প্যাডিং কমানো, বেশি জায়গা ছবির জন্য */
+            /* 🆕 মোবাইলে বাল্ক-অ্যাকশন বার এক লাইনে — বাটন/গ্যাপ/ফন্ট ছোট করা হলো,
+               তাও না আঁটলে বারের ভেতরেই পাশে scroll হবে (wrap হয়ে দুই লাইন হবে না) */
+            .bulk-action-bar {
+                gap: 5px; padding: 8px 10px; max-width: calc(100vw - 16px);
+                flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch;
+            }
+            .bulk-action-bar .bulk-count { font-size: 11px; padding: 0 2px; }
+            .bulk-action-bar button { padding: 6px 8px; font-size: 10.5px; }
+
+
             .gallery-section { padding: 0 10px 60px; }
 
 

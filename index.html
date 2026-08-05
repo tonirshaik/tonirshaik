@@ -1219,10 +1219,100 @@
         .reveal.visible { opacity: 1; transform: none; }
 
         @media (max-width: 600px) {
-            nav { padding: 10px 16px; }
+            nav { padding: 8px 12px; flex-wrap: nowrap; column-gap: 8px; }
             .nav-links { gap: 12px; }
             .nav-links a { font-size: 9px; letter-spacing: 0.08em; }
             footer { flex-direction: column; text-align: center; }
+
+            /* 🆕 মোবাইলে "Photo Gallery" টাইটেল ও "Official Site" বাটন হাইড —
+               জায়গা বাঁচাতে; Official Site লিংক হ্যামবার্গার মেনুতে আছে */
+            .nav-gallery-title { display: none; }
+            .nav-official-btn { display: none; }
+
+            /* 🆕 মোবাইলে লোগো ছোট আর হ্যামবার্গারের বাড়তি মার্জিন কমানো — যাতে
+               লোগো + মাঝের গ্রুপ + হ্যামবার্গার সবাই এক লাইনেই আঁটে, নিচে না নামে */
+            .nav-logo { font-size: 17px; }
+            .nav-hamburger { width: 30px; height: 30px; margin-left: 0; gap: 4px; }
+            .nav-hamburger-wrap { flex-shrink: 0; }
+            .nav-logo-wrap { flex-shrink: 0; min-width: 0; }
+
+            /* 🆕 মোবাইলে ৪-কলাম গ্রিডের জন্য সাইড প্যাডিং কমানো, বেশি জায়গা ছবির জন্য */
+            .gallery-section { padding: 0 10px 60px; }
+
+
+            .nav-photo-stat .stat-num { font-size: 16px; }
+            .nav-photo-stat .stat-label { font-size: 7px; letter-spacing: 0.1em; margin-top: 0; }
+
+            /* 🆕 এখন হ্যামবার্গার + লোগোর সাথে একই লাইনে — search-wrap আর ফুল-উইথ থাকবে না,
+               মাঝখানে (লোগো আর হ্যামবার্গারের মাঝে) বসবে */
+            .nav-logo-wrap { order: 1; }
+            .nav-search-wrap { order: 2; flex: 1 1 auto; width: auto; min-width: 0; justify-content: center; }
+            .nav-hamburger-wrap { order: 3; }
+
+            /* 🆕 মোবাইলে search-row: photo-count, filter+select (একটা বক্সে), আর সার্চ আইকন —
+               সব এক লাইনে পাশাপাশি, YouTube-স্টাইল কম্প্যাক্ট */
+            .search-row { flex-wrap: nowrap; gap: 6px; justify-content: flex-end; align-items: center; min-width: 0; max-width: 100%; }
+            .nav-photo-stat { order: 1; margin-right: 0; flex-shrink: 0; }
+            .nav-search-wrap .search-status { margin-top: 3px; font-size: 10px; }
+            .nav-search-wrap .search-status:empty { display: none; margin: 0; }
+
+            /* 🆕 filter-dropdown-btn + select-toggle-btn — দুটো বাটন এখন একটাই বক্সের মধ্যে
+               (একটা border/background শেয়ার করে, মাঝে শুধু একটা পাতলা ডিভাইডার) */
+            .filter-select-group {
+                order: 2; flex-shrink: 0; gap: 0;
+                background: var(--card-bg); border: 1px solid var(--border);
+                border-radius: 18px;
+            }
+            .filter-select-group .filter-dropdown-btn,
+            .filter-select-group .select-toggle-btn {
+                background: transparent; border: none; border-radius: 0;
+                padding: 4px 7px; font-size: 8.5px;
+            }
+            .filter-select-group .filter-dropdown-btn {
+                border-right: 1px solid var(--border);
+            }
+            .filter-select-group .filter-dropdown-btn:hover,
+            .filter-select-group .filter-dropdown-btn.open,
+            .filter-select-group .select-toggle-btn:hover {
+                box-shadow: none; color: var(--gold);
+            }
+            .filter-select-group .select-toggle-btn.active {
+                background: var(--gold); color: #000;
+            }
+            .select-toggle-btn span { display: none; }
+
+            /* 🆕 সার্চ আইকন এখন সেই একই লাইনে (photo-count আর filter-বক্সের পাশে) বসে —
+               ডিফল্টে ছোট, সাদামাটা গোল আইকন (YouTube-স্টাইল), কোনো glow/animation নেই,
+               ট্যাপ করলে এই লাইনের ভেতরেই খুলবে আর বাকি দুটো (photo-count, filter-বক্স) হাইড হয়ে যাবে */
+            .search-bar {
+                order: 3; position: relative;
+                flex: 0 0 34px; width: 34px; height: 34px; min-width: 34px; max-width: 34px; padding: 0;
+                justify-content: center; align-items: center; border-radius: 50%;
+                animation: none !important; box-shadow: none !important;
+                background: var(--card-bg); border: 1px solid var(--border);
+                overflow: hidden;
+                transition: flex-basis 0.28s ease, width 0.28s ease, padding 0.28s ease, border-radius 0.28s ease;
+            }
+            .search-bar:not(.mobile-expanded):hover,
+            .search-bar:not(.mobile-expanded):active {
+                border-color: var(--gold);
+            }
+            .search-bar.mobile-expanded {
+                flex: 1 1 auto; width: auto; height: auto; min-width: 0; max-width: none; padding: 5px 12px;
+                border-radius: 20px; justify-content: flex-start;
+                animation: searchBarGlow 3.2s ease-in-out infinite !important;
+            }
+            .search-bar:not(.mobile-expanded) .search-icon {
+                width: 15px; height: 15px; color: var(--gold-light);
+            }
+            .search-row.search-active .nav-photo-stat,
+            .search-row.search-active .filter-select-group { display: none; }
+            .search-bar:not(.mobile-expanded) .search-input,
+            .search-bar:not(.mobile-expanded) .search-clear,
+            .search-bar:not(.mobile-expanded) .lang-toggle-btn,
+            .search-bar:not(.mobile-expanded) .mic-btn { display: none; }
+            .search-bar:not(.mobile-expanded) .search-icon { cursor: pointer; width: 16px; height: 16px; }
+
         }
 </style>
 </head>
@@ -1285,7 +1375,7 @@
         </div>
         <p class="search-status" id="searchStatus"></p>
     </div>
-    <div style="display:flex; align-items:center;">
+    <div class="nav-hamburger-wrap" style="display:flex; align-items:center;">
         <button class="nav-hamburger" id="navHamburgerBtn" aria-label="Open menu">
             <span></span><span></span><span></span>
         </button>
@@ -1301,6 +1391,7 @@
     <ul class="side-drawer-links">
         <li><a href="#" id="sideGalleryLink">Upload</a></li>
         <li><a href="#" id="sideWorkPicLink">Work Pic</a></li>
+        <li><a href="https://tonirshaik.github.io/tonirshaik_web/" target="_blank">Official Site</a></li>
     </ul>
 </div>
 
@@ -1971,7 +2062,7 @@
     // থাকে — scrollbar স্বাভাবিক আচরণ করে, কিন্তু DOM সবসময় হালকা থাকে।
     // =====================================================================
 
-    const GRID_GAP = 16;
+    let GRID_GAP = 16;
     const BUFFER_ROWS = 3; // viewport-এর উপরে/নিচে অতিরিক্ত কয়েক সারি রেন্ডার করা থাকে, যাতে দ্রুত scroll করলেও ফাঁকা না দেখায়
 
     const renderedItems = new Map(); // photo.idx -> DOM element (বর্তমানে DOM-এ যা আছে)
@@ -1980,7 +2071,7 @@
 
     function getColumnCount() {
         const w = window.innerWidth;
-        if (w <= 400) return 1;
+        if (w <= 400) return 4;
         if (w <= 700) return 2;
         if (w <= 1100) return 3;
         return 4;
@@ -1990,6 +2081,7 @@
         const masonry = document.getElementById('masonry');
         const containerWidth = masonry.clientWidth || masonry.parentElement.clientWidth || window.innerWidth;
         const columns = getColumnCount();
+        GRID_GAP = window.innerWidth <= 400 ? 6 : 16; // 🆕 ছোট ফোনে ৪ কলাম, তাই gap কমানো হলো যাতে ছবিগুলো ছোট বাক্সে বেশি চেপে না যায়
         const itemWidth = (containerWidth - GRID_GAP * (columns - 1)) / columns;
         const itemHeight = itemWidth * 4 / 3; // aspect-ratio 3 / 4 (width : height)
         const rowHeight = itemHeight + GRID_GAP;
@@ -2694,6 +2786,42 @@
             e.preventDefault();
             closeDrawer();
             document.getElementById('navWorkPicLink').click();
+        });
+    })();
+
+    // 🆕 মোবাইলে সার্চ বার ডিফল্টে ছোট আইকন, ট্যাপ করলে খোলে (YouTube-স্টাইল)
+    (function() {
+        const searchBar = document.querySelector('.search-bar');
+        const searchRow = document.querySelector('.search-row');
+        const searchIcon = document.querySelector('.search-bar .search-icon');
+        const searchInput = document.getElementById('searchInput');
+        const navEl = document.querySelector('nav');
+        if (!searchBar || !searchRow || !searchIcon || !searchInput || !navEl) return;
+
+        function isMobile() { return window.matchMedia('(max-width: 600px)').matches; }
+
+        function expand() {
+            searchBar.classList.add('mobile-expanded');
+            searchRow.classList.add('search-active');
+            searchInput.focus();
+        }
+        function collapse() {
+            searchBar.classList.remove('mobile-expanded');
+            searchRow.classList.remove('search-active');
+        }
+
+        searchIcon.addEventListener('click', () => {
+            if (!isMobile()) return;
+            if (!searchBar.classList.contains('mobile-expanded')) expand();
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!isMobile()) return;
+            if (!searchBar.contains(e.target) && searchInput.value.trim() === '') collapse();
+        });
+
+        window.addEventListener('resize', () => {
+            if (!isMobile()) collapse();
         });
     })();
 

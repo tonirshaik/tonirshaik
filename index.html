@@ -1103,7 +1103,8 @@
 
         .lightbox {
             display: none; position: fixed; inset: 0; z-index: 1000;
-            background: rgba(0,0,0,0.95);
+            height: 100vh; height: 100dvh;
+            background: rgba(0,0,0,0.97);
             align-items: center; justify-content: center;
         }
         .lightbox.open { display: flex; }
@@ -1257,6 +1258,22 @@
             .photo-actions { gap: 6px; }
             .photo-action-btn { width: 24px; height: 24px; }
             .photo-action-btn svg { width: 11px; height: 11px; }
+
+            /* 🆕 লাইটবক্স (ছবি বড় করে দেখার ভিউ): মোবাইলে টাইটেল/কাউন্টার/ডাউনলোড/শেয়ার
+               এক লাইনে না এঁটে পাশের ছবিতে/স্ক্রিনের বাইরে চলে যাচ্ছিল — এখন wrap করে
+               সেন্টারে সাজানো হলো, ডাউনলোড-শেয়ার নিজেদের লাইনে মাঝখানে বসবে */
+            .lb-inner { max-width: 94vw; }
+            .lb-meta {
+                flex-wrap: wrap; justify-content: center;
+                gap: 8px 12px; max-width: 94vw; margin-top: 12px;
+            }
+            .lb-title { display: none; }
+            .lb-counter { font-size: 10px; flex-basis: 100%; text-align: center; }
+            .lb-dl, .lb-share { padding: 7px 12px; font-size: 10px; }
+            .lb-nav { padding: 10px; font-size: 26px; }
+            .lb-prev { left: 6px; }
+            .lb-next { right: 6px; }
+            .lb-close { top: 14px; right: 14px; }
 
 
             .nav-photo-stat .stat-num { font-size: 16px; }

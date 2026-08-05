@@ -1959,12 +1959,25 @@
     // ছবি পায় — কোনো redirect visitor পর্যন্ত পৌঁছায় না। ImgBB লিংক
     // (Drive না) এমনিতেই সরাসরি থাকে, প্রক্সির দরকার নেই।
     const IMAGE_PROXY_BASE = 'https://tonir-image-proxy.tonirshaik.workers.dev/img';
+    // 🛠️ FIX (PageSpeed: "Avoid enormous network payloads" — ছিল 29+ MiB,
+    // কিছু কিছু ছবি একটাই 9-10 MiB!): আগে ImgBB (ibb.co)-এর ছবির জন্য
+    // কোনো resize হতো না — thumbUrl মিসিং থাকলে সরাসরি raw/original
+    // ফাইলটাই গ্রিডে/লাইটবক্সে লোড হয়ে যেত। এখন wsrv.nl (ফ্রি, কোনো
+    // key/সাইনআপ লাগে না, publicly hosted image resizing proxy) দিয়ে
+    // ঠিক দরকারি সাইজে + WebP-তে on-the-fly resize করে সার্ভ করা হয়।
+    // মূল ফাইল/downloadUrl অপরিবর্তিত থাকে (toDownloadUrl আগের মতোই
+    // raw url ফেরত দেয়), শুধু display copy হালকা হলো।
+    const WSRV_BASE = 'https://wsrv.nl/';
     function toRenderableUrl(url, size) {
         if (isGoogleDriveUrl(url)) {
             const id = getDriveFileId(url);
             if (id) {
                 return IMAGE_PROXY_BASE + '?id=' + id + '&sz=w' + (size || 1000);
             }
+        }
+        if (/^https?:\/\//i.test(url)) {
+            const bare = url.replace(/^https?:\/\//i, '');
+            return WSRV_BASE + '?url=' + encodeURIComponent(bare) + '&w=' + (size || 1000) + '&output=webp&q=76';
         }
         return url;
     }

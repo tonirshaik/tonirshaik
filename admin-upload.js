@@ -371,7 +371,7 @@
                 <label style="display:flex; align-items:center; gap:10px; flex:1; cursor:pointer; margin:0; min-width:0;">
                     <input type="checkbox" ${checked ? 'checked' : ''}> <span class="tag-face-name">${name}</span>
                 </label>
-                <button type="button" class="tag-face-edit-btn" title="এই নামটি ঠিক করো"><i class="fa-solid fa-pen"></i></button>
+                <button type="button" class="tag-face-edit-btn" title="এই নামটি ঠিক করো"><svg class="svg-icon" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><path d="M352.9 21.2L308 66.1 445.9 204 490.8 159.1C504.4 145.6 512 127.2 512 108s-7.6-37.6-21.2-51.1L455.1 21.2C441.6 7.6 423.2 0 404 0s-37.6 7.6-51.1 21.2zM274.1 100L58.9 315.1c-10.7 10.7-18.5 24.1-22.6 38.7L.9 481.6c-2.3 8.3 0 17.3 6.2 23.4s15.1 8.5 23.4 6.2l127.8-35.5c14.6-4.1 27.9-11.8 38.7-22.6L412 237.9 274.1 100z"/></svg></button>
                 <button type="button" class="thumb-remove" title="Remove this name" style="position:static; flex-shrink:0;">×</button>
             `;
             row.querySelector('input').addEventListener('change', (e) => {
@@ -396,8 +396,8 @@
         wrap.className = 'tag-face-rename-row';
         wrap.innerHTML = `
             <input type="text" class="tag-face-rename-input" value="${oldName.replace(/"/g, '&quot;')}">
-            <button type="button" class="tag-face-rename-save" title="Save"><i class="fa-solid fa-check"></i></button>
-            <button type="button" class="tag-face-rename-cancel" title="Cancel"><i class="fa-solid fa-xmark"></i></button>
+            <button type="button" class="tag-face-rename-save" title="Save"><svg class="svg-icon" viewBox="0 0 448 512" xmlns="http://www.w3.org/2000/svg"><path d="M434.8 70.1c14.3 10.4 17.5 30.4 7.1 44.7l-256 352c-5.5 7.6-14 12.3-23.4 13.1s-18.5-2.7-25.1-9.3l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l101.5 101.5 234-321.7c10.4-14.3 30.4-17.5 44.7-7.1z"/></svg></button>
+            <button type="button" class="tag-face-rename-cancel" title="Cancel"><svg class="svg-icon" viewBox="0 0 384 512" xmlns="http://www.w3.org/2000/svg"><path d="M55.1 73.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L147.2 256 9.9 393.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192.5 301.3 329.9 438.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.8 256 375.1 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192.5 210.7 55.1 73.4z"/></svg></button>
         `;
         row.innerHTML = '';
         row.appendChild(wrap);
@@ -820,8 +820,8 @@
                 <label style="display:flex; align-items:center; gap:10px; flex:1; cursor:pointer; margin:0; min-width:0;">
                     <input type="checkbox" ${checked ? 'checked' : ''}> <span class="tag-face-name">${name}</span>
                 </label>
-                <button type="button" class="tag-face-edit-btn" title="Edit name"><i class="fa-solid fa-pen"></i></button>
-                <button type="button" class="tag-face-delete-btn" title="Delete this tag entirely"><i class="fa-solid fa-trash"></i></button>
+                <button type="button" class="tag-face-edit-btn" title="Edit name"><svg class="svg-icon" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><path d="M352.9 21.2L308 66.1 445.9 204 490.8 159.1C504.4 145.6 512 127.2 512 108s-7.6-37.6-21.2-51.1L455.1 21.2C441.6 7.6 423.2 0 404 0s-37.6 7.6-51.1 21.2zM274.1 100L58.9 315.1c-10.7 10.7-18.5 24.1-22.6 38.7L.9 481.6c-2.3 8.3 0 17.3 6.2 23.4s15.1 8.5 23.4 6.2l127.8-35.5c14.6-4.1 27.9-11.8 38.7-22.6L412 237.9 274.1 100z"/></svg></button>
+                <button type="button" class="tag-face-delete-btn" title="Delete this tag entirely"><svg class="svg-icon" viewBox="0 0 448 512" xmlns="http://www.w3.org/2000/svg"><path d="M136.7 5.9L128 32 32 32C14.3 32 0 46.3 0 64S14.3 96 32 96l384 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-96 0-8.7-26.1C306.9-7.2 294.7-16 280.9-16L167.1-16c-13.8 0-26 8.8-30.4 21.9zM416 144L32 144 53.1 467.1C54.7 492.4 75.7 512 101 512L347 512c25.3 0 46.3-19.6 47.9-44.9L416 144z"/></svg></button>
             `;
             row.querySelector('input').addEventListener('change', (e) => {
                 if (e.target.checked) editTagSelected.add(name.toLowerCase());
@@ -852,8 +852,8 @@
         wrap.className = 'tag-face-rename-row';
         wrap.innerHTML = `
             <input type="text" class="tag-face-rename-input" value="${oldName.replace(/"/g, '&quot;')}">
-            <button type="button" class="tag-face-rename-save" title="Save"><i class="fa-solid fa-check"></i></button>
-            <button type="button" class="tag-face-rename-cancel" title="Cancel"><i class="fa-solid fa-xmark"></i></button>
+            <button type="button" class="tag-face-rename-save" title="Save"><svg class="svg-icon" viewBox="0 0 448 512" xmlns="http://www.w3.org/2000/svg"><path d="M434.8 70.1c14.3 10.4 17.5 30.4 7.1 44.7l-256 352c-5.5 7.6-14 12.3-23.4 13.1s-18.5-2.7-25.1-9.3l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l101.5 101.5 234-321.7c10.4-14.3 30.4-17.5 44.7-7.1z"/></svg></button>
+            <button type="button" class="tag-face-rename-cancel" title="Cancel"><svg class="svg-icon" viewBox="0 0 384 512" xmlns="http://www.w3.org/2000/svg"><path d="M55.1 73.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L147.2 256 9.9 393.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192.5 301.3 329.9 438.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.8 256 375.1 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192.5 210.7 55.1 73.4z"/></svg></button>
         `;
         row.innerHTML = '';
         row.appendChild(wrap);

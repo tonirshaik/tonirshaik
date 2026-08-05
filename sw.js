@@ -7,14 +7,14 @@
 // Apps Script (script.google.com) ইচ্ছাকৃতভাবে কখনো cache করা হয় না —
 // এগুলো সবসময় সবচেয়ে নতুন ডেটা/ছবি দেখানোর জন্য সরাসরি নেটওয়ার্কে যায়।
 
-const CACHE_NAME = 'tonir-gallery-v1';
+const CACHE_NAME = 'tonir-gallery-v2';
 
 const PRECACHE_URLS = [
   './',
   './index.html',
   './admin-upload.js',
   './workpic.js',
-  'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=Inter:wght@300;400;500&display=swap',
+  'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=Inter:wght@400;500&display=swap',
   'https://tonirshaik.github.io/tonirshaik/web-app-manifest-512x512.png'
 ];
 

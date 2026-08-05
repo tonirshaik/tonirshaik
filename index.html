@@ -2350,6 +2350,15 @@
                 return;
             }
             if (stage === MAX_THUMB_RETRIES + 1 && isGoogleDriveUrl(photo.rawUrl)) {
+                // 🆕 raw full-quality-এ যাওয়ার আগে আরেকটু ছোট সাইজ (w100)
+                // দিয়ে একবার চেষ্টা — Drive-এর thumbnail engine কিছু
+                // নির্দিষ্ট ফাইলে w200-তে বারবার fail করলেও ছোট সাইজে
+                // সফল হতে পারে।
+                const smallUrl = toRenderableUrl(photo.rawUrl, 100);
+                imgEl.src = smallUrl + (smallUrl.indexOf('?') === -1 ? '?' : '&') + 'small=' + Date.now();
+                return;
+            }
+            if (stage === MAX_THUMB_RETRIES + 2 && isGoogleDriveUrl(photo.rawUrl)) {
                 const id = getDriveFileId(photo.rawUrl);
                 if (id) {
                     imgEl.src = 'https://drive.google.com/uc?export=view&id=' + id;

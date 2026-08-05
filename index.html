@@ -2332,7 +2332,15 @@
             imgEl.style.opacity = '0';
             stage++;
             if (stage === 1) {
-                const retryUrl = photo.url + (photo.url.indexOf('?') === -1 ? '?' : '&') + 'retry=' + Date.now();
+                // 🛠️ FIX: আগে এখানে ভুলবশত photo.url (full-size, w1000,
+                // 150-400KB+) দিয়ে retry হতো — comment-এ "thumbnail retry"
+                // লেখা থাকলেও কোড আসলে full-size ব্যবহার করত। Slow
+                // network-এ thumbnail request একটু দেরি/transient error
+                // হলেই এই ভুল fallback-এর কারণে ছোট ~20KB ছবির বদলে
+                // হঠাৎ ৩০০KB+ ছবি ডাউনলোড হয়ে বাকি সব ছবির bandwidth
+                // কেড়ে নিত। এখন thumbUrl (w200) দিয়েই retry হচ্ছে।
+                const base = photo.thumbUrl || photo.url;
+                const retryUrl = base + (base.indexOf('?') === -1 ? '?' : '&') + 'retry=' + Date.now();
                 imgEl.src = retryUrl;
                 return;
             }

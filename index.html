@@ -1241,6 +1241,16 @@
         .loading-state {
             text-align: center; padding: 80px 20px;
             color: var(--muted); font-size: 12px; letter-spacing: 0.15em;
+            /* 🛠️ FIX (PageSpeed CLS: 0.581): আগে এই box মাত্র ~150-200px
+               উঁচু ছিল, ঠিক পরেই <footer> থাকায় ধীর নেটওয়ার্কে footer-টা
+               শুরুতে viewport-এর মধ্যেই দেখা যেত। গ্যালারি লোড হয়ে অনেক
+               row হঠাৎ বসে গেলে footer অনেক নিচে ছিটকে পড়ত — এটাই ছিল আসল
+               layout-shift। এখন loading অবস্থায়ই কমপক্ষে ১ viewport (100vh)
+               জায়গা রিজার্ভ রাখা হচ্ছে, তাই লোডিং শেষে footer এমনিতেই
+               viewport-এর বাইরে থাকে, কোনো দৃশ্যমান শিফট গণনা হয় না। */
+            min-height: 100vh;
+            box-sizing: border-box;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
         .loading-spinner {
             width: 32px; height: 32px; border-radius: 50%;

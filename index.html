@@ -1248,6 +1248,16 @@
 
             .gallery-section { padding: 0 10px 60px; }
 
+            /* 🆕 মোবাইলে ৪-কলাম হওয়ায় ছবির কার্ড অনেক ছোট (~85px) — তাই ওভারলেতে
+               ট্যাগ/টাইটেল টেক্সট আঁটছিল না আর ডাউনলোড/শেয়ার বাটন বাইরে চলে
+               যাচ্ছিল/কাটা যাচ্ছিল। মোবাইলে টেক্সট হাইড করে শুধু ছোট, সেন্টার
+               করা অ্যাকশন বাটন রাখা হলো। */
+            .photo-overlay { padding: 6px; justify-content: center; }
+            .photo-meta { display: none; }
+            .photo-actions { gap: 6px; }
+            .photo-action-btn { width: 24px; height: 24px; }
+            .photo-action-btn svg { width: 11px; height: 11px; }
+
 
             .nav-photo-stat .stat-num { font-size: 16px; }
             .nav-photo-stat .stat-label { font-size: 7px; letter-spacing: 0.1em; margin-top: 0; }
@@ -2691,6 +2701,35 @@
         if (e.key === 'ArrowLeft') document.getElementById('lbPrev').click();
         if (e.key === 'ArrowRight') document.getElementById('lbNext').click();
     });
+
+    // 🆕 মোবাইলে ছবি বড় করার পর বাম/ডানে সোয়াইপ (টান) করলে আগের/পরের ছবি দেখাবে
+    (function() {
+        const lbEl = document.getElementById('lightbox');
+        const lbInner = lbEl.querySelector('.lb-inner');
+        if (!lbInner) return;
+        let touchStartX = 0, touchStartY = 0, touchMoved = false;
+
+        lbInner.addEventListener('touchstart', (e) => {
+            if (e.touches.length !== 1) return;
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+            touchMoved = false;
+        }, { passive: true });
+
+        lbInner.addEventListener('touchmove', () => { touchMoved = true; }, { passive: true });
+
+        lbInner.addEventListener('touchend', (e) => {
+            if (!touchMoved) return;
+            const touch = e.changedTouches[0];
+            const dx = touch.clientX - touchStartX;
+            const dy = touch.clientY - touchStartY;
+            // শুধু যখন হরাইজন্টাল টান ভার্টিক্যাল থেকে স্পষ্ট বেশি, তখনই সোয়াইপ ধরা হবে
+            if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+                if (dx < 0) document.getElementById('lbNext').click(); // বামে টান = পরের ছবি
+                else document.getElementById('lbPrev').click();        // ডানে টান = আগের ছবি
+            }
+        });
+    })();
 
     function dlImg(url, filename) {
         fetch(url)

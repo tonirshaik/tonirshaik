@@ -53,15 +53,25 @@
     }
 </script>
 
+    <!-- 🛠️ FIX: আগে ৬টা preconnect ছিল (Google Fonts x2, script.google.com,
+         script.googleusercontent.com, drive.google.com, image-proxy) —
+         PageSpeed Insights এটাকে flag করেছে ("More than 4 preconnect
+         connections were found")। preconnect ব্রাউজারকে বলে এখনই TLS
+         handshake করে রাখতে, কিন্তু বেশি সংখ্যক preconnect একসাথে করলে
+         এগুলোই প্রথম স্ক্রিনের আসল জরুরি resource (ছবি, ফন্ট)-এর
+         connection budget/priority কেড়ে নেয়। এখন শুধু সেই ২টা origin
+         রাখা হলো যেগুলো পেজ লোড হওয়ার সাথে সাথেই লাগে (ফন্ট CSS আর
+         image proxy — প্রথম স্ক্রিনের thumbnail সব এখান থেকেই আসে)।
+         script.google.com/script.googleusercontent.com/drive.google.com
+         শুধু admin আপলোড করলে বা fallback হিসেবে লাগে (প্রতি visit-এ
+         না), তাই সেগুলো হালকা dns-prefetch-এই রাখা হলো — DNS আগে থেকেই
+         resolve হয়ে থাকবে, কিন্তু পুরো connection early করা হবে না। -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preconnect" href="https://script.google.com">
-    <link rel="preconnect" href="https://script.googleusercontent.com">
-    <link rel="preconnect" href="https://drive.google.com">
+    <link rel="preconnect" href="https://tonir-image-proxy.tonirshaik.workers.dev">
     <link rel="dns-prefetch" href="https://script.google.com">
     <link rel="dns-prefetch" href="https://script.googleusercontent.com">
     <link rel="dns-prefetch" href="https://drive.google.com">
-    <link rel="preconnect" href="https://tonir-image-proxy.tonirshaik.workers.dev">
     <link rel="dns-prefetch" href="https://tonir-image-proxy.tonirshaik.workers.dev">
     <!-- 🆕 REVERTED TO LIVE BACKEND, তারপর EDGE-CACHED: গ্যালারি ডেটা
          এখন সরাসরি Apps Script নয়, tonir-image-proxy Worker-এর

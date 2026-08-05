@@ -1940,14 +1940,20 @@
         return /drive\.google\.com/.test(url);
     }
 
-    // 🆕 Cloudflare Worker প্রক্সি বাদ দেওয়া হয়েছে — এখন সব Drive ছবি
-    // সরাসরি Google-এর নিজস্ব thumbnail endpoint (drive.google.com/thumbnail)
-    // থেকে লোড হয়, আর ImgBB লিংক এমনিতেই সরাসরি (কোনো প্রক্সি লাগে না)।
+    // 🛠️ FIX: সরাসরি drive.google.com/thumbnail ব্যবহার করলে প্রতিটা
+    // ছবিতে আগে একটা 302 redirect আসে (Slow 4G-তে ~700ms করে!), তারপর
+    // আসল ছবি — মানে প্রতি ছবিতে ডবল round-trip। tonir-image-proxy
+    // Worker-এর /img রুট এটাই সমাধান করে: Worker নিজে সার্ভার-সাইডে
+    // Drive থেকে ছবি এনে Cloudflare edge cache + KV-তে রেখে দেয়, তাই
+    // ব্রাউজার একটাই request পাঠায় আর কাছের edge server থেকে সরাসরি
+    // ছবি পায় — কোনো redirect visitor পর্যন্ত পৌঁছায় না। ImgBB লিংক
+    // (Drive না) এমনিতেই সরাসরি থাকে, প্রক্সির দরকার নেই।
+    const IMAGE_PROXY_BASE = 'https://tonir-image-proxy.tonirshaik.workers.dev/img';
     function toRenderableUrl(url, size) {
         if (isGoogleDriveUrl(url)) {
             const id = getDriveFileId(url);
             if (id) {
-                return 'https://drive.google.com/thumbnail?id=' + id + '&sz=w' + (size || 1000);
+                return IMAGE_PROXY_BASE + '?id=' + id + '&sz=w' + (size || 1000);
             }
         }
         return url;

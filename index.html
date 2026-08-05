@@ -2331,20 +2331,25 @@
         imgEl.addEventListener('error', function onErr() {
             imgEl.style.opacity = '0';
             stage++;
-            if (stage === 1) {
-                // 🛠️ FIX: আগে এখানে ভুলবশত photo.url (full-size, w1000,
-                // 150-400KB+) দিয়ে retry হতো — comment-এ "thumbnail retry"
-                // লেখা থাকলেও কোড আসলে full-size ব্যবহার করত। Slow
-                // network-এ thumbnail request একটু দেরি/transient error
-                // হলেই এই ভুল fallback-এর কারণে ছোট ~20KB ছবির বদলে
-                // হঠাৎ ৩০০KB+ ছবি ডাউনলোড হয়ে বাকি সব ছবির bandwidth
-                // কেড়ে নিত। এখন thumbUrl (w200) দিয়েই retry হচ্ছে।
+            // 🛠️ FIX: আগে মাত্র ১ বার thumbnail retry করেই সরাসরি
+            // full-resolution (uc?export=view, কখনো কখনো MB-এর ফাইল)
+            // fallback-এ চলে যেত। Slow network-এ অনেক ছবি একসাথে লোড
+            // হওয়ার সময় এই "error" প্রায়ই আসল broken image না, স্রেফ
+            // সাময়িক network congestion — কিন্তু তার শাস্তি হিসেবে পুরো
+            // পেজ বড় ফাইল ডাউনলোড করে আরও ধীর হয়ে যেত (একটা negative
+            // feedback loop)। এখন full-resolution-এ যাওয়ার আগে ছোট
+            // thumbnail দিয়েই আরও ২ বার (মোট ৩ বার) সামান্য backoff
+            // দিয়ে retry করা হয় — congestion কমার সময় দেওয়া হয়।
+            const MAX_THUMB_RETRIES = 3;
+            if (stage <= MAX_THUMB_RETRIES) {
                 const base = photo.thumbUrl || photo.url;
-                const retryUrl = base + (base.indexOf('?') === -1 ? '?' : '&') + 'retry=' + Date.now();
-                imgEl.src = retryUrl;
+                const delay = 400 * stage; // 400ms, 800ms, 1200ms
+                setTimeout(() => {
+                    imgEl.src = base + (base.indexOf('?') === -1 ? '?' : '&') + 'retry=' + Date.now();
+                }, delay);
                 return;
             }
-            if (stage === 2 && isGoogleDriveUrl(photo.rawUrl)) {
+            if (stage === MAX_THUMB_RETRIES + 1 && isGoogleDriveUrl(photo.rawUrl)) {
                 const id = getDriveFileId(photo.rawUrl);
                 if (id) {
                     imgEl.src = 'https://drive.google.com/uc?export=view&id=' + id;

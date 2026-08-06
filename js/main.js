@@ -442,13 +442,17 @@
     let virtualPhotos = [];          // বর্তমানে layout করা তালিকা (currentList-এর সাথে মিরর করা)
     let virtualLayout = { columns: 4, itemWidth: 0, itemHeight: 0, rowHeight: 0, totalRows: 0 };
 
-    function getColumnCount() {
-        const w = window.innerWidth;
-        if (w <= 400) return 4;
-        if (w <= 700) return 2;
-        if (w <= 1100) return 3;
-        return 4;
-    }
+function getColumnCount() {
+    const w = window.innerWidth;
+    if (w <= 400) return 4;
+    if (w <= 700) return 2;
+    if (w <= 1100) return 3;
+    // 🆕 বড় ডেস্কটপ/ল্যাপটপে প্রতি কলামের টার্গেট width ~230px ধরে
+    // কলাম সংখ্যা বের করা হয় — ডিসপ্লে যত চওড়া, কলাম তত বেশি (৪ থেকে
+    // অটো বাড়বে), ফলে প্রতিটা ছবি তুলনামূলক ছোট দেখাবে বড় স্ক্রিনে।
+    const desktopCols = Math.floor(w / 230);
+    return Math.max(4, Math.min(desktopCols, 9)); // সর্বোচ্চ ৯ কলাম পর্যন্ত
+}
 
     function computeVirtualLayout() {
         const masonry = document.getElementById('masonry');

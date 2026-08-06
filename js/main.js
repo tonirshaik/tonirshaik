@@ -1349,7 +1349,7 @@
         }
 
         lazyLoadOnFirstClick('navGalleryLink', 'admin-upload.js');
-        lazyLoadOnFirstClick('navWorkPicLink', 'workpic.js');
+        lazyLoadOnFirstClick('navWorkPicLink', 'js/workpic.js');
     })();
     // 🆕 SERVICE WORKER: HTML shell, নিজের JS, Google Fonts, favicon —
     // এগুলো cache করে রাখা হয় যাতে পরের visit-এ প্রায় instant লোড হয়।

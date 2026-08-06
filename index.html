@@ -73,6 +73,7 @@
     <link rel="dns-prefetch" href="https://script.googleusercontent.com">
     <link rel="dns-prefetch" href="https://drive.google.com">
     <link rel="dns-prefetch" href="https://tonir-image-proxy.tonirshaik.workers.dev">
+    <link rel="dns-prefetch" href="https://wsrv.nl">
     <!-- 🆕 REVERTED TO LIVE BACKEND, তারপর EDGE-CACHED: গ্যালারি ডেটা
          এখন সরাসরি Apps Script নয়, tonir-image-proxy Worker-এর
          /gallery-data রুট থেকে আসে — সেটা Apps Script (/exec,
@@ -1943,16 +1944,33 @@
         return fetch(url, opts).finally(() => clearTimeout(timer));
     }
 
+    // 🛠️ FIX (bug from previous patch): অনেক পুরনো এন্ট্রির url আসলে
+    // "drive.google.com/..." ফরম্যাটে না, বরং Google-এর
+    // "lh3.googleusercontent.com/d/ID..." ফরম্যাটে সেভ আছে (redirect-এর
+    // পর resolve হওয়া লিংক)। isGoogleDriveUrl() আগে শুধু
+    // "drive.google.com" চিনত, তাই এই লিংকগুলো "Drive না" ধরে নিয়ে
+    // toGenericThumb()-এর wsrv.nl fallback-এ পাঠানো হচ্ছিল — কিন্তু
+    // wsrv.nl Google-এর এই session/cookie-নির্ভর googleusercontent
+    // লিংক fetch করতে পারে না, ফলে প্রতিটা request net::ERR দিয়ে fail
+    // করছিল (broken thumbnails, ২৪৮টা failed request)। এখন
+    // googleusercontent.com-ও Drive হিসেবে চেনা হয়, আর getDriveFileId()
+    // "/d/ID" প্যাটার্নও (file/ ছাড়া) ধরতে পারে, যাতে এগুলো নিজের
+    // Cloudflare Worker proxy দিয়েই যায় (যেটা Drive API দিয়ে সঠিকভাবে
+    // ফাইল আনতে পারে), wsrv.nl-এ না গিয়ে।
     function getDriveFileId(url) {
         let m = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
         if (m) return m[1];
         m = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
         if (m) return m[1];
+        m = url.match(/googleusercontent\.com\/d\/([a-zA-Z0-9_-]+)/);
+        if (m) return m[1];
+        m = url.match(/\/d\/([a-zA-Z0-9_-]{15,})/);
+        if (m) return m[1];
         return null;
     }
 
     function isGoogleDriveUrl(url) {
-        return /drive\.google\.com/.test(url);
+        return /drive\.google\.com|googleusercontent\.com/.test(url);
     }
 
     // 🛠️ FIX: সরাসরি drive.google.com/thumbnail ব্যবহার করলে প্রতিটা
@@ -1972,6 +1990,23 @@
             }
         }
         return url;
+    }
+
+    // 🆕 UNIVERSAL THUMBNAIL FIX: আগে শুধু Drive URL রিসাইজ হতো
+    // (toRenderableUrl), কিন্তু যেসব ImgBB ছবির জন্য backend থেকে
+    // img.thumbUrl ফাঁকা/না-আসে (পুরনো এন্ট্রি, বা কোনো কারণে
+    // thumb জেনারেট হয়নি), সেগুলোর জন্য fallback ছিল raw ImgBB
+    // URL — মানে ফুল-সাইজ ২০০-৪৫০ KB ছবি সরাসরি গ্রিডে লোড হতো
+    // (Network ট্যাবে দেখা 6.9 MB সমস্যার আসল কারণ)। এখন সেই
+    // fallback-এও images.weserv.nl (ফ্রি, কোনো key লাগে না) দিয়ে
+    // on-the-fly resize+webp করে ছোট thumbnail বানানো হয়, উৎস
+    // যেটাই হোক না কেন।
+    const THUMB_PROXY_BASE = 'https://wsrv.nl/';
+    function toGenericThumb(url, size) {
+        if (!url) return url;
+        const bare = url.replace(/^https?:\/\//, '');
+        return THUMB_PROXY_BASE + '?url=' + encodeURIComponent(bare) +
+            '&w=' + (size || 200) + '&output=webp&q=70';
     }
 
     function toDownloadUrl(url) {
@@ -2030,7 +2065,7 @@
 
                 photos.push({
                     url: toRenderableUrl(url, 1000),
-                    thumbUrl: toRenderableUrl(url, 200),
+                    thumbUrl: isGoogleDriveUrl(url) ? toRenderableUrl(url, 200) : toGenericThumb(url, 200),
                     rawUrl: url,
                     downloadUrl: toDownloadUrl(url),
                     idx: idx,
@@ -2067,7 +2102,9 @@
             // ২০০-৪৫০ KB এর ফুল ছবি লোড হতো (Network ট্যাবে দেখা 9MB সমস্যার
             // প্রধান কারণ)। এখন Drive URL হলে backend যাই পাঠাক, জোর করে
             // toRenderableUrl(...,200) দিয়ে ছোট, প্রক্সি-করা thumbnail বানানো হয়।
-            thumbUrl: (img.thumbUrl && !isGoogleDriveUrl(img.thumbUrl)) ? img.thumbUrl : toRenderableUrl(img.url, 200),
+            thumbUrl: (img.thumbUrl && !isGoogleDriveUrl(img.thumbUrl))
+                ? img.thumbUrl
+                : (isGoogleDriveUrl(img.url) ? toRenderableUrl(img.url, 200) : toGenericThumb(img.url, 200)),
             rawUrl: img.url,
             // Download button: full-quality original file, not the thumbnail.
             downloadUrl: toDownloadUrl(img.url),

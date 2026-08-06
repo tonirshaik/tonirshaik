@@ -2061,7 +2061,13 @@
             // Drive-hosted ছবির জন্য img.thumbUrl খালি থাকবে, তখন আগের মতোই
             // toRenderableUrl(img.url, 200) fallback হিসেবে ব্যবহার হয়।
             url: toRenderableUrl(img.url, 1000),
-            thumbUrl: img.thumbUrl ? img.thumbUrl : toRenderableUrl(img.url, 200),
+            // 🛠️ FIX: ব্যাকএন্ড কখনো কখনো Drive-hosted ছবির জন্যও img.thumbUrl-এ
+            // ফুল-সাইজ লিংক পাঠিয়ে দেয় (শুধু ImgBB-এর জন্যই আসল thumb লিংক আসে)।
+            // আগে সেটা যাচাই ছাড়াই ব্যবহার হতো — ফলে গ্রিডে thumbnail-এর বদলে
+            // ২০০-৪৫০ KB এর ফুল ছবি লোড হতো (Network ট্যাবে দেখা 9MB সমস্যার
+            // প্রধান কারণ)। এখন Drive URL হলে backend যাই পাঠাক, জোর করে
+            // toRenderableUrl(...,200) দিয়ে ছোট, প্রক্সি-করা thumbnail বানানো হয়।
+            thumbUrl: (img.thumbUrl && !isGoogleDriveUrl(img.thumbUrl)) ? img.thumbUrl : toRenderableUrl(img.url, 200),
             rawUrl: img.url,
             // Download button: full-quality original file, not the thumbnail.
             downloadUrl: toDownloadUrl(img.url),

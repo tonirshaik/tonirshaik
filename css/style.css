@@ -1,4 +1,4 @@
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         /* 🆕 Font Awesome (~80-90KB পুরো লাইব্রেরি) সরিয়ে শুধু ব্যবহৃত
            কয়েকটা icon inline SVG হিসেবে বসানো হয়েছে speed-এর জন্য।
@@ -112,7 +112,7 @@
 
         nav {
             position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-            padding: 10px 40px;
+            padding: 6px 40px;
             display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
             row-gap: 2px; column-gap: 16px;
             background: rgba(5, 10, 22, 0.72);
@@ -128,12 +128,12 @@
             display: flex; flex-direction: column; align-items: center;
         }
         .nav-search-wrap .search-row { max-width: 640px; }
-        .nav-search-wrap .search-status { margin-top: 6px; }
+        .nav-search-wrap .search-status { margin-top: 3px; }
         .nav-gallery-title {
             font-family: 'Cormorant Garamond', serif;
-            font-size: 50px; font-weight: 500;
+            font-size: 26px; font-weight: 500;
             color: #fff; line-height: 0.85;
-            margin-top: -26px; margin-bottom: 26px; text-align: center;
+            margin-top: 0; margin-bottom: 6px; text-align: center;
         }
         .nav-gallery-title em { font-style: italic; color: var(--gold-light); }
         .nav-logo-wrap {
@@ -333,7 +333,7 @@
             background: var(--card-bg);
             border: 1px solid var(--border);
             border-radius: 20px;
-            padding: 7px 14px;
+            padding: 5px 14px;
             transition: border-color 0.2s, box-shadow 0.2s;
             animation: searchBarGlow 3.2s ease-in-out infinite;
         }
@@ -1034,8 +1034,8 @@
             color: var(--muted); margin-top: 4px;
         }
         .nav-photo-stat { flex-shrink: 0; margin-right: 10px; }
-        .nav-photo-stat .stat-num { font-size: 34px; }
-        .nav-photo-stat .stat-label { font-size: 11px; letter-spacing: 0.15em; margin-top: 2px; }
+        .nav-photo-stat .stat-num { font-size: 20px; }
+        .nav-photo-stat .stat-label { font-size: 8px; letter-spacing: 0.12em; margin-top: 1px; }
 
         .lightbox {
             display: none; position: fixed; inset: 0; z-index: 1000;

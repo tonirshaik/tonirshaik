@@ -713,35 +713,6 @@
             width: 100%;
         }
 
-        /* 🆕 CLS FIX: আগে masonry শুরুতে display:none থাকত (height 0),
-           তারপর ডেটা এলে হঠাৎ পুরো grid (হাজার হাজার px উচ্চতা) একসাথে
-           ভেসে উঠত — এটাই Lighthouse-এর সবচেয়ে বড় layout-shift ছিল
-           (CLS 0.581)। এখন এই skeleton-grid শুরু থেকেই একই column/gap/
-           aspect-ratio ব্যবহার করে জায়গাটা আগে থেকে দখল করে রাখে।
-           কয়টা .skeleton-item বসবে সেটা head-এর inline script ঠিক করে
-           (localStorage cache-এ থাকা photo count থেকে row সংখ্যা বের
-           করে) — cached visitor-দের জন্য প্রায় হুবহু আসল height-এর
-           কাছাকাছি থাকে, তাই swap-এর সময় বাস্তবে প্রায় shift-ই হয় না। */
-        .skeleton-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
-        }
-        .skeleton-item {
-            aspect-ratio: 3 / 4;
-            border-radius: 4px;
-            background: linear-gradient(100deg, #0A1220 30%, #101a2c 50%, #0A1220 70%);
-            background-size: 250% 100%;
-            animation: skeleton-shimmer 1.6s ease-in-out infinite;
-        }
-        @keyframes skeleton-shimmer {
-            0% { background-position: 200% 0; }
-            100% { background-position: -50% 0; }
-        }
-        @media (max-width: 1100px) { .skeleton-grid { grid-template-columns: repeat(3, 1fr); } }
-        @media (max-width: 700px)  { .skeleton-grid { grid-template-columns: repeat(2, 1fr); } }
-        @media (max-width: 400px)  { .skeleton-grid { grid-template-columns: repeat(4, 1fr); gap: 6px; } }
-
         .photo-item {
             position: relative; border-radius: 4px; overflow: hidden;
             cursor: pointer;
@@ -1139,6 +1110,11 @@
             background: rgba(63,168,255,0.18);
             border-color: var(--gold);
             color: var(--gold-light);
+        }
+        @media (max-width: 640px) {
+            .tag-cat-row { flex-wrap: nowrap; gap: 5px; }
+            .tag-cat-label { font-size: 10px; margin-right: 0; }
+            .tag-cat-btn { padding: 6px 8px; font-size: 9.5px; letter-spacing: 0.03em; flex: 1; text-align: center; }
         }
         .tag-quickadd-row { display: flex; gap: 8px; margin-bottom: 14px; }
         .tag-quickadd-row .admin-input { margin-bottom: 0; flex: 1; }
@@ -1596,37 +1572,7 @@
     </div>
 
     <div class="gallery-section">
-        <!-- 🆕 CLS FIX: এটাই এখন default loading state — page paint হওয়ার
-             সাথে সাথেই (নিচের head script থেকে) এখানে skeleton-item বসে
-             যায়, তাই masonry পরে display:'' হলেও height প্রায় একই
-             থাকে, বড় jump হয় না। Row সংখ্যা head-এর inline script ঠিক
-             করে (cache থাকলে exact, না থাকলে default 4 row)। -->
-        <div class="skeleton-grid" id="skeletonGrid"></div>
-        <script>
-        // 🆕 এই script blocking/synchronous রাখা হয়েছে ইচ্ছাকৃতভাবে —
-        // parser এখানে এসে থামে, skeleton বসিয়ে দেয়, তারপর বাকি পেজ
-        // parse করে। ফলে ব্রাউজার প্রথম paint-এই সঠিক (বা কাছাকাছি)
-        // height সহ grid আঁকে — পরে masonry.style.display='' হওয়ার সময়
-        // আর বড় jump হয় না। localStorage cache-এ আগের visit-এর photo
-        // count থাকলে (99% রিটার্নিং ভিজিটরের ক্ষেত্রে) row সংখ্যা প্রায়
-        // হুবহু মেলে; না থাকলে (একদম প্রথম visit) ডিফল্ট 4 row বসে।
-        (function () {
-            var count = 4 * 3; // default: প্রথমবার-ভিজিটরের জন্য ৩ row অনুমান
-            try {
-                var cached = localStorage.getItem('tonir_gallery_cache_v1');
-                if (cached) {
-                    var arr = JSON.parse(cached);
-                    if (Array.isArray(arr) && arr.length) count = arr.length;
-                }
-            } catch (e) {}
-            var cols = window.innerWidth <= 400 ? 4 : window.innerWidth <= 700 ? 2 : window.innerWidth <= 1100 ? 3 : 4;
-            var rows = Math.min(Math.ceil(count / cols), 20); // ২০ row-এর বেশি reserve করার দরকার নেই (viewport-এর বাইরের অংশ যাই হোক না কেন CLS-এ প্রভাব ফেলে না)
-            var html = '';
-            for (var i = 0; i < rows * cols; i++) html += '<div class="skeleton-item"></div>';
-            document.getElementById('skeletonGrid').innerHTML = html;
-        })();
-        </script>
-        <div class="loading-state" id="loadingState" style="display:none;">
+        <div class="loading-state" id="loadingState">
             <div class="loading-spinner"></div>
             Loading gallery…
         </div>
@@ -2228,15 +2174,10 @@
         allPhotos = photos;
         document.getElementById('photoCount').textContent = allPhotos.length;
         document.getElementById('loadingState').style.display = 'none';
-        currentList = allPhotos;
-        renderGallery(currentList, true); // masonry.style.height এখানেই সেট হয়ে যায় (computeVirtualLayout)
-        buildStrip(allPhotos);
-        // 🆕 CLS FIX: height ঠিক হয়ে যাওয়ার পরই skeleton সরিয়ে masonry
-        // দেখানো হচ্ছে — যেহেতু skeleton আগে থেকেই প্রায় কাছাকাছি জায়গা
-        // দখল করে রেখেছিল, এই swap-এ বড় কোনো jump হয় না।
-        const skeleton = document.getElementById('skeletonGrid');
-        if (skeleton) skeleton.style.display = 'none';
         document.getElementById('masonry').style.display = '';
+        currentList = allPhotos;
+        renderGallery(currentList, true);
+        buildStrip(allPhotos);
     }
 
     let paintedFromCache = false;
@@ -2316,11 +2257,7 @@
         maybeFirstPaint();
         maybeFinalPaint();
         if (!paintedFromCache && !firstPaintDone) {
-            const skeleton = document.getElementById('skeletonGrid');
-            if (skeleton) skeleton.style.display = 'none';
-            const ls = document.getElementById('loadingState');
-            ls.style.display = '';
-            ls.innerHTML =
+            document.getElementById('loadingState').innerHTML =
                 '<p style="color:var(--muted)">Could not load photos. Check your connection.</p>';
         }
     });

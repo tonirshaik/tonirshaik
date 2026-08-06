@@ -2546,9 +2546,18 @@
     window.addEventListener('scroll', scheduleVirtualUpdate, { passive: true });
 
     let virtualResizeTimer = null;
+    // 🛠️ FIX: মোবাইলে স্ক্রল করার সময় ব্রাউজারের address bar লুকালে/দেখা
+    // দিলে শুধু window.innerHeight বদলায় (width না), কিন্তু ব্রাউজার সেটাকেও
+    // একটা "resize" ইভেন্ট হিসেবে পাঠায়। আগে যেকোনো resize-এই পুরো গ্যালারি
+    // মুছে আবার বানানো হতো — এতে স্ক্রল করার সময় পেজ বারবার নড়েচড়ে উঠত
+    // ("যায়-আসে" সমস্যা)। এখন width সত্যিই বদলালে (breakpoint/orientation
+    // change) তবেই recalculation হবে, খালি height বদলালে কিছু হবে না।
+    let lastKnownWidth = window.innerWidth;
     window.addEventListener('resize', () => {
         clearTimeout(virtualResizeTimer);
         virtualResizeTimer = setTimeout(() => {
+            if (window.innerWidth === lastKnownWidth) return;
+            lastKnownWidth = window.innerWidth;
             computeVirtualLayout(); // কলাম সংখ্যা বদলাতে পারে (breakpoint), তাই layout নতুন করে গণনা
             renderedItems.forEach(el => el.remove());
             renderedItems.clear();

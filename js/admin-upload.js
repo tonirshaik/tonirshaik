@@ -158,7 +158,7 @@
         faceApiScript.src = 'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js';
         faceApiScript.onload = function () {
             const faceRecScript = document.createElement('script');
-            faceRecScript.src = 'face-recognition.js';
+            faceRecScript.src = 'js/face-recognition.js';
             faceRecScript.onload = function () {
                 faceScriptsState = 'ready';
                 faceApiReadyCallbacks.forEach(function (cb) { cb(); });

@@ -2391,6 +2391,15 @@
                 imgEl.src = smallUrl + (smallUrl.indexOf('?') === -1 ? '?' : '&') + 'small=' + Date.now();
                 return;
             }
+            // 🛠️ FIX: ImgBB (ibb.co)-এর ছবির জন্য wsrv.nl proxy ৩ বার retry-তেও
+            // fail করলে আগে কোনো fallback ছিল না — ছবিটা সরাসরি হারিয়ে যেত
+            // (কিছু ভিজিটরের কাছে গ্যালারিতে ফাঁকা/ভাঙা বক্স দেখা যাচ্ছিল)।
+            // এখন proxy ব্যর্থ হলে সরাসরি মূল/original ইমেজ URL দিয়ে একবার
+            // চেষ্টা করা হয় (আকারে বড় হলেও অন্তত ছবিটা দেখা যাবে)।
+            if (stage === MAX_THUMB_RETRIES + 1 && !isGoogleDriveUrl(photo.rawUrl) && photo.rawUrl) {
+                imgEl.src = photo.rawUrl + (photo.rawUrl.indexOf('?') === -1 ? '?' : '&') + 'direct=' + Date.now();
+                return;
+            }
             if (stage === MAX_THUMB_RETRIES + 2 && isGoogleDriveUrl(photo.rawUrl)) {
                 const id = getDriveFileId(photo.rawUrl);
                 if (id) {

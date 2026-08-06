@@ -1241,16 +1241,6 @@
         .loading-state {
             text-align: center; padding: 80px 20px;
             color: var(--muted); font-size: 12px; letter-spacing: 0.15em;
-            /* 🛠️ FIX (PageSpeed CLS: 0.581): আগে এই box মাত্র ~150-200px
-               উঁচু ছিল, ঠিক পরেই <footer> থাকায় ধীর নেটওয়ার্কে footer-টা
-               শুরুতে viewport-এর মধ্যেই দেখা যেত। গ্যালারি লোড হয়ে অনেক
-               row হঠাৎ বসে গেলে footer অনেক নিচে ছিটকে পড়ত — এটাই ছিল আসল
-               layout-shift। এখন loading অবস্থায়ই কমপক্ষে ১ viewport (100vh)
-               জায়গা রিজার্ভ রাখা হচ্ছে, তাই লোডিং শেষে footer এমনিতেই
-               viewport-এর বাইরে থাকে, কোনো দৃশ্যমান শিফট গণনা হয় না। */
-            min-height: 100vh;
-            box-sizing: border-box;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
         .loading-spinner {
             width: 32px; height: 32px; border-radius: 50%;
@@ -1969,25 +1959,12 @@
     // ছবি পায় — কোনো redirect visitor পর্যন্ত পৌঁছায় না। ImgBB লিংক
     // (Drive না) এমনিতেই সরাসরি থাকে, প্রক্সির দরকার নেই।
     const IMAGE_PROXY_BASE = 'https://tonir-image-proxy.tonirshaik.workers.dev/img';
-    // 🛠️ FIX (PageSpeed: "Avoid enormous network payloads" — ছিল 29+ MiB,
-    // কিছু কিছু ছবি একটাই 9-10 MiB!): আগে ImgBB (ibb.co)-এর ছবির জন্য
-    // কোনো resize হতো না — thumbUrl মিসিং থাকলে সরাসরি raw/original
-    // ফাইলটাই গ্রিডে/লাইটবক্সে লোড হয়ে যেত। এখন wsrv.nl (ফ্রি, কোনো
-    // key/সাইনআপ লাগে না, publicly hosted image resizing proxy) দিয়ে
-    // ঠিক দরকারি সাইজে + WebP-তে on-the-fly resize করে সার্ভ করা হয়।
-    // মূল ফাইল/downloadUrl অপরিবর্তিত থাকে (toDownloadUrl আগের মতোই
-    // raw url ফেরত দেয়), শুধু display copy হালকা হলো।
-    const WSRV_BASE = 'https://wsrv.nl/';
     function toRenderableUrl(url, size) {
         if (isGoogleDriveUrl(url)) {
             const id = getDriveFileId(url);
             if (id) {
                 return IMAGE_PROXY_BASE + '?id=' + id + '&sz=w' + (size || 1000);
             }
-        }
-        if (/^https?:\/\//i.test(url)) {
-            const bare = url.replace(/^https?:\/\//i, '');
-            return WSRV_BASE + '?url=' + encodeURIComponent(bare) + '&w=' + (size || 1000) + '&output=webp&q=76';
         }
         return url;
     }
@@ -2391,15 +2368,6 @@
                 imgEl.src = smallUrl + (smallUrl.indexOf('?') === -1 ? '?' : '&') + 'small=' + Date.now();
                 return;
             }
-            // 🛠️ FIX: ImgBB (ibb.co)-এর ছবির জন্য wsrv.nl proxy ৩ বার retry-তেও
-            // fail করলে আগে কোনো fallback ছিল না — ছবিটা সরাসরি হারিয়ে যেত
-            // (কিছু ভিজিটরের কাছে গ্যালারিতে ফাঁকা/ভাঙা বক্স দেখা যাচ্ছিল)।
-            // এখন proxy ব্যর্থ হলে সরাসরি মূল/original ইমেজ URL দিয়ে একবার
-            // চেষ্টা করা হয় (আকারে বড় হলেও অন্তত ছবিটা দেখা যাবে)।
-            if (stage === MAX_THUMB_RETRIES + 1 && !isGoogleDriveUrl(photo.rawUrl) && photo.rawUrl) {
-                imgEl.src = photo.rawUrl + (photo.rawUrl.indexOf('?') === -1 ? '?' : '&') + 'direct=' + Date.now();
-                return;
-            }
             if (stage === MAX_THUMB_RETRIES + 2 && isGoogleDriveUrl(photo.rawUrl)) {
                 const id = getDriveFileId(photo.rawUrl);
                 if (id) {
@@ -2546,18 +2514,9 @@
     window.addEventListener('scroll', scheduleVirtualUpdate, { passive: true });
 
     let virtualResizeTimer = null;
-    // 🛠️ FIX: মোবাইলে স্ক্রল করার সময় ব্রাউজারের address bar লুকালে/দেখা
-    // দিলে শুধু window.innerHeight বদলায় (width না), কিন্তু ব্রাউজার সেটাকেও
-    // একটা "resize" ইভেন্ট হিসেবে পাঠায়। আগে যেকোনো resize-এই পুরো গ্যালারি
-    // মুছে আবার বানানো হতো — এতে স্ক্রল করার সময় পেজ বারবার নড়েচড়ে উঠত
-    // ("যায়-আসে" সমস্যা)। এখন width সত্যিই বদলালে (breakpoint/orientation
-    // change) তবেই recalculation হবে, খালি height বদলালে কিছু হবে না।
-    let lastKnownWidth = window.innerWidth;
     window.addEventListener('resize', () => {
         clearTimeout(virtualResizeTimer);
         virtualResizeTimer = setTimeout(() => {
-            if (window.innerWidth === lastKnownWidth) return;
-            lastKnownWidth = window.innerWidth;
             computeVirtualLayout(); // কলাম সংখ্যা বদলাতে পারে (breakpoint), তাই layout নতুন করে গণনা
             renderedItems.forEach(el => el.remove());
             renderedItems.clear();

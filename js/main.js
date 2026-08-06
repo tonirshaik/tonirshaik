@@ -444,7 +444,7 @@
 
 function getColumnCount() {
     const w = window.innerWidth;
-    if (w <= 400) return 4;
+    if (w <= 400) return 3;
     if (w <= 700) return 2;
     if (w <= 1100) return 3;
     // 🆕 বড় ডেস্কটপ/ল্যাপটপে প্রতি কলামের টার্গেট width ~230px ধরে

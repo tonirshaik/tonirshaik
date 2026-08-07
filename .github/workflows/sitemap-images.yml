@@ -36,10 +36,10 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          if git diff --quiet -- sitemap-images.xml; then
+          git add sitemap-images.xml
+          if git diff --cached --quiet; then
             echo "No changes to sitemap-images.xml"
           else
-            git add sitemap-images.xml
             git commit -m "chore: update image sitemap"
             git push
           fi

@@ -1,0 +1,45 @@
+name: Update Image Sitemap
+
+# প্রতিদিন একবার (UTC 03:00, মানে বাংলাদেশ সময় সকাল ৯টা) অটো চলবে,
+# আর চাইলে GitHub Actions ট্যাব থেকে ম্যানুয়ালি "Run workflow" দিয়েও
+# চালানো যাবে।
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-sitemap:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Fetch latest sitemap from Cloudflare Worker
+        run: |
+          curl -sSL "https://tonir-image-proxy.tonirshaik.workers.dev/sitemap-images.xml" \
+            -o sitemap-images.xml
+
+      - name: Check file is non-empty and valid-looking XML
+        run: |
+          if [ ! -s sitemap-images.xml ]; then
+            echo "sitemap-images.xml is empty, aborting."
+            exit 1
+          fi
+          head -c 200 sitemap-images.xml
+          grep -q "<urlset" sitemap-images.xml
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet -- sitemap-images.xml; then
+            echo "No changes to sitemap-images.xml"
+          else
+            git add sitemap-images.xml
+            git commit -m "chore: update image sitemap"
+            git push
+          fi

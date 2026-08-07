@@ -2,3 +2,4 @@ User-agent: *
 Allow: /
 
 Sitemap: https://tonirshaik.github.io/tonirshaik/sitemap.xml
+Sitemap: https://tonirshaik.github.io/tonirshaik/sitemap-images.xml

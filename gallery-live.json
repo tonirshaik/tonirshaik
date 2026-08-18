@@ -1,6 +1,15 @@
 {
   "images": [
     {
+      "url": "https://drive.google.com/file/d/13v-YUguNoE8eCCnAOEsQuiPmL_0gJ8zb/view?usp=sharing",
+      "thumbUrl": "",
+      "caption": "Tonir, Toma, তনির, তমা",
+      "cat": "dual",
+      "date": "2026-08-18T00:31:17.145Z",
+      "id": "13v-YUguNoE8eCCnAOEsQuiPmL_0gJ8zb",
+      "acc": "self"
+    },
+    {
       "url": "https://drive.google.com/file/d/16h9UqR1-6I5ZuWlhTYpkSn_SesuH888e/view?usp=sharing",
       "thumbUrl": "",
       "caption": "Tonir, nanu, bu, নানু, বু",
@@ -757,5 +766,5 @@
       "acc": "self"
     }
   ],
-  "exportedAt": "2026-08-18T00:29:00.519Z"
+  "exportedAt": "2026-08-18T00:31:43.642Z"
 }

@@ -112,7 +112,7 @@
       "url": "https://drive.google.com/file/d/1czzEaZsfenzM37_vVjvUu_yr5yMXgZU0/view?usp=sharing",
       "thumbUrl": "",
       "caption": "Tonir, তনির",
-      "cat": "dual",
+      "cat": "single",
       "date": "2026-09-11T10:42:07.986Z",
       "id": "1czzEaZsfenzM37_vVjvUu_yr5yMXgZU0",
       "acc": "self"
@@ -409,7 +409,7 @@
       "url": "https://i.ibb.co/5X61GVYv/6fe1ddbbcd6c.jpg",
       "thumbUrl": "https://i.ibb.co/JWKcmPx2/6fe1ddbbcd6c.jpg",
       "caption": "Tonir, তনির",
-      "cat": "dual",
+      "cat": "single",
       "date": "2026-08-15T14:41:41.903Z",
       "id": "imgbb_1786804900882_36503",
       "acc": "self"
@@ -418,7 +418,7 @@
       "url": "https://i.ibb.co/23ZgVHdH/3295020a2f9b.jpg",
       "thumbUrl": "https://i.ibb.co/7tk2MLKL/3295020a2f9b.jpg",
       "caption": "Tonir, তনির",
-      "cat": "dual",
+      "cat": "single",
       "date": "2026-08-13T08:23:07.789Z",
       "id": "imgbb_1786609386647_31629",
       "acc": "self"
@@ -892,5 +892,5 @@
       "acc": "self"
     }
   ],
-  "exportedAt": "2026-09-25T17:43:54.954Z"
+  "exportedAt": "2026-09-25T17:46:16.831Z"
 }

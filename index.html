@@ -65,6 +65,7 @@
 <nav>
 <div class=nav-logo-wrap>
 <a href=# class=nav-logo>Tonir <span>Shaik</span></a>
+<span class="site-version" id="siteVersion" title="Website version">v1.0.0</span>
 </div>
 <ul class=nav-links>
 <li class="chase-wrap nav-hidden-btn"><a href=# id=navGalleryLink class="nav-chase-btn nav-premium"><span class=pl>U</span><span class=pl>p</span><span class=pl>l</span><span class=pl>o</span><span class=pl>a</span><span class=pl>d</span></a>
@@ -432,6 +433,21 @@ Visit Official Site →
 </div>
 </div>
 </div>
+<script>
+(function(){
+  const badge=document.getElementById('siteVersion');
+  if(!badge)return;
+  fetch('./version.json',{cache:'no-store'})
+    .then(r=>{if(!r.ok)throw new Error('Version unavailable');return r.json();})
+    .then(data=>{
+      if(data&&/^[0-9]+\.[0-9]+\.[0-9]+$/.test(data.version||'')){
+        badge.textContent='v'+data.version;
+        badge.title='Website version '+data.version;
+      }
+    }).catch(()=>{badge.textContent='v1.0.0';});
+})();
+</script>
+
 <script src=js/main.js defer></script>
 </body>
 </html>

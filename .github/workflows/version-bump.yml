@@ -1,0 +1,64 @@
+name: Create gallery version bump PR
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  version-bump:
+    if: >-
+      github.event.pull_request.merged == true &&
+      !startsWith(github.event.pull_request.head.ref, 'version-bump/')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Calculate next version
+        id: version
+        env:
+          PR_LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const file = 'version.json';
+          const data = JSON.parse(fs.readFileSync(file, 'utf8'));
+          const match = /^([0-9]+)\.([0-9]+)\.([0-9]+)$/.exec(data.version || '');
+          if (!match) throw new Error('version.json must contain a semantic version like 1.0.0');
+          let [major, minor, patch] = match.slice(1).map(Number);
+          const labels = JSON.parse(process.env.PR_LABELS || '[]').map(x => String(x).toLowerCase());
+          if (labels.includes('major')) {
+            major += 1; minor = 0; patch = 0;
+          } else if (labels.includes('feature') || labels.includes('minor')) {
+            minor += 1; patch = 0;
+          } else {
+            patch += 1;
+          }
+          data.version = `${major}.${minor}.${patch}`;
+          data.release = labels.includes('major') ? 'Major release' :
+            (labels.includes('feature') || labels.includes('minor') ? 'Feature release' : 'Bug fix / maintenance release');
+          data.updatedAt = new Date().toISOString();
+          fs.writeFileSync(file, JSON.stringify(data, null, 2) + '\n');
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `version=${data.version}\n`);
+          NODE
+
+      - name: Open version bump pull request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: version-bump/${{ github.event.pull_request.number }}
+          delete-branch: true
+          commit-message: "chore: bump gallery version to ${{ steps.version.outputs.version }}"
+          title: "chore: bump gallery version to ${{ steps.version.outputs.version }}"
+          body: |
+            Automated version update after #${{ github.event.pull_request.number }} was merged.
+
+            Review and merge this PR to publish the new website version.
+          base: main

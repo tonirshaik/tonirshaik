@@ -1,18 +1,26 @@
-name: Create gallery version bump PR
+name: Auto version bump
 
 on:
-  pull_request:
-    types: [closed]
+  push:
+    branches: [main]
+    paths-ignore:
+      - version.json
+      - VERSIONING.md
+      - README.md
+      - sitemap-images.xml
 
 permissions:
   contents: write
-  pull-requests: write
+
+concurrency:
+  group: version-bump
+  cancel-in-progress: false
 
 jobs:
-  version-bump:
+  bump:
     if: >-
-      github.event.pull_request.merged == true &&
-      !startsWith(github.event.pull_request.head.ref, 'version-bump/')
+      github.actor != 'github-actions[bot]' &&
+      !startsWith(github.event.head_commit.message, 'chore: bump')
     runs-on: ubuntu-latest
     steps:
       - name: Check out main
@@ -21,44 +29,42 @@ jobs:
           ref: main
           fetch-depth: 0
 
-      - name: Calculate next version
+      - name: Calculate and write next version
         id: version
         env:
-          PR_LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.sha }}
         run: |
           node <<'NODE'
-          const fs = require('fs');
-          const file = 'version.json';
-          const data = JSON.parse(fs.readFileSync(file, 'utf8'));
-          const match = /^([0-9]+)\.([0-9]+)\.([0-9]+)$/.exec(data.version || '');
-          if (!match) throw new Error('version.json must contain a semantic version like 1.0.0');
-          let [major, minor, patch] = match.slice(1).map(Number);
-          const labels = JSON.parse(process.env.PR_LABELS || '[]').map(x => String(x).toLowerCase());
-          if (labels.includes('major')) {
-            major += 1; minor = 0; patch = 0;
-          } else if (labels.includes('feature') || labels.includes('minor')) {
-            minor += 1; patch = 0;
-          } else {
-            patch += 1;
-          }
-          data.version = `${major}.${minor}.${patch}`;
-          data.release = labels.includes('major') ? 'Major release' :
-            (labels.includes('feature') || labels.includes('minor') ? 'Feature release' : 'Bug fix / maintenance release');
-          data.updatedAt = new Date().toISOString();
-          fs.writeFileSync(file, JSON.stringify(data, null, 2) + '\n');
-          fs.appendFileSync(process.env.GITHUB_OUTPUT, `version=${data.version}\n`);
+          const fs=require('fs'),cp=require('child_process');
+          const before=process.env.BEFORE||'',after=process.env.AFTER;
+          let log='';
+          try{
+            const cmd=/^0*$/.test(before)?'git log -1 --format=%B%n----':'git log '+before+'..'+after+' --format=%B%n----';
+            log=cp.execSync(cmd).toString();
+          }catch(e){}
+          let level='patch';
+          if(/^[a-z]+(\([^)]*\))?!:/im.test(log)||/BREAKING CHANGE/.test(log)||/^major:/im.test(log)){level='major';}
+          else if(/^(feat|feature|minor)(\([^)]*\))?:/im.test(log)){level='minor';}
+          const data=JSON.parse(fs.readFileSync('version.json','utf8'));
+          const m=/^(\d+)\.(\d+)\.(\d+)$/.exec(data.version||'');
+          if(!m)throw new Error('version.json must contain a version like 1.0.0');
+          let [a,b,c]=m.slice(1).map(Number);
+          if(level==='major'){a++;b=0;c=0;}
+          else if(level==='minor'){b++;c=0;}
+          else{c++;}
+          data.version=a+'.'+b+'.'+c;
+          data.release=level==='major'?'Major release':(level==='minor'?'Feature release':'Bug fix / maintenance release');
+          data.updatedAt=new Date().toISOString();
+          fs.writeFileSync('version.json',JSON.stringify(data,null,2)+'\n');
+          fs.appendFileSync(process.env.GITHUB_OUTPUT,'version='+data.version+'\n');
           NODE
 
-      - name: Open version bump pull request
-        uses: peter-evans/create-pull-request@v7
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          branch: version-bump/${{ github.event.pull_request.number }}
-          delete-branch: true
-          commit-message: "chore: bump gallery version to ${{ steps.version.outputs.version }}"
-          title: "chore: bump gallery version to ${{ steps.version.outputs.version }}"
-          body: |
-            Automated version update after #${{ github.event.pull_request.number }} was merged.
-
-            Review and merge this PR to publish the new website version.
-          base: main
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add version.json
+          git commit -m "chore: bump gallery version to ${{ steps.version.outputs.version }}"
+          git pull --rebase
+          git push

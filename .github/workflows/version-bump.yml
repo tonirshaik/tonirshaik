@@ -3,11 +3,11 @@ name: Auto version bump
 on:
   push:
     branches: [main]
-    paths-ignore:
-      - version.json
-      - VERSIONING.md
-      - README.md
-      - sitemap-images.xml
+    paths:
+      - index.html
+      - js/**
+      - css/**
+      - sw.js
 
 permissions:
   contents: write

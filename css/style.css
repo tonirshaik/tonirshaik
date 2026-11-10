@@ -7,3 +7,4 @@
 .site-version:before{content:"";width:5px;height:5px;border-radius:50%;background:currentColor;box-shadow:0 0 6px currentColor}
 @media(max-width:600px){.nav-logo-wrap{gap:7px}.site-version{font-size:9px;padding:3px 6px}}
 .lb-nav:hover,.lb-nav:active{transform:translateY(-50%)!important}
+/* nav height stable on load */.nav-logo{line-height:26px!important}.stat-label{line-height:10px!important}.search-input,.filter-dropdown-btn,.select-toggle-btn{line-height:1.2!important}@media (max-width:600px){.nav-logo{line-height:20px!important}}

@@ -1,15 +1,6 @@
 {
   "images": [
     {
-      "url": "https://drive.google.com/file/d/1PqCJwL0w6F1KgztBM2nXbbjbf1KOr18N/view?usp=sharing",
-      "thumbUrl": "",
-      "caption": "",
-      "cat": "single",
-      "date": "2026-11-10T09:20:06.863Z",
-      "id": "1PqCJwL0w6F1KgztBM2nXbbjbf1KOr18N",
-      "acc": "self"
-    },
-    {
       "url": "https://i.ibb.co/WW4nnf2R/e0848dc0c844.jpg",
       "thumbUrl": "https://i.ibb.co/MDxnn7CJ/e0848dc0c844.jpg",
       "caption": "Tonir, Royal, তনির, রয়েল",
@@ -919,5 +910,5 @@
       "acc": "self"
     }
   ],
-  "exportedAt": "2026-11-10T10:24:11.105Z"
+  "exportedAt": "2026-11-10T10:34:06.058Z"
 }
